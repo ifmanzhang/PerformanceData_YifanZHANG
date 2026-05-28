@@ -1,10 +1,12 @@
 import * as THREE from "../../vendor/three.module.min.js";
 import { clamp, lerp, pressureWindow, smoothstep } from "../utils/math.js";
+import { createThinFilmSimulator } from "./thinFilmSim.js";
 
 let els = null;
 
-const FRONT_HEMISPHERE_TEST_MODE = true;
-const SINGLE_REFERENCE_FILM_TEST_MODE = true;
+const GPU_THIN_FILM_SIM_MODE = true;
+const FRONT_HEMISPHERE_TEST_MODE = false;
+const SINGLE_REFERENCE_FILM_TEST_MODE = false;
 const FRONT_HEMISPHERE_MIN_FACING = 0.38;
 
 const logo3d = {
@@ -17,6 +19,7 @@ const logo3d = {
   coreUniforms: null,
   glass: null,
   glassUniforms: null,
+  thinFilmSim: null,
   filmSurface: null,
   filmUniforms: null,
   glow: null,
@@ -53,6 +56,7 @@ const LOGO3D_RESET = {
   coreUniforms: null,
   glass: null,
   glassUniforms: null,
+  thinFilmSim: null,
   filmSurface: null,
   filmUniforms: null,
   glow: null,
@@ -178,6 +182,7 @@ function disposeMaterial(material) {
 
 export function disposeLogo3d() {
   if (!logo3d.ready) return;
+  logo3d.thinFilmSim?.dispose?.();
   logo3d.scene?.traverse((object) => {
     object.geometry?.dispose?.();
     disposeMaterial(object.material);
@@ -315,6 +320,226 @@ function createCoreMaterial() {
 
         float alpha = 0.032 + fresnel * 0.074;
         gl_FragColor = vec4(color * (0.18 + uBrightness * 0.12), alpha);
+      }
+    `,
+  });
+
+  return { material, uniforms };
+}
+
+function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256) {
+  const uniforms = {
+    uTime: { value: 0 },
+    uPressure: { value: 0 },
+    uBrightness: { value: 0.5 },
+    uClinicalShift: { value: 0 },
+    uFilmStateMap: { value: filmStateTexture },
+    uFilmTexel: { value: new THREE.Vector2(1 / simSize, 1 / simSize) },
+    uEdge: { value: 0.1 },
+    uDeform: { value: 0 },
+    uWindBase: { value: 0.68 },
+    uWindGustAmount: { value: 0.23 },
+    uWindGustSpeed: { value: 0.39 },
+    uWindYawAmount: { value: 0.72 },
+    uWindYawSpeed: { value: 0.21 },
+    uWindPitchAmount: { value: 0.32 },
+    uWindPitchSpeed: { value: 0.27 },
+    uDownwindBulge: { value: 0.2 },
+    uUpwindCompression: { value: 0.1 },
+    uRimFlutterAmount: { value: 0.038 },
+    uSurfaceWaveAmount: { value: 0.07 },
+    uFilmFlowSpeed: { value: 0.46 },
+    uFilmFlowDirection: { value: 92 * Math.PI / 180 },
+    uFilmFlowCoherence: { value: 0.76 },
+    uFilmDiffusionAmount: { value: 0.38 },
+    uFilmDripAmount: { value: 1.24 },
+    uFilmBandContrast: { value: 1.22 },
+    uFilmCoverage: { value: 1.08 },
+    uFilmSpeckleAmount: { value: 0.86 },
+  };
+
+  const material = new THREE.ShaderMaterial({
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.FrontSide,
+    blending: THREE.NormalBlending,
+    vertexShader: `
+      uniform float uTime;
+      uniform float uPressure;
+      uniform float uDeform;
+      uniform float uWindBase;
+      uniform float uWindGustAmount;
+      uniform float uWindGustSpeed;
+      uniform float uWindYawAmount;
+      uniform float uWindYawSpeed;
+      uniform float uWindPitchAmount;
+      uniform float uWindPitchSpeed;
+      uniform float uDownwindBulge;
+      uniform float uUpwindCompression;
+      uniform float uRimFlutterAmount;
+      uniform float uSurfaceWaveAmount;
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
+      varying vec3 vLocalPosition;
+
+      float hash21(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+
+      float noise21(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+          mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+          u.y
+        );
+      }
+
+      float fbm(vec2 p) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        for (int i = 0; i < 4; i += 1) {
+          value += noise21(p) * amplitude;
+          p = mat2(1.62, 1.18, -1.18, 1.62) * p + vec2(0.13, 0.31);
+          amplitude *= 0.52;
+        }
+        return value;
+      }
+
+      void main() {
+        vec3 localDir = normalize(position);
+        float gust = uWindBase + sin(uTime * uWindGustSpeed) * uWindGustAmount + sin(uTime * (uWindGustSpeed * 2.33) + 1.7) * uWindGustAmount * 0.6 + sin(uTime * (uWindGustSpeed * 3.77)) * uWindGustAmount * 0.3;
+        float wind = clamp(uDeform * (0.72 + uPressure * 0.38) * gust, 0.0, 1.15);
+        float yaw = sin(uTime * uWindYawSpeed) * uWindYawAmount + sin(uTime * (uWindYawSpeed * 0.32) + 1.7) * uWindYawAmount * 0.52;
+        float pitch = sin(uTime * uWindPitchSpeed + 0.8) * uWindPitchAmount + sin(uTime * (uWindPitchSpeed * 2.33)) * uWindPitchAmount * 0.25;
+        vec3 windDir = normalize(vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch) * 0.52));
+        vec3 crossDir = normalize(cross(windDir, vec3(0.0, 1.0, 0.0)));
+        vec3 liftDir = normalize(cross(crossDir, windDir));
+        float alongWind = dot(localDir, windDir);
+        float lift = dot(localDir, liftDir);
+        float side = dot(localDir, crossDir);
+        float membraneWave =
+          sin(alongWind * 5.6 + lift * 2.2 - uTime * 0.72) * 0.48 +
+          sin(side * 4.8 - alongWind * 1.6 + uTime * 0.44) * 0.34 +
+          sin((side + lift) * 8.2 - uTime * 0.28) * 0.18;
+        float downwind = smoothstep(-0.18, 0.86, alongWind);
+        float upwind = smoothstep(0.2, -0.82, alongWind);
+        float rimFlutter = pow(1.0 - abs(alongWind), 2.0) * sin(side * 10.8 + uTime * 0.82);
+        float surfaceTension = 0.7 + 0.3 * sin(uTime * 0.16 + side * 2.0);
+
+        vec3 membrane = position;
+        membrane += windDir * wind * (0.052 + downwind * (uDownwindBulge + 0.06) - upwind * uUpwindCompression);
+        membrane += liftDir * wind * (0.03 * sin(uTime * 0.21) + lift * 0.028);
+        membrane += crossDir * wind * side * (0.024 + downwind * 0.036);
+        membrane += localDir * wind * (downwind * uDownwindBulge - upwind * uUpwindCompression + membraneWave * uSurfaceWaveAmount);
+        membrane += crossDir * rimFlutter * wind * uRimFlutterAmount * surfaceTension;
+
+        vLocalPosition = membrane;
+        vec4 worldPosition = modelMatrix * vec4(membrane, 1.0);
+        vWorldPosition = worldPosition.xyz;
+        vWorldNormal = normalize(mat3(modelMatrix) * normalize(mix(normal, membrane, 0.42)));
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform float uPressure;
+      uniform float uBrightness;
+      uniform float uClinicalShift;
+      uniform sampler2D uFilmStateMap;
+      uniform vec2 uFilmTexel;
+      uniform float uEdge;
+      uniform float uFilmBandContrast;
+      uniform float uFilmCoverage;
+      uniform float uFilmSpeckleAmount;
+      varying vec3 vWorldPosition;
+      varying vec3 vWorldNormal;
+      varying vec3 vLocalPosition;
+
+      vec3 thinFilmRgb(float thickness, float cosTheta) {
+        vec3 wavelength = vec3(0.66, 0.53, 0.45);
+        vec3 phase = (4.0 * 3.14159265 * 1.33 * thickness * cosTheta) / wavelength + 3.14159265;
+        vec3 reflected = 0.5 + 0.5 * cos(phase);
+        vec3 softened = pow(clamp(reflected, vec3(0.0), vec3(1.0)), vec3(1.22));
+        return clamp(softened * vec3(1.08, 1.0, 1.16), vec3(0.0), vec3(1.28));
+      }
+
+      vec4 filmAt(vec2 uv) {
+        return texture2D(uFilmStateMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      void main() {
+        vec3 normal = normalize(vWorldNormal);
+        vec3 local = normalize(vLocalPosition);
+        vec3 viewDir = normalize(cameraPosition - vWorldPosition);
+        float facing = clamp(dot(normal, viewDir), 0.0, 1.0);
+        float frontMask = smoothstep(0.05, 0.28, facing);
+        if (frontMask < 0.012) discard;
+
+        vec2 filmUv = vec2(0.5 + local.x * 0.49, 0.5 + local.y * 0.49);
+        vec4 state = filmAt(filmUv);
+        vec4 left = filmAt(filmUv - vec2(uFilmTexel.x, 0.0));
+        vec4 right = filmAt(filmUv + vec2(uFilmTexel.x, 0.0));
+        vec4 down = filmAt(filmUv - vec2(0.0, uFilmTexel.y));
+        vec4 up = filmAt(filmUv + vec2(0.0, uFilmTexel.y));
+
+        float height = state.r;
+        float surfactant = state.g;
+        float fleck = state.b * uFilmSpeckleAmount;
+        vec2 gradH = vec2(right.r - left.r, up.r - down.r);
+        vec2 gradG = vec2(right.g - left.g, up.g - down.g);
+        float slope = clamp(length(gradH) * 36.0 + length(gradG) * 14.0, 0.0, 1.0);
+        float rim = 1.0 - facing;
+        float fresnel = pow(rim, 2.55);
+        float cosTheta = mix(0.52, 1.0, facing);
+        float opticalThickness = 0.13 + height * (1.55 + uFilmBandContrast * 0.42) + (surfactant - 0.5) * 0.34 + slope * 0.16;
+        vec3 physical = thinFilmRgb(opticalThickness * (1.08 + uPressure * 0.16), cosTheta);
+
+        vec3 amber = vec3(0.98, 0.55, 0.08);
+        vec3 honey = vec3(1.0, 0.74, 0.24);
+        vec3 darkGold = vec3(0.48, 0.36, 0.18);
+        vec3 cyan = vec3(0.02, 0.78, 0.88);
+        vec3 aqua = vec3(0.18, 0.9, 0.76);
+        vec3 rose = vec3(0.82, 0.18, 0.38);
+        vec3 violet = vec3(0.3, 0.12, 0.78);
+        vec3 pearl = vec3(1.0, 0.92, 0.68);
+        vec3 coldWhite = vec3(0.84, 0.92, 0.89);
+        vec3 paleGreen = vec3(0.55, 0.74, 0.62);
+
+        float cyanChannel = smoothstep(0.18, 0.58, 1.0 - height + slope * 0.18) * smoothstep(0.22, 0.78, surfactant + slope * 0.12);
+        float amberPool = smoothstep(0.16, 0.82, height) * (0.86 + (1.0 - surfactant) * 0.18);
+        float roseBoundary = smoothstep(0.12, 0.78, slope) * smoothstep(0.34, 0.92, physical.r);
+        float violetBoundary = smoothstep(0.1, 0.72, slope) * smoothstep(0.3, 0.9, physical.b);
+        float whiteSpeck = smoothstep(0.24, 0.86, fleck) * (0.5 + slope * 0.42);
+
+        vec3 color = mix(amber, honey, smoothstep(0.18, 0.74, height));
+        color = mix(color, darkGold, smoothstep(0.86, 0.99, height) * 0.18);
+        color = mix(color, physical, 0.26 + slope * 0.24);
+        color = mix(color, honey * 1.08, amberPool * 0.36);
+        color = mix(color, cyan, cyanChannel * 0.58);
+        color = mix(color, aqua, cyanChannel * smoothstep(0.24, 0.92, physical.g) * 0.32);
+        color = mix(color, violet, violetBoundary * 0.58);
+        color = mix(color, rose, roseBoundary * 0.44);
+        color = mix(color, pearl, whiteSpeck * 0.82);
+
+        float luma = dot(color, vec3(0.299, 0.587, 0.114));
+        vec3 clinical = mix(coldWhite, paleGreen, smoothstep(0.18, 0.82, 1.0 - height + cyanChannel * 0.2));
+        clinical = mix(clinical, darkGold, amberPool * 0.26);
+        color = mix(color, mix(vec3(luma), clinical, 0.66), uClinicalShift * 0.72);
+
+        float spec = pow(max(dot(reflect(normalize(vec3(0.45, -0.28, 0.84)), normal), viewDir), 0.0), 24.0);
+        vec3 rimColor = mix(color, mix(cyan, rose, smoothstep(0.26, 0.82, physical.r)), 0.28);
+        color += rimColor * fresnel * (0.32 + uEdge * 0.38);
+        color += coldWhite * spec * (0.11 + slope * 0.18 + uBrightness * 0.08);
+        color *= 0.92 + uBrightness * 0.36 + amberPool * 0.18 + slope * 0.12;
+
+        float alpha = frontMask * (0.5 + amberPool * 0.2 + cyanChannel * 0.2 + slope * 0.18 + fleck * 0.12);
+        alpha += frontMask * fresnel * (0.22 + uEdge * 0.12);
+        alpha = clamp(alpha * uFilmCoverage * (0.96 + uPressure * 0.08), 0.08, 0.92);
+        gl_FragColor = vec4(color, alpha);
       }
     `,
   });
@@ -1752,11 +1977,14 @@ export function initLogo3d(elements) {
   rose.position.set(1.6, -1.5, 2.8);
   scene.add(ambient, key, cyan, rose);
 
-  const referenceFilmTexture = new THREE.TextureLoader().load("./assets/reference-soap-film.jpg");
-  referenceFilmTexture.colorSpace = THREE.SRGBColorSpace;
-  referenceFilmTexture.wrapS = THREE.ClampToEdgeWrapping;
-  referenceFilmTexture.wrapT = THREE.ClampToEdgeWrapping;
-  referenceFilmTexture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 4);
+  let referenceFilmTexture = null;
+  if (!GPU_THIN_FILM_SIM_MODE) {
+    referenceFilmTexture = new THREE.TextureLoader().load("./assets/reference-soap-film.jpg");
+    referenceFilmTexture.colorSpace = THREE.SRGBColorSpace;
+    referenceFilmTexture.wrapS = THREE.ClampToEdgeWrapping;
+    referenceFilmTexture.wrapT = THREE.ClampToEdgeWrapping;
+    referenceFilmTexture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 4);
+  }
 
   const coreShader = createCoreMaterial();
   const core = new THREE.Mesh(new THREE.SphereGeometry(1.0, 96, 96), coreShader.material);
@@ -1764,7 +1992,10 @@ export function initLogo3d(elements) {
   core.visible = false;
   group.add(core);
 
-  const glassShader = createBubbleShellMaterial(referenceFilmTexture);
+  const thinFilmSim = GPU_THIN_FILM_SIM_MODE ? createThinFilmSimulator(renderer, { size: 192 }) : null;
+  const glassShader = GPU_THIN_FILM_SIM_MODE
+    ? createPhysicalThinFilmShellMaterial(thinFilmSim.texture, thinFilmSim.size)
+    : createBubbleShellMaterial(referenceFilmTexture);
   const glass = new THREE.Mesh(new THREE.SphereGeometry(1.0, 128, 128), glassShader.material);
   glass.renderOrder = 7;
   group.add(glass);
@@ -1837,6 +2068,7 @@ export function initLogo3d(elements) {
   logo3d.coreUniforms = coreShader.uniforms;
   logo3d.glass = glass;
   logo3d.glassUniforms = glassShader.uniforms;
+  logo3d.thinFilmSim = thinFilmSim;
   logo3d.filmSurface = null;
   logo3d.filmUniforms = null;
   logo3d.glow = glow;
@@ -1941,6 +2173,10 @@ export function updateLogo3d(visual, timeMs, pressureValue = 0, visualConfig = {
   logo3d.glassUniforms.uFilmBandContrast.value = glassWind.filmBandContrast ?? 1.22;
   logo3d.glassUniforms.uFilmCoverage.value = glassWind.filmCoverage ?? 1.08;
   logo3d.glassUniforms.uFilmSpeckleAmount.value = glassWind.filmSpeckleAmount ?? 0.86;
+  if (logo3d.thinFilmSim && logo3d.glassUniforms.uFilmStateMap) {
+    logo3d.thinFilmSim.update(seconds, glassWind, pressure);
+    logo3d.glassUniforms.uFilmStateMap.value = logo3d.thinFilmSim.texture;
+  }
   if (logo3d.filmUniforms) {
     [
       "uDeform",
