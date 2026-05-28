@@ -1,0 +1,42 @@
+{
+  "测试名称": "BIDMC 开源生理数据预处理测试",
+  "日期": "2026-05-26",
+  "数据来源": "PhysioNet BIDMC PPG and Respiration Dataset v1.0.0 / bidmc_01_Signals.csv",
+  "数据用途": "仅用于 ECG + respiration 预处理和真实噪声测试，不作为表演者本人数据。",
+  "输入文件": "data/raw/physionet_bidmc/bidmc_01_Signals.csv",
+  "输出文件": "mvp/data/replay/bidmc_01_open_data_replay.json",
+  "frames": 601,
+  "durationSec": 120.0,
+  "meta": {
+    "schemaVersion": "guided-baseline-replay-v1",
+    "sourceType": "physionet-demo",
+    "source": "data/raw/physionet_bidmc/bidmc_01_Signals.csv",
+    "durationSec": 120.0,
+    "fps": 5.0,
+    "sampleRate": 125.0,
+    "rPeakCount": 730,
+    "respPeakCount": 158,
+    "notes": "开源数据只用于算法和噪声测试；不能在最终文档中伪装成表演者本人的身体数据。"
+  },
+  "指标摘要": {
+    "pressure": {
+      "min": 0.1637,
+      "max": 0.5239,
+      "avg": 0.3321
+    },
+    "heartRateBpm": {
+      "min": 90.241,
+      "max": 94.371
+    },
+    "breathRate": {
+      "min": 10.475,
+      "max": 26.69
+    },
+    "stageHint": [
+      "calm",
+      "guidance"
+    ]
+  },
+  "结果": "通过：CSV 可读，R peak / RR interval / HRV proxy / respiration proxy 可输出统一 replay schema。",
+  "限制": "当前只是 120 秒小样本测试；R peak 检测为简化算法，最终报告应说明它是艺术 proxy，不是医学分析。"
+}

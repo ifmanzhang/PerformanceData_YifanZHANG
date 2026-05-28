@@ -1,0 +1,74 @@
+{
+  "testedAt": "2026-05-26T14:49:26.045Z",
+  "url": "http://127.0.0.1:4173/",
+  "mode": "synthetic replay at 4x",
+  "artifactDir": "/Users/if_man/Documents/GitHub/PerformanceData_YifanZHANG/artifacts/test-runs/synthetic_replay_full_test",
+  "checkpoints": [
+    {
+      "at": "2026-05-26T14:48:06.537Z",
+      "elapsed": "00:14",
+      "label": "calm",
+      "lastVoice": "等待生成",
+      "logCount": "18",
+      "playPauseText": "暂停",
+      "pressure": "0.07",
+      "replayStatus": "synthetic / 1501 帧",
+      "source": "replay",
+      "stage": "安静进入",
+      "ttsStatus": "本地 TTS 待机"
+    },
+    {
+      "at": "2026-05-26T14:48:34.653Z",
+      "elapsed": "02:06",
+      "label": "evaluation",
+      "lastVoice": "Stay where you are.",
+      "logCount": "161",
+      "playPauseText": "暂停",
+      "pressure": "0.30",
+      "replayStatus": "synthetic / 1501 帧",
+      "source": "replay",
+      "stage": "评估",
+      "ttsStatus": "kokoro_onnx / af_nicole"
+    },
+    {
+      "at": "2026-05-26T14:48:56.791Z",
+      "elapsed": "03:35",
+      "label": "overload",
+      "lastVoice": "Let the stillness become easier.",
+      "logCount": "272",
+      "playPauseText": "暂停",
+      "pressure": "0.64",
+      "replayStatus": "synthetic / 1501 帧",
+      "source": "replay",
+      "stage": "过载",
+      "ttsStatus": "kokoro_onnx / af_nicole"
+    },
+    {
+      "at": "2026-05-26T14:49:19.539Z",
+      "elapsed": "05:00",
+      "label": "ending",
+      "lastVoice": "Stay with the quiet.",
+      "logCount": "379",
+      "playPauseText": "开始",
+      "pressure": "0.11",
+      "replayStatus": "synthetic / 1501 帧",
+      "source": "replay",
+      "stage": "结束",
+      "ttsStatus": "kokoro_onnx / af_nicole"
+    },
+    {
+      "at": "2026-05-26T14:49:25.888Z",
+      "elapsed": "05:00",
+      "label": "complete",
+      "lastVoice": "Stay with the quiet.",
+      "logCount": "379",
+      "playPauseText": "开始",
+      "pressure": "0.11",
+      "replayStatus": "synthetic / 1501 帧",
+      "source": "replay",
+      "stage": "结束",
+      "ttsStatus": "kokoro_onnx / af_nicole"
+    }
+  ],
+  "browserWarningsOrErrors": []
+}

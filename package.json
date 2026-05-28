@@ -1,0 +1,9 @@
+{
+  "name": "guided-baseline-mvp",
+  "private": true,
+  "scripts": {
+    "start": "node mvp/server/index.js",
+    "validate:replay": "python3 scripts/data/preprocess_replay.py --validate mvp/data/replay/demo_replay.json",
+    "smoke": "./scripts/smoke.sh"
+  }
+}

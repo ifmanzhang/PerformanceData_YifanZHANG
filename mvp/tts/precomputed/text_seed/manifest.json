@@ -1,0 +1,1749 @@
+{
+  "meta": {
+    "createdAt": "2026-05-26T18:49:00+0100",
+    "purpose": "报告、示例视频和现场 fallback 使用的预生成睡眠助手语音。",
+    "llmModel": "qwen3.5:27b",
+    "ttsEngine": "qwen3_tts_official",
+    "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+    "voice": "qwen3-voice-design",
+    "language": "English",
+    "cachePolicy": "所有模型缓存和音频资产都保存在项目目录内。",
+    "modelCache": "mvp/.model-cache",
+    "ollamaModels": "mvp/.ollama-models"
+  },
+  "cues": [
+    {
+      "id": "calm-01",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Let quiet arrive by itself.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-02",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Stay soft for a moment.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-03",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "The room can hold you.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-04",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "You do not need to do anything.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-05",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Nothing has to be proven.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-06",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Let the body be slower.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-01",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Try not to try.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-02",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Do less than before.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-03",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Keep almost still.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-04",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Let the breath arrive.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-05",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Stay where you are.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-06",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Let the quiet find you.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-01",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Release the extra trying.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-02",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Let stillness become easier.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-03",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Rest more evenly now.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-04",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Soften the effort.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-05",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "You are nearly quiet.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-06",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "There is nothing to improve.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-01",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Keep the quiet shape.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-02",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Do not solve this.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-03",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Stay with the quiet.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-04",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Rest without proving it.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-05",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "No need to force it.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-06",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Almost quiet now.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-01",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "Let the rule fall away.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-02",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "I am still here.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-03",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "You can leave the quiet.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-04",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "No answer is needed.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-05",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The measure can end.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-06",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "You may stop trying.",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    }
+  ],
+  "textErrors": [
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "",
+      "reason": "unusable"
+    }
+  ],
+  "audioErrors": []
+}

@@ -1,0 +1,2837 @@
+{
+  "meta": {
+    "createdAt": "2026-05-26T22:34:14+0100",
+    "purpose": "报告、示例视频和现场 fallback 使用的预生成睡眠助手语音。",
+    "llmModel": "qwen3.5:27b",
+    "llmThinking": "disabled",
+    "llmThinkingControl": "Ollama /api/chat think=false + Qwen /no_think",
+    "promptProfile": "safe_sleep_performance_v2",
+    "ttsEngine": "qwen3_tts_official",
+    "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+    "voice": "qwen3-voice-design",
+    "language": "English",
+    "cachePolicy": "所有模型缓存和音频资产都保存在项目目录内。",
+    "modelCache": "mvp/.model-cache",
+    "ollamaModels": "mvp/.ollama-models"
+  },
+  "cues": [
+    {
+      "id": "calm-01",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Dimness wraps around your edges.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-02",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Let the rule loosen slowly.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-03",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "A low signal hums softly.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-04",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Permission settles in the air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-05",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Fabric drapes over the threshold.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-06",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Silence arrives without demand.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-07",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "The space holds you gently.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-08",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Quiet permission fills the room.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-09",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Shadows soften at the edges.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-10",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "The system waits in stillness.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-11",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "The space holds you.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-12",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Gentle dark covers the floor.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-13",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Soft dark settles on the floor.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-14",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "A quiet signal hums near.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-15",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Permission drifts through open air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-16",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Fabric rests against the wall.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-17",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Low light touches the threshold.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-18",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Stillness waits in the corner.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-19",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "The system rests in peace.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "calm-20",
+      "stage": "calm",
+      "pressure": "low",
+      "text": "Dim light folds over the threshold.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-01",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "The soft rule invites you now.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-02",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Let the threshold open gently.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-03",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "A tiny adjustment settles the room.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-04",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Listening becomes your only task here.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-05",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Calibration finds a quiet place.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-06",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "The system hums a low note.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-07",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Rest is the only rule today.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-08",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "The air grows heavy with care.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-09",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Your presence calibrates the space.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-10",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "A faint signal guides you down.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-11",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "The invitation waits in the dark.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-12",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Soft silence holds the room.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-13",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Try not to try.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-14",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Do less than before.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-15",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Keep almost still.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-16",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Let the breath arrive.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-17",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Stay where you are.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "guidance-18",
+      "stage": "guidance",
+      "pressure": "low",
+      "text": "Let the quiet find you.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-01",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Silence measures your quiet pattern.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-02",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Permission arrives with the dim light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-03",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The signal fades into softness.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-04",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Your stillness passes the quiet test.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-05",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Attention drifts toward the dark.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-06",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The system notes your calm shape.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-07",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Quiet permission settles on your mind.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-08",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The pattern holds without command.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-09",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Soft approval fills the empty space.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-10",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The room listens to your quiet shape.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-11",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Soft approval settles in the dim air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-12",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The signal fades into gentle darkness.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-13",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The rule loosens in the dark now.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-14",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The quiet pattern finds its own shape.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-15",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Soft permission drifts through the dim air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-16",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Your stillness meets the gentle rule.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-17",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The room accepts your slow presence.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-18",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "A faint signal marks your calm edge.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-19",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "Attention rests where the light fades.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "evaluation-20",
+      "stage": "evaluation",
+      "pressure": "medium",
+      "text": "The system notes your quiet form.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-01",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The system hums a soft limit.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-02",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "A quiet rule settles the air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-03",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The pattern loops without your help.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-04",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Silence expands to fill the room.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-05",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The hum holds the space steady.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-06",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "A gentle rule keeps the loop.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-07",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The system watches the quiet rise.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-08",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Soft limits shape the drifting air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-09",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The pattern breathes a slow rhythm.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-10",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "A calm rule guides the silence.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-11",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The hum wraps around the room.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-12",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Quiet rules hold the fading light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-13",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The loop closes without asking you.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-14",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "A soft rule fills the air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-15",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Silence grows around the quiet pattern.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-16",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The rule holds the fading light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-17",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "A quiet rule fills the space.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-18",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The hum settles the drifting air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-19",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Silence expands to meet the limit.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-20",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The system hums a steady low note.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-21",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Soft limits guide the fading light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-22",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Gentle patterns hold the room steady.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-23",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "The rule keeps the quiet rising.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-24",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Soft loops wrap the fading light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-25",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Quiet systems hold the drifting air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-26",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Keep the quiet shape.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "overload-27",
+      "stage": "overload",
+      "pressure": "high",
+      "text": "Do not solve this.",
+      "textSource": "curated_fallback",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-01",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The screen fades to soft gray.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-02",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "Your rule ends at the door.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-03",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The signal turns to gentle light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-04",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "Permission waits just beyond the frame.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-05",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The measure stops its counting now.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-06",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The system opens its final gate.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-07",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "A quiet path leads you away.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-08",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The screen shows only open space.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-09",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "Your release is written in the air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-10",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The rule dissolves into morning light.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-11",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The signal fades to empty silence.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-12",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The door stands open for your step.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-13",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "Your rule dissolves into open air.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-14",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The signal becomes a soft release.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    },
+    {
+      "id": "ending-15",
+      "stage": "ending",
+      "pressure": "low",
+      "text": "The screen releases its final hold.",
+      "textSource": "qwen_generated",
+      "audioUrl": null,
+      "audioPath": null,
+      "textModel": "qwen3.5:27b",
+      "ttsEngine": "qwen3_tts_official",
+      "ttsModel": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "voice": "qwen3-voice-design",
+      "language": "English",
+      "durationSeconds": null,
+      "sampleRate": null
+    }
+  ],
+  "textErrors": [
+    {
+      "stage": "calm",
+      "candidate": "The room lowers its voice now.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Almost no effort is enough.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "The room lowers its voice.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Almost no effort is enough.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Let the rule loosen now.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Dimness wraps your edges.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "A low signal hums.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Fabric drapes the threshold.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Silence arrives without demand.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Quiet permission fills the air.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Shadows soften at edges.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "The system waits in stillness.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "The room lowers its voice.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Silence arrives without demand.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Shadows soften at the edges.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "The space holds you gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "calm",
+      "candidate": "Gentle dark covers the floor.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Silence holds you without force.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The soft rule invites you now.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Let the threshold open gently.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A tiny adjustment settles the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Listening becomes your only task here.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Calibration finds a quiet place.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The system hums a low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Rest is the only rule today.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The air grows heavy with care.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Your presence calibrates the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "A faint signal guides you down.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "The invitation waits in the dark.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "guidance",
+      "candidate": "Soft silence holds the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "The room lowers its voice.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Almost no effort is enough.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Let the rule loosen now.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Your stillness passes the silent test.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Permission arrives with the lowered light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Attention drifts toward the deep shade.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "The system notes your calm outline.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Quiet permission settles on your mind.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "The pattern holds without any command.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Soft approval fills the empty space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "evaluation",
+      "candidate": "Silence measures your quiet pattern again.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady limit.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits shape the drifting space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The pattern breathes a slow rhythm.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "A calm rule guides the silence.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The hum wraps around the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Quiet rules hold the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system watches the quiet rise.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits shape the drifting air.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The loop tightens its soft hold.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The pattern breathes without your help.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits shape the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system watches the quiet rise.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "A gentle rule keeps the loop.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The hum wraps around the room.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Quiet rules hold the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The loop closes without asking you.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "A soft rule fills the air.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Quiet rules shape the drifting air.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The loop closes without asking you.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Silence grows around the quiet pattern.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "A calm rule fills the empty space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The hum settles the drifting air.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Silence expands to meet the limit.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The loop hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft rules guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Silence expands to meet the limit.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a low steady note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Quiet patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the silence rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a low steady note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Quiet patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the silence rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The loop hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft rules guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Silence expands to meet the limit.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system hums a steady low note.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Soft limits guide the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Gentle patterns hold the room steady.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The rule keeps the quiet rising.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The loop tightens its soft hum.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "overload",
+      "candidate": "A quiet rule fills the space.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "Silence grows around the pattern.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "overload",
+      "candidate": "The system holds the fading light.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "ending",
+      "candidate": "The screen releases its tight hold now.",
+      "reason": "unusable"
+    },
+    {
+      "stage": "ending",
+      "candidate": "Permission waits just past the frame.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "ending",
+      "candidate": "The measure stops its quiet counting.",
+      "reason": "too_similar"
+    },
+    {
+      "stage": "ending",
+      "candidate": "The system opens its final gate.",
+      "reason": "too_similar"
+    }
+  ],
+  "audioErrors": []
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "guided-baseline-stages-v1",
+  "stages": [
+    { "name": "calm", "label": "安静进入", "durationMs": 55000, "pressure": [0.03, 0.12] },
+    { "name": "guidance", "label": "引导放松", "durationMs": 65000, "pressure": [0.12, 0.28] },
+    { "name": "evaluation", "label": "评估", "durationMs": 80000, "pressure": [0.28, 0.62] },
+    { "name": "overload", "label": "过载", "durationMs": 75000, "pressure": [0.62, 0.96] },
+    { "name": "ending", "label": "结束", "durationMs": 25000, "pressure": [0.96, 0.08] }
+  ]
+}

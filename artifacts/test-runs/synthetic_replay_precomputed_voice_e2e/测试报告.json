@@ -1,0 +1,86 @@
+{
+  "测试名称": "合成 replay + 预生成 Qwen3-TTS 语音端到端测试",
+  "日期": "2026-05-26",
+  "server": "http://127.0.0.1:4173",
+  "replay": {
+    "file": "mvp/data/replay/demo_replay.json",
+    "frames": 1501,
+    "durationSec": 300.0,
+    "stages": [
+      "calm",
+      "guidance",
+      "evaluation",
+      "overload",
+      "ending"
+    ],
+    "pressureMin": 0.0551,
+    "pressureMax": 0.9602,
+    "pressureAvg": 0.4286
+  },
+  "staticChecks": {
+    "indexStatus": 200,
+    "indexType": "text/html; charset=utf-8",
+    "indexBytes": 6043,
+    "replayStatus": 200,
+    "replayType": "application/json; charset=utf-8",
+    "replayBytes": 499057
+  },
+  "voiceChecks": [
+    {
+      "stage": "calm",
+      "text": "Fabric rests against the wall.",
+      "source": "precomputed",
+      "audioUrl": "/tts/precomputed/audio/calm-16.wav",
+      "ttsSource": "precomputed",
+      "durationSeconds": 2.17,
+      "audioStatus": 200,
+      "audioType": "audio/wav",
+      "audioBytes": 104204
+    },
+    {
+      "stage": "guidance",
+      "text": "The air grows heavy with care.",
+      "source": "precomputed",
+      "audioUrl": "/tts/precomputed/audio/guidance-08.wav",
+      "ttsSource": "precomputed",
+      "durationSeconds": 2.09,
+      "audioStatus": 200,
+      "audioType": "audio/wav",
+      "audioBytes": 100364
+    },
+    {
+      "stage": "evaluation",
+      "text": "Silence measures your quiet pattern.",
+      "source": "precomputed",
+      "audioUrl": "/tts/precomputed/audio/evaluation-01.wav",
+      "ttsSource": "precomputed",
+      "durationSeconds": 2.81,
+      "audioStatus": 200,
+      "audioType": "audio/wav",
+      "audioBytes": 134924
+    },
+    {
+      "stage": "overload",
+      "text": "Silence expands to meet the limit.",
+      "source": "precomputed",
+      "audioUrl": "/tts/precomputed/audio/overload-19.wav",
+      "ttsSource": "precomputed",
+      "durationSeconds": 3.85,
+      "audioStatus": 200,
+      "audioType": "audio/wav",
+      "audioBytes": 184844
+    },
+    {
+      "stage": "ending",
+      "text": "The rule dissolves into morning light.",
+      "source": "precomputed",
+      "audioUrl": "/tts/precomputed/audio/ending-10.wav",
+      "ttsSource": "precomputed",
+      "durationSeconds": 2.41,
+      "audioStatus": 200,
+      "audioType": "audio/wav",
+      "audioBytes": 115724
+    }
+  ],
+  "result": "通过：MVP 服务可读取合成 replay，五个阶段均能从 precomputed manifest 返回 Qwen3-TTS wav，不触发实时生成。"
+}

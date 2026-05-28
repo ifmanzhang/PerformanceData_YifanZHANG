@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>睡眠基线控制台</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="stage" aria-label="睡眠基线 MVP">
+      <div id="siriScene" class="siri-scene" aria-hidden="true">
+        <canvas id="siriCanvas"></canvas>
+        <div class="siri-vignette"></div>
+      </div>
+
+      <section class="cockpit" aria-label="调试驾驶舱">
+        <header class="cockpit-header">
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <div>
+              <strong>睡眠基线</strong>
+              <span>调试驾驶舱</span>
+            </div>
+          </div>
+          <div class="run-controls">
+            <button id="startBtn" class="primary" type="button">开始演出</button>
+            <button id="playPauseBtn" type="button">开始</button>
+            <button id="resetBtn" type="button">重置</button>
+            <button id="stopAudioBtn" class="danger" type="button">停止音频</button>
+            <button id="liveModeBtn" type="button">现场视图</button>
+          </div>
+        </header>
+
+        <div id="readoutRoot" class="readout-root"></div>
+        <div id="phaseStrip" class="phase-strip" aria-label="阶段"></div>
+        <nav id="panelTabs" class="tabs" aria-label="控制面板"></nav>
+        <section id="panelRoot" class="panel-root" aria-label="参数面板"></section>
+      </section>
+
+      <button id="liveReturnBtn" class="live-return" type="button" aria-label="显示控制台">控制台</button>
+      <audio id="voicePreview" controls preload="none" hidden></audio>
+    </main>
+
+    <script src="./src/main.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "测试名称": "中文预生成语音库测试",
+  "日期": "2026-05-27",
+  "目标": "将英文最终语音文本人工策展翻译为中文，并用 Qwen3-TTS 重新生成测试阶段中文语音。",
+  "输入文本库": "mvp/tts/precomputed/manifest.json",
+  "中文文本库": "mvp/tts/precomputed_zh/manifest_text_zh.json",
+  "中文音频库": "mvp/tts/precomputed_zh/manifest.json",
+  "音频目录": "mvp/tts/precomputed_zh/audio",
+  "cueCount": 99,
+  "stageCounts": {
+    "calm": 21,
+    "guidance": 15,
+    "evaluation": 20,
+    "overload": 28,
+    "ending": 15
+  },
+  "textSourceCounts": {
+    "manual_curated_translation": 99
+  },
+  "tts": {
+    "engine": "qwen3_tts_official",
+    "model": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+    "language": "Chinese",
+    "sampleRate": 24000,
+    "audioErrors": 0,
+    "durationMin": 1.29,
+    "durationMax": 5.21,
+    "durationAvg": 3.195
+  },
+  "接口测试": {
+    "server": "http://127.0.0.1:4174",
+    "是否通过": true,
+    "TTS_PRECOMPUTED_DIR": "mvp/tts/precomputed_zh",
+    "结果": "通过：五个阶段均返回中文 precomputed cue，音频 URL 可访问。"
+  },
+  "伦理与质量边界": "中文翻译保留系统化、温柔但略带控制感的表演语言；禁用呼吸、心跳、医学诊断、真实身体指令等表达。"
+}

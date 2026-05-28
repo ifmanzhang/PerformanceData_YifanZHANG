@@ -1,0 +1,197 @@
+{
+  "created_at": "2026-05-18T15:02:49+0100",
+  "machine": {
+    "system": "Darwin",
+    "release": "25.2.0",
+    "machine": "arm64",
+    "processor": "arm"
+  },
+  "texts": [
+    "You do not need to do anything.",
+    "Let the breath arrive.",
+    "Stay where you are.",
+    "You may stop trying."
+  ],
+  "engines": [
+    {
+      "engine": "macos_say",
+      "voice": "Samantha",
+      "load_s": 0,
+      "cold_first_total_s": 0.5857,
+      "runs": [
+        {
+          "text": "You do not need to do anything.",
+          "output": "mvp/tts/output/macos_say_samantha/01.aiff",
+          "synth_s": 0.5857,
+          "audio_duration_s": 1.6644,
+          "rtf": 0.3519
+        },
+        {
+          "text": "Let the breath arrive.",
+          "output": "mvp/tts/output/macos_say_samantha/02.aiff",
+          "synth_s": 0.5793,
+          "audio_duration_s": 1.0609,
+          "rtf": 0.546
+        },
+        {
+          "text": "Stay where you are.",
+          "output": "mvp/tts/output/macos_say_samantha/03.aiff",
+          "synth_s": 0.5748,
+          "audio_duration_s": 1.0478,
+          "rtf": 0.5486
+        },
+        {
+          "text": "You may stop trying.",
+          "output": "mvp/tts/output/macos_say_samantha/04.aiff",
+          "synth_s": 0.5835,
+          "audio_duration_s": 1.2116,
+          "rtf": 0.4816
+        }
+      ],
+      "summary": {
+        "runs": 4,
+        "avg_synth_s": 0.5808,
+        "median_synth_s": 0.5814,
+        "min_synth_s": 0.5748,
+        "max_synth_s": 0.5857,
+        "avg_audio_duration_s": 1.2462,
+        "avg_rtf": 0.482
+      }
+    },
+    {
+      "engine": "kokoro_onnx",
+      "voice": "af_bella",
+      "load_s": 0.3061,
+      "cold_first_total_s": 1.4416,
+      "runs": [
+        {
+          "text": "You do not need to do anything.",
+          "output": "mvp/tts/output/kokoro_af_bella/01.wav",
+          "synth_s": 1.1355,
+          "audio_duration_s": 1.8347,
+          "rtf": 0.6189
+        },
+        {
+          "text": "Let the breath arrive.",
+          "output": "mvp/tts/output/kokoro_af_bella/02.wav",
+          "synth_s": 0.5326,
+          "audio_duration_s": 1.3227,
+          "rtf": 0.4027
+        },
+        {
+          "text": "Stay where you are.",
+          "output": "mvp/tts/output/kokoro_af_bella/03.wav",
+          "synth_s": 0.4914,
+          "audio_duration_s": 1.2587,
+          "rtf": 0.3904
+        },
+        {
+          "text": "You may stop trying.",
+          "output": "mvp/tts/output/kokoro_af_bella/04.wav",
+          "synth_s": 0.5738,
+          "audio_duration_s": 1.5147,
+          "rtf": 0.3788
+        }
+      ],
+      "summary": {
+        "runs": 4,
+        "avg_synth_s": 0.6833,
+        "median_synth_s": 0.5532,
+        "min_synth_s": 0.4914,
+        "max_synth_s": 1.1355,
+        "avg_audio_duration_s": 1.4827,
+        "avg_rtf": 0.4477
+      }
+    },
+    {
+      "engine": "kokoro_onnx",
+      "voice": "af_heart",
+      "load_s": 0.3089,
+      "cold_first_total_s": 0.9161,
+      "runs": [
+        {
+          "text": "You do not need to do anything.",
+          "output": "mvp/tts/output/kokoro_af_heart/01.wav",
+          "synth_s": 0.6072,
+          "audio_duration_s": 1.9627,
+          "rtf": 0.3094
+        },
+        {
+          "text": "Let the breath arrive.",
+          "output": "mvp/tts/output/kokoro_af_heart/02.wav",
+          "synth_s": 0.5003,
+          "audio_duration_s": 1.4293,
+          "rtf": 0.35
+        },
+        {
+          "text": "Stay where you are.",
+          "output": "mvp/tts/output/kokoro_af_heart/03.wav",
+          "synth_s": 0.4828,
+          "audio_duration_s": 1.344,
+          "rtf": 0.3592
+        },
+        {
+          "text": "You may stop trying.",
+          "output": "mvp/tts/output/kokoro_af_heart/04.wav",
+          "synth_s": 0.5297,
+          "audio_duration_s": 1.5787,
+          "rtf": 0.3355
+        }
+      ],
+      "summary": {
+        "runs": 4,
+        "avg_synth_s": 0.53,
+        "median_synth_s": 0.515,
+        "min_synth_s": 0.4828,
+        "max_synth_s": 0.6072,
+        "avg_audio_duration_s": 1.5787,
+        "avg_rtf": 0.3385
+      }
+    },
+    {
+      "engine": "piper",
+      "voice": "en_US-lessac-high",
+      "load_s": 0.4841,
+      "cold_first_total_s": 0.9363,
+      "runs": [
+        {
+          "text": "You do not need to do anything.",
+          "output": "mvp/tts/output/piper_lessac_high/01.wav",
+          "synth_s": 0.4522,
+          "audio_duration_s": 1.8692,
+          "rtf": 0.2419
+        },
+        {
+          "text": "Let the breath arrive.",
+          "output": "mvp/tts/output/piper_lessac_high/02.wav",
+          "synth_s": 0.3343,
+          "audio_duration_s": 1.3119,
+          "rtf": 0.2548
+        },
+        {
+          "text": "Stay where you are.",
+          "output": "mvp/tts/output/piper_lessac_high/03.wav",
+          "synth_s": 0.2852,
+          "audio_duration_s": 1.0797,
+          "rtf": 0.2642
+        },
+        {
+          "text": "You may stop trying.",
+          "output": "mvp/tts/output/piper_lessac_high/04.wav",
+          "synth_s": 0.3478,
+          "audio_duration_s": 1.3932,
+          "rtf": 0.2496
+        }
+      ],
+      "summary": {
+        "runs": 4,
+        "avg_synth_s": 0.3549,
+        "median_synth_s": 0.341,
+        "min_synth_s": 0.2852,
+        "max_synth_s": 0.4522,
+        "avg_audio_duration_s": 1.4135,
+        "avg_rtf": 0.2526
+      }
+    }
+  ]
+}

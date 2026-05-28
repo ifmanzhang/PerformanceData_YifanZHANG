@@ -1,0 +1,15 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+.model-cache/
+.ollama-models/
+runtime/
+
+mvp/.ollama-models/
+mvp/.model-cache/
+mvp/.venv-qwen-tts/
+mvp/tts/models/
+mvp/tts/generated/
+mvp/tts/output/
+mvp/tts/previews/
