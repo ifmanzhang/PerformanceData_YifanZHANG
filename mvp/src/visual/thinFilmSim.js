@@ -44,25 +44,29 @@ const INIT_FRAGMENT_SHADER = `
     vec2 uv = vUv;
     vec2 centered = uv - 0.5;
     float dome = smoothstep(0.72, 0.08, length(centered));
-    float verticalDrain = smoothstep(-0.18, 0.88, 0.5 - uv.y);
-    float broad = fbm(uv * vec2(2.0, 3.8) + uSeed);
-    float lanes = fbm(vec2(uv.x * 3.2 + broad * 0.85, uv.y * 8.8 + broad * 1.4 + uSeed * 0.23));
-    float fine = fbm(uv * 16.0 + vec2(uSeed * 0.71, -uSeed * 0.37));
+    float verticalDrain = smoothstep(-0.26, 0.9, 0.5 - uv.y);
+    float broad = fbm(uv * vec2(1.7, 3.1) + uSeed);
+    float shear = fbm(vec2(uv.x * 2.2 + broad * 0.74, uv.y * 6.8 + broad * 1.1 + uSeed * 0.23));
+    float lanes = fbm(vec2(uv.x * 3.4 + shear * 1.2, uv.y * 9.4 + broad * 1.8 + uSeed * 0.23));
+    float fine = fbm(uv * 18.0 + vec2(uSeed * 0.71, -uSeed * 0.37));
 
-    float channel = smoothstep(0.44, 0.7, lanes) * (1.0 - smoothstep(0.7, 0.94, lanes));
-    float filmHeight = 0.34 + verticalDrain * 0.32 + broad * 0.28 + smoothstep(0.62, 0.92, lanes) * 0.24;
-    filmHeight -= channel * 0.12;
-    filmHeight += smoothstep(0.82, 0.99, fine) * 0.1;
+    float runnel = exp(-pow((lanes - 0.55) * 4.4, 2.0));
+    float pool = smoothstep(0.38, 0.88, broad * 0.7 + shear * 0.3);
+    float filmHeight = 0.36 + verticalDrain * 0.32 + pool * 0.24 + shear * 0.16;
+    filmHeight -= runnel * 0.18;
+    filmHeight += pow(fine, 5.2) * 0.06;
     filmHeight = mix(0.24, filmHeight, dome);
 
-    float surfactant = 0.42 + fbm(uv * 4.6 + vec2(4.2 + uSeed, 1.3)) * 0.28 + channel * 0.34 - filmHeight * 0.1;
-    float fleck = smoothstep(0.84, 0.992, fbm(uv * 72.0 + vec2(8.2, uSeed)));
-    float pinning = hash21(floor(uv * 256.0) + uSeed);
+    float surfactant = 0.44 + fbm(uv * 4.2 + vec2(4.2 + uSeed, 1.3)) * 0.22 + runnel * 0.26 - filmHeight * 0.08;
+    vec2 seedVelocity = vec2(
+      fbm(uv * 5.0 + vec2(2.1, uSeed)) - 0.5,
+      fbm(uv * 5.0 + vec2(uSeed, 7.4)) - 0.5
+    ) * 0.018;
     gl_FragColor = vec4(
       clamp(filmHeight, 0.04, 0.96),
       clamp(surfactant, 0.04, 0.96),
-      clamp(fleck * dome, 0.0, 1.0),
-      pinning
+      clamp(0.5 + seedVelocity.x, 0.0, 1.0),
+      clamp(0.5 + seedVelocity.y, 0.0, 1.0)
     );
   }
 `;
@@ -125,8 +129,7 @@ const STEP_FRAGMENT_SHADER = `
 
     float height = center.r;
     float surfactant = center.g;
-    float fleck = center.b;
-    float pinning = center.a;
+    vec2 storedVelocity = (center.ba - 0.5) * 2.0;
     vec2 gradH = vec2(right.r - left.r, up.r - down.r);
     vec2 gradG = vec2(right.g - left.g, up.g - down.g);
     float lapH = left.r + right.r + up.r + down.r - height * 4.0;
@@ -138,54 +141,56 @@ const STEP_FRAGMENT_SHADER = `
     float potentialX = fbm((uv + vec2(uTexel.x * 2.0, 0.0)) * 3.2 + vec2(uTime * 0.018, -uTime * 0.012));
     float potentialY = fbm((uv + vec2(0.0, uTexel.y * 2.0)) * 3.2 + vec2(uTime * 0.018, -uTime * 0.012));
     vec2 curl = normalize(vec2(potential - potentialY, potentialX - potential) + 0.0001);
+    float pinning = hash21(floor(uv * 256.0));
     float slipNoise = fbm(uv * 9.0 + vec2(pinning * 3.1, potential * 2.4));
     float slip = 0.68 + slipNoise * 0.54 + pinning * 0.18;
 
-    vec2 marangoniFlow = gradG * (0.03 + uMarangoni * 0.1);
-    vec2 capillaryFlow = -gradH * (0.018 + uCapillary * 0.09);
+    vec2 marangoniFlow = gradG * (0.05 + uMarangoni * 0.12);
+    vec2 capillaryFlow = -gradH * (0.03 + uCapillary * 0.12);
     vec2 localShear = mix(curl, mainDir + crossDir * (slipNoise - 0.5) * 0.5, clamp(uFlowCoherence, 0.0, 1.0));
-    vec2 velocity =
-      mainDir * (0.012 + uFlowSpeed * 0.085) * (0.72 + uPressure * 0.38) +
-      localShear * (1.0 - uFlowCoherence) * (0.012 + uFlowSpeed * 0.038) +
-      marangoniFlow +
-      capillaryFlow;
+    vec2 externalVelocity =
+      mainDir * (0.006 + uFlowSpeed * 0.028) * (0.72 + uPressure * 0.38) +
+      localShear * (1.0 - uFlowCoherence) * (0.004 + uFlowSpeed * 0.018);
+    vec2 forceVelocity = externalVelocity + marangoniFlow + capillaryFlow;
+    vec2 velocity = storedVelocity * 0.86 + forceVelocity;
 
     vec2 backUv = uv - velocity * uDelta * slip;
     vec4 advected = stateAt(backUv);
 
     float downwind = dot(uv - vec2(0.5), mainDir);
     float downhill = smoothstep(-0.48, 0.74, downwind);
-    float sourceNoise = fbm(uv * vec2(5.2, 12.0) + mainDir * uTime * 0.04 + crossDir * potential);
-    float sourceLane = smoothstep(0.68, 0.96, sourceNoise) * smoothstep(-0.82, 0.72, -downwind);
-    float beadSeed = smoothstep(0.955, 0.995, fbm(uv * 72.0 + vec2(-uTime * 0.08, uTime * 0.05) + pinning));
+    float sourceNoise = fbm(uv * vec2(4.4, 11.0) + mainDir * uTime * 0.04 + crossDir * potential);
+    float sourceLane = pow(clamp(sourceNoise, 0.0, 1.0), 3.4) * smoothstep(-0.82, 0.72, -downwind);
+    float beadSeed = smoothstep(0.968, 0.998, fbm(uv * 84.0 + vec2(-uTime * 0.08, uTime * 0.05) + pinning));
     float edgeLoss = smoothstep(0.48, 0.76, length(uv - vec2(0.5)));
     float thickFilmLoss = smoothstep(0.88, 0.98, advected.r);
 
     height = advected.r;
     surfactant = advected.g;
-    fleck = advected.b;
+    vec2 advectedVelocity = (advected.ba - 0.5) * 2.0;
+    vec2 nextVelocity = advectedVelocity * 0.94 + forceVelocity * uDelta * (1.3 + slip * 0.4);
+    nextVelocity += curl * (1.0 - uFlowCoherence) * uDelta * 0.015;
+    nextVelocity -= gradH * uDelta * (0.04 + uCapillary * 0.08);
+    nextVelocity = clamp(nextVelocity, vec2(-0.22), vec2(0.22));
     height += uDelta * (
-      lapH * (0.026 + uDiffusion * 0.085) +
+      lapH * (0.04 + uDiffusion * 0.12) +
       downhill * uDrainage * 0.032 * uDripAmount -
       height * (0.008 + edgeLoss * 0.026) * uDrainage -
       thickFilmLoss * 0.034 +
-      sourceLane * uSourceAmount * 0.052 -
-      beadSeed * uDripAmount * 0.026
+      sourceLane * uSourceAmount * 0.032 -
+      beadSeed * uDripAmount * 0.018
     );
     surfactant += uDelta * (
-      lapG * (0.028 + uDiffusion * 0.075) +
+      lapG * (0.042 + uDiffusion * 0.12) +
       (0.52 - surfactant) * 0.018 -
       sourceLane * uSourceAmount * 0.008 +
       gradH.x * 0.015
     );
-    fleck = max(fleck * (0.988 - edgeLoss * 0.01), beadSeed * (0.42 + uDripAmount * 0.3));
-    fleck += sourceLane * smoothstep(0.72, 0.96, slipNoise) * uDripAmount * 0.012;
-
     gl_FragColor = vec4(
       clamp(height, 0.025, 0.985),
       clamp(surfactant, 0.025, 0.985),
-      clamp(fleck, 0.0, 1.0),
-      pinning
+      clamp(0.5 + nextVelocity.x * 2.0, 0.0, 1.0),
+      clamp(0.5 + nextVelocity.y * 2.0, 0.0, 1.0)
     );
   }
 `;
