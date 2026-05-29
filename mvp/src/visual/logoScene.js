@@ -327,13 +327,14 @@ function createCoreMaterial() {
   return { material, uniforms };
 }
 
-function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256) {
+function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256, referenceFilmTexture = null) {
   const uniforms = {
     uTime: { value: 0 },
     uPressure: { value: 0 },
     uBrightness: { value: 0.5 },
     uClinicalShift: { value: 0 },
     uFilmStateMap: { value: filmStateTexture },
+    uReferenceFilmMap: { value: referenceFilmTexture },
     uFilmTexel: { value: new THREE.Vector2(1 / simSize, 1 / simSize) },
     uEdge: { value: 0.1 },
     uDeform: { value: 0 },
@@ -450,6 +451,7 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256) {
       uniform float uBrightness;
       uniform float uClinicalShift;
       uniform sampler2D uFilmStateMap;
+      uniform sampler2D uReferenceFilmMap;
       uniform vec2 uFilmTexel;
       uniform float uEdge;
       uniform float uFilmBandContrast;
@@ -498,6 +500,16 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256) {
         return texture2D(uFilmStateMap, clamp(uv, vec2(0.002), vec2(0.998)));
       }
 
+      vec2 referenceUvFor(vec2 uv, vec2 flowDir, vec2 gradH, float height, float timeValue) {
+        vec2 refUv = vec2(
+          mix(0.055, 0.945, uv.x),
+          mix(0.145, 0.815, 1.0 - uv.y)
+        );
+        refUv += flowDir * (timeValue * 0.006 + height * 0.016);
+        refUv += gradH * vec2(-0.08, 0.08);
+        return clamp(refUv, vec2(0.002), vec2(0.998));
+      }
+
       void main() {
         vec3 normal = normalize(vWorldNormal);
         vec3 local = normalize(vLocalPosition);
@@ -515,11 +527,24 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256) {
 
         float height = state.r;
         float surfactant = state.g;
+        float neighborMax = max(max(left.r, right.r), max(up.r, down.r));
+        float neighborMin = min(min(left.r, right.r), min(up.r, down.r));
+        float lapH = left.r + right.r + up.r + down.r - height * 4.0;
         vec2 filmVelocity = (state.ba - 0.5) * 2.0;
         float velocityMag = clamp(length(filmVelocity) * 3.6, 0.0, 1.0);
         vec2 gradH = vec2(right.r - left.r, up.r - down.r);
         vec2 gradG = vec2(right.g - left.g, up.g - down.g);
-        float slope = clamp(length(gradH) * 22.0 + length(gradG) * 8.0, 0.0, 1.0);
+        float rawSlope = length(gradH);
+        float slope = clamp(rawSlope * 26.0 + length(gradG) * 8.0, 0.0, 1.0);
+        float dropletCore = smoothstep(0.52, 0.86, height) * smoothstep(0.0, 0.2, height - neighborMin + 0.04);
+        float meniscus = smoothstep(0.018, 0.09, rawSlope) * smoothstep(0.34, 0.92, height) * (1.0 - smoothstep(0.18, 0.42, abs(lapH)));
+        float valley = smoothstep(0.035, 0.14, neighborMax - height) * smoothstep(0.12, 0.68, 1.0 - height);
+        float thinChannel = smoothstep(
+          0.68,
+          1.08,
+          surfactant + max(-lapH, 0.0) * 2.6 + valley * 0.46 + meniscus * 0.22 + slope * 0.08 - height * 0.3
+        );
+        float localCrest = smoothstep(0.02, 0.12, height - neighborMax + 0.025) * dropletCore;
         vec3 opticalNormal = normalize(normal + vec3(-gradH.x * 1.25, -gradH.y * 1.25, 0.0));
         float rim = 1.0 - facing;
         float fresnel = pow(rim, 2.55);
@@ -538,42 +563,68 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, simSize = 256) {
         vec3 coldWhite = vec3(0.84, 0.92, 0.89);
         vec3 paleGreen = vec3(0.55, 0.74, 0.62);
 
-        float thinFilm = smoothstep(0.28, 0.72, 1.0 - height + slope * 0.08);
-        float cyanChannel = pow(clamp(thinFilm * (0.42 + surfactant * 0.48), 0.0, 1.0), 1.35);
-        float amberPool = smoothstep(0.1, 0.78, height) * (0.92 + (1.0 - surfactant) * 0.12);
-        float boundary = pow(slope, 0.82) * (0.44 + thinFilm * 0.36);
-        float roseBoundary = boundary * smoothstep(0.42, 0.96, physical.r);
-        float violetBoundary = boundary * smoothstep(0.48, 0.98, physical.b);
+        float thinFilm = smoothstep(0.34, 0.78, 1.0 - height + slope * 0.04);
+        float channelRiver = smoothstep(0.08, 0.42, valley + max(-lapH, 0.0) * 3.2 + surfactant * 0.22 - height * 0.18);
+        float cyanChannel = pow(clamp(max(thinChannel, channelRiver) * (0.84 + slope * 0.24) + meniscus * thinFilm * 0.06, 0.0, 1.0), 1.12);
+        float amberPool = smoothstep(0.1, 0.72, height) * (0.96 + (1.0 - surfactant) * 0.22 + dropletCore * 0.18);
+        float boundary = max(meniscus, pow(slope, 0.94) * (0.2 + thinFilm * 0.18));
+        float roseBoundary = boundary * smoothstep(0.34, 0.94, physical.r);
+        float violetBoundary = boundary * smoothstep(0.38, 0.96, physical.b);
         vec2 flowDir = normalize(filmVelocity + vec2(0.08, -0.32));
         vec2 flowCross = vec2(-flowDir.y, flowDir.x);
         vec2 flowUv = vec2(dot(filmUv, flowCross), dot(filmUv, flowDir));
-        float microPearl = smoothstep(0.72, 0.972, fbm(filmUv * vec2(42.0, 82.0) + flowDir * uTime * 0.035));
-        float microStreak = smoothstep(0.5, 0.82, fbm(vec2(flowUv.x * 16.0 + height * 1.7, flowUv.y * 54.0 + uTime * 0.045)));
-        float whiteSpeck = clamp(microPearl * microStreak * (0.13 + slope * 0.28 + velocityMag * 0.18), 0.0, 1.0);
+        float cyanVein = smoothstep(
+          0.52,
+          0.76,
+          fbm(vec2(flowUv.x * 5.2 + height * 2.4, flowUv.y * 18.0 + surfactant * 2.0 + uTime * 0.03))
+        ) * smoothstep(0.22, 0.82, thinFilm) * (0.35 + valley * 0.65 + boundary * 0.22);
+        cyanChannel = clamp(max(cyanChannel, cyanVein * 0.82), 0.0, 1.0);
+        float microPearl = smoothstep(0.74, 0.982, fbm(filmUv * vec2(54.0, 108.0) + flowDir * uTime * 0.035));
+        float microStreak = smoothstep(0.46, 0.84, fbm(vec2(flowUv.x * 18.0 + height * 1.7, flowUv.y * 68.0 + uTime * 0.045)));
+        float foamDust = smoothstep(0.86, 0.995, fbm(filmUv * vec2(190.0, 148.0) + vec2(uTime * 0.018, -uTime * 0.027)));
+        float whiteSpeck = clamp(
+          microPearl * microStreak * (0.1 + slope * 0.22 + velocityMag * 0.16) +
+          foamDust * (amberPool * 0.5 + boundary * 0.62 + cyanChannel * 0.3) +
+          localCrest * smoothstep(0.68, 0.98, microPearl) * 0.28,
+          0.0,
+          1.0
+        );
 
-        vec3 color = mix(amber, honey, smoothstep(0.18, 0.74, height));
-        color = mix(color, darkGold, smoothstep(0.86, 0.99, height) * 0.18);
-        color = mix(color, honey * 1.05, amberPool * 0.32);
-        color = mix(color, physical, 0.3 + boundary * 0.24);
-        color = mix(color, cyan, cyanChannel * 0.34);
-        color = mix(color, aqua, cyanChannel * smoothstep(0.24, 0.92, physical.g) * 0.2);
-        color = mix(color, violet, violetBoundary * 0.24);
-        color = mix(color, rose, roseBoundary * 0.18);
-        color = mix(color, pearl, whiteSpeck * 0.52);
+        vec3 deepAmber = vec3(0.72, 0.22, 0.035);
+        vec3 orangeFilm = vec3(1.0, 0.42, 0.06);
+        vec3 color = mix(deepAmber, orangeFilm, smoothstep(0.12, 0.66, height));
+        color = mix(color, honey * 1.16, amberPool * 0.52);
+        color = mix(color, darkGold, smoothstep(0.9, 0.99, height) * 0.12);
+        color = mix(color, physical, 0.16 + boundary * 0.22);
+        color = mix(color, cyan, cyanChannel * 0.86);
+        color = mix(color, aqua, cyanChannel * smoothstep(0.14, 0.88, physical.g) * 0.38);
+        color = mix(color, violet, violetBoundary * 0.44);
+        color = mix(color, rose, roseBoundary * 0.34);
+        color = mix(color, pearl, whiteSpeck * 0.72);
+
+        vec2 referenceUv = referenceUvFor(filmUv, flowDir, gradH, height, uTime);
+        vec3 referenceFilm = texture2D(uReferenceFilmMap, referenceUv).rgb;
+        float referenceLuma = dot(referenceFilm, vec3(0.299, 0.587, 0.114));
+        vec3 referenceLifted = clamp(mix(vec3(referenceLuma), referenceFilm, 1.24), vec3(0.0), vec3(1.18));
+        float referenceWeight = clamp(0.48 + amberPool * 0.22 + cyanChannel * 0.18 + boundary * 0.12, 0.0, 0.74);
+        color = mix(color, referenceLifted * (0.98 + uBrightness * 0.16), referenceWeight);
 
         float luma = dot(color, vec3(0.299, 0.587, 0.114));
         vec3 clinical = mix(coldWhite, paleGreen, smoothstep(0.18, 0.82, 1.0 - height + cyanChannel * 0.2));
         clinical = mix(clinical, darkGold, amberPool * 0.26);
         color = mix(color, mix(vec3(luma), clinical, 0.66), uClinicalShift * 0.72);
 
-        float spec = pow(max(dot(reflect(normalize(vec3(0.45, -0.28, 0.84)), opticalNormal), viewDir), 0.0), 28.0);
+        float spec = pow(max(dot(reflect(normalize(vec3(0.45, -0.28, 0.84)), opticalNormal), viewDir), 0.0), 30.0);
+        float meniscusSpec = pow(max(dot(reflect(normalize(vec3(-0.24, 0.42, 0.88)), opticalNormal), viewDir), 0.0), 18.0) * meniscus;
         vec3 rimColor = mix(color, mix(cyan, rose, smoothstep(0.26, 0.82, physical.r)), 0.28);
         color += rimColor * fresnel * (0.22 + uEdge * 0.24);
         color += coldWhite * spec * (0.1 + slope * 0.14 + uBrightness * 0.08);
-        color += pearl * microPearl * microStreak * (0.035 + slope * 0.05 + velocityMag * 0.035);
-        color *= 0.98 + uBrightness * 0.34 + amberPool * 0.16 + boundary * 0.08;
+        color += pearl * meniscusSpec * (0.32 + uBrightness * 0.12);
+        color += pearl * microPearl * microStreak * (0.04 + slope * 0.06 + velocityMag * 0.04);
+        color += honey * amberPool * microStreak * 0.05;
+        color *= 1.06 + uBrightness * 0.38 + amberPool * 0.2 + boundary * 0.1 + dropletCore * 0.08;
 
-        float alpha = frontMask * (0.46 + amberPool * 0.18 + cyanChannel * 0.1 + boundary * 0.12 + whiteSpeck * 0.06);
+        float alpha = frontMask * (0.48 + amberPool * 0.2 + cyanChannel * 0.12 + boundary * 0.16 + whiteSpeck * 0.08 + dropletCore * 0.08);
         alpha += frontMask * fresnel * (0.16 + uEdge * 0.1);
         alpha = clamp(alpha * uFilmCoverage * (0.94 + uPressure * 0.08), 0.08, 0.84);
         gl_FragColor = vec4(color, alpha);
@@ -2014,14 +2065,11 @@ export function initLogo3d(elements) {
   rose.position.set(1.6, -1.5, 2.8);
   scene.add(ambient, key, cyan, rose);
 
-  let referenceFilmTexture = null;
-  if (!GPU_THIN_FILM_SIM_MODE) {
-    referenceFilmTexture = new THREE.TextureLoader().load("./assets/reference-soap-film.jpg");
-    referenceFilmTexture.colorSpace = THREE.SRGBColorSpace;
-    referenceFilmTexture.wrapS = THREE.ClampToEdgeWrapping;
-    referenceFilmTexture.wrapT = THREE.ClampToEdgeWrapping;
-    referenceFilmTexture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 4);
-  }
+  const referenceFilmTexture = new THREE.TextureLoader().load("./assets/reference-soap-film.jpg");
+  referenceFilmTexture.colorSpace = THREE.SRGBColorSpace;
+  referenceFilmTexture.wrapS = THREE.ClampToEdgeWrapping;
+  referenceFilmTexture.wrapT = THREE.ClampToEdgeWrapping;
+  referenceFilmTexture.anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy?.() || 1, 4);
 
   const coreShader = createCoreMaterial();
   const core = new THREE.Mesh(new THREE.SphereGeometry(1.0, 96, 96), coreShader.material);
@@ -2031,7 +2079,7 @@ export function initLogo3d(elements) {
 
   const thinFilmSim = GPU_THIN_FILM_SIM_MODE ? createThinFilmSimulator(renderer, { size: 256 }) : null;
   const glassShader = GPU_THIN_FILM_SIM_MODE
-    ? createPhysicalThinFilmShellMaterial(thinFilmSim.texture, thinFilmSim.size)
+    ? createPhysicalThinFilmShellMaterial(thinFilmSim.texture, thinFilmSim.size, referenceFilmTexture)
     : createBubbleShellMaterial(referenceFilmTexture);
   const glass = new THREE.Mesh(new THREE.SphereGeometry(1.0, 128, 128), glassShader.material);
   glass.renderOrder = 7;

@@ -40,28 +40,59 @@ const INIT_FRAGMENT_SHADER = `
     return value;
   }
 
+  vec2 rotate2(vec2 p, float angle) {
+    float c = cos(angle);
+    float s = sin(angle);
+    return vec2(c * p.x - s * p.y, s * p.x + c * p.y);
+  }
+
+  float ellipsoidDrop(vec2 uv, vec2 center, vec2 radius, float angle, float edgeSoftness) {
+    vec2 p = rotate2(uv - center, angle) / radius;
+    float d = length(p);
+    float body = exp(-pow(d, 2.45) * 2.2);
+    float rim = exp(-pow((d - 0.86) / edgeSoftness, 2.0));
+    return body + rim * 0.18;
+  }
+
+  float capsuleDistance(vec2 p, vec2 a, vec2 b) {
+    vec2 pa = p - a;
+    vec2 ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+  }
+
   void main() {
     vec2 uv = vUv;
     vec2 centered = uv - 0.5;
     float dome = smoothstep(0.72, 0.08, length(centered));
-    float verticalDrain = smoothstep(-0.26, 0.9, 0.5 - uv.y);
-    float broad = fbm(uv * vec2(1.7, 3.1) + uSeed);
-    float shear = fbm(vec2(uv.x * 2.2 + broad * 0.74, uv.y * 6.8 + broad * 1.1 + uSeed * 0.23));
-    float lanes = fbm(vec2(uv.x * 3.4 + shear * 1.2, uv.y * 9.4 + broad * 1.8 + uSeed * 0.23));
-    float fine = fbm(uv * 18.0 + vec2(uSeed * 0.71, -uSeed * 0.37));
+    float verticalDrain = smoothstep(-0.24, 0.92, 0.5 - uv.y);
+    float broad = fbm(uv * vec2(1.45, 2.35) + uSeed);
+    float shear = fbm(vec2(uv.x * 2.0 + broad * 0.74, uv.y * 6.2 + broad * 1.1 + uSeed * 0.23));
+    float lanes = fbm(vec2(uv.x * 3.0 + shear * 1.45, uv.y * 8.8 + broad * 1.8 + uSeed * 0.23));
+    float fine = fbm(uv * 20.0 + vec2(uSeed * 0.71, -uSeed * 0.37));
 
-    float runnel = exp(-pow((lanes - 0.55) * 4.4, 2.0));
-    float pool = smoothstep(0.38, 0.88, broad * 0.7 + shear * 0.3);
-    float filmHeight = 0.36 + verticalDrain * 0.32 + pool * 0.24 + shear * 0.16;
-    filmHeight -= runnel * 0.18;
-    filmHeight += pow(fine, 5.2) * 0.06;
+    float riverA = exp(-pow(capsuleDistance(uv, vec2(0.05, 0.77), vec2(0.93, 0.58)) / 0.045, 2.0));
+    float riverB = exp(-pow(capsuleDistance(uv, vec2(0.02, 0.34), vec2(0.92, 0.28)) / 0.035, 2.0));
+    float riverC = exp(-pow(capsuleDistance(uv, vec2(0.2, 0.54), vec2(0.78, 0.48)) / 0.03, 2.0));
+    float rivulet = clamp(riverA * 0.8 + riverB * 0.62 + riverC * 0.52, 0.0, 1.0);
+    float blobs =
+      ellipsoidDrop(uv, vec2(0.28, 0.68), vec2(0.22, 0.07), -0.24, 0.2) * 0.72 +
+      ellipsoidDrop(uv, vec2(0.56, 0.62), vec2(0.18, 0.06), -0.12, 0.22) * 0.54 +
+      ellipsoidDrop(uv, vec2(0.38, 0.39), vec2(0.2, 0.055), -0.18, 0.2) * 0.58 +
+      ellipsoidDrop(uv, vec2(0.68, 0.33), vec2(0.24, 0.07), -0.14, 0.2) * 0.66 +
+      ellipsoidDrop(uv, vec2(0.77, 0.73), vec2(0.15, 0.05), -0.12, 0.2) * 0.38;
+    float cellularDrops = pow(smoothstep(0.42, 0.92, lanes), 2.2) * (0.24 + broad * 0.18);
+    float filmHeight = 0.26 + verticalDrain * 0.22 + broad * 0.18 + shear * 0.08;
+    filmHeight += blobs * 0.58 + cellularDrops;
+    filmHeight -= rivulet * 0.2;
+    filmHeight += pow(fine, 7.0) * 0.035;
     filmHeight = mix(0.24, filmHeight, dome);
 
-    float surfactant = 0.44 + fbm(uv * 4.2 + vec2(4.2 + uSeed, 1.3)) * 0.22 + runnel * 0.26 - filmHeight * 0.08;
+    float surfactant = 0.46 + fbm(uv * 4.2 + vec2(4.2 + uSeed, 1.3)) * 0.18 + rivulet * 0.34 - blobs * 0.14 - filmHeight * 0.06;
     vec2 seedVelocity = vec2(
       fbm(uv * 5.0 + vec2(2.1, uSeed)) - 0.5,
       fbm(uv * 5.0 + vec2(uSeed, 7.4)) - 0.5
-    ) * 0.018;
+    ) * 0.012 + vec2(0.028, -0.01) * (0.45 + filmHeight);
     gl_FragColor = vec4(
       clamp(filmHeight, 0.04, 0.96),
       clamp(surfactant, 0.04, 0.96),
@@ -143,14 +174,16 @@ const STEP_FRAGMENT_SHADER = `
     vec2 curl = normalize(vec2(potential - potentialY, potentialX - potential) + 0.0001);
     float pinning = hash21(floor(uv * 256.0));
     float slipNoise = fbm(uv * 9.0 + vec2(pinning * 3.1, potential * 2.4));
-    float slip = 0.68 + slipNoise * 0.54 + pinning * 0.18;
+    float thicknessMobility = smoothstep(0.18, 0.86, height);
+    float slip = 0.46 + slipNoise * 0.36 + thicknessMobility * 0.78 + pinning * 0.08;
 
-    vec2 marangoniFlow = gradG * (0.05 + uMarangoni * 0.12);
-    vec2 capillaryFlow = -gradH * (0.03 + uCapillary * 0.12);
+    vec2 marangoniFlow = gradG * (0.038 + uMarangoni * 0.09);
+    vec2 capillaryFlow = -gradH * (0.018 + uCapillary * 0.08);
     vec2 localShear = mix(curl, mainDir + crossDir * (slipNoise - 0.5) * 0.5, clamp(uFlowCoherence, 0.0, 1.0));
     vec2 externalVelocity =
-      mainDir * (0.006 + uFlowSpeed * 0.028) * (0.72 + uPressure * 0.38) +
+      mainDir * (0.004 + uFlowSpeed * 0.022) * (0.72 + uPressure * 0.38) * (0.44 + height * 0.95) +
       localShear * (1.0 - uFlowCoherence) * (0.004 + uFlowSpeed * 0.018);
+    externalVelocity += vec2(0.0, -1.0) * uDrainage * 0.006 * (0.35 + height * height);
     vec2 forceVelocity = externalVelocity + marangoniFlow + capillaryFlow;
     vec2 velocity = storedVelocity * 0.86 + forceVelocity;
 
@@ -160,8 +193,8 @@ const STEP_FRAGMENT_SHADER = `
     float downwind = dot(uv - vec2(0.5), mainDir);
     float downhill = smoothstep(-0.48, 0.74, downwind);
     float sourceNoise = fbm(uv * vec2(4.4, 11.0) + mainDir * uTime * 0.04 + crossDir * potential);
-    float sourceLane = pow(clamp(sourceNoise, 0.0, 1.0), 3.4) * smoothstep(-0.82, 0.72, -downwind);
-    float beadSeed = smoothstep(0.968, 0.998, fbm(uv * 84.0 + vec2(-uTime * 0.08, uTime * 0.05) + pinning));
+    float sourceLane = pow(clamp(sourceNoise, 0.0, 1.0), 4.2) * smoothstep(-0.82, 0.72, -downwind);
+    float beadSeed = smoothstep(0.976, 0.999, fbm(uv * 92.0 + vec2(-uTime * 0.08, uTime * 0.05) + pinning));
     float edgeLoss = smoothstep(0.48, 0.76, length(uv - vec2(0.5)));
     float thickFilmLoss = smoothstep(0.88, 0.98, advected.r);
 
@@ -171,20 +204,24 @@ const STEP_FRAGMENT_SHADER = `
     vec2 nextVelocity = advectedVelocity * 0.94 + forceVelocity * uDelta * (1.3 + slip * 0.4);
     nextVelocity += curl * (1.0 - uFlowCoherence) * uDelta * 0.015;
     nextVelocity -= gradH * uDelta * (0.04 + uCapillary * 0.08);
-    nextVelocity = clamp(nextVelocity, vec2(-0.22), vec2(0.22));
+    nextVelocity = clamp(nextVelocity, vec2(-0.18), vec2(0.18));
+    float dropletCore = smoothstep(0.58, 0.9, height);
+    float thinCut = smoothstep(0.16, 0.38, height);
+    float rimFlow = smoothstep(0.035, 0.18, length(gradH));
     height += uDelta * (
-      lapH * (0.04 + uDiffusion * 0.12) +
-      downhill * uDrainage * 0.032 * uDripAmount -
-      height * (0.008 + edgeLoss * 0.026) * uDrainage -
-      thickFilmLoss * 0.034 +
-      sourceLane * uSourceAmount * 0.032 -
-      beadSeed * uDripAmount * 0.018
+      lapH * (0.022 + uDiffusion * 0.055 + dropletCore * 0.025) +
+      downhill * uDrainage * 0.02 * uDripAmount * (0.35 + height * height) -
+      height * (0.004 + edgeLoss * 0.018) * uDrainage -
+      thickFilmLoss * 0.025 +
+      sourceLane * uSourceAmount * 0.026 -
+      beadSeed * uDripAmount * 0.012 -
+      rimFlow * thinCut * 0.008
     );
     surfactant += uDelta * (
-      lapG * (0.042 + uDiffusion * 0.12) +
+      lapG * (0.034 + uDiffusion * 0.09) +
       (0.52 - surfactant) * 0.018 -
-      sourceLane * uSourceAmount * 0.008 +
-      gradH.x * 0.015
+      sourceLane * uSourceAmount * 0.012 +
+      dot(gradH, mainDir) * 0.018
     );
     gl_FragColor = vec4(
       clamp(height, 0.025, 0.985),
