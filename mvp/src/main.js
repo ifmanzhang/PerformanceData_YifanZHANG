@@ -41,11 +41,11 @@ const els = {
 };
 
 function pageCanRunVisuals() {
-  const hasPageFocus = typeof document.hasFocus === "function" ? document.hasFocus() : true;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("forceVisuals") === "1") return true;
   return (
     document.visibilityState === "visible" &&
     !document.hidden &&
-    hasPageFocus &&
     window.innerWidth > 0 &&
     window.innerHeight > 0
   );
@@ -104,10 +104,17 @@ const eventBus = createEventBus();
 
 function applyInitialUrlOverrides() {
   const params = new URLSearchParams(window.location.search);
+  CONTROL_PARAMS.forEach((param) => {
+    const shortId = param.id.split(".").pop();
+    const rawValue = params.get(param.id) ?? params.get(shortId);
+    if (rawValue === null) return;
+    if (param.type === "select" && param.options?.length && !param.options.some((option) => option.value === rawValue)) return;
+    setControlValue(state.runtimeConfig, param.target, parseControlValue(param, rawValue));
+  });
+
   const view = params.get("view");
-  const viewParam = CONTROL_PARAMS.find((param) => param.id === "visual.cameraView");
-  if (view && viewParam?.options?.some((option) => option.value === view)) {
-    setControlValue(state.runtimeConfig, viewParam.target, view);
+  if (view && CONTROL_PARAMS.find((param) => param.id === "visual.cameraView")?.options?.some((option) => option.value === view)) {
+    setControlValue(state.runtimeConfig, "visual.cameraView", view);
   }
 
   if (params.get("live") === "1") {
@@ -1005,7 +1012,6 @@ function bindDomEvents() {
   });
   document.addEventListener("visibilitychange", refreshPageActivity);
   window.addEventListener("focus", refreshPageActivity);
-  window.addEventListener("blur", () => suspendPageWork());
   window.addEventListener("pagehide", () => {
     suspendPageWork({ closeAudio: true });
   });
