@@ -23,6 +23,8 @@
 
 ## M1 论文算法审计和参数锁定
 
+状态：已完成。已生成 `artifacts/targets/soap-film-huang-implementation-audit.md`，明确当前独立程序与 Huang 2020 全文算法的差距，并锁定 M2 必须先重建论文级 staggered spherical grid。
+
 目标：
 
 - 全文重读 Huang Full Paper 和 Supplemental。
