@@ -2,93 +2,83 @@
 
 ## Stage
 
-M4 - Huang BiMocq2 spherical material mapping
+M5 - Gamma projection-like implicit SPD solve
 
 状态：已完成。
 
 ## Paper Sources Required
 
-- Full Paper sections: Section 4.2 Advection, Section 4.2.1 Preserving details, Section 4.4 Implementation and runtime performance.
-- Supplemental sections: Appendix B for the velocity-aligned spherical half-step already implemented in M3.
-- Figures used as visual truth: Fig. 8 for pole-safe transport purpose; M4 is a numerical detail-preservation milestone, not yet a final physical result scene.
-- Tables/parameters: paper-scale grid `1024 x 2048`, time step `dt=0.002`, reset threshold `pi/128`, typical paper runtime target within 30 minutes per run.
+- Full Paper sections: Section 4.3 Time integration and chemomechanical forces, Eq. 24-26, Section 4.4 runtime notes.
+- Supplemental sections: Appendix C / linear-system derivation where available in the converted text, plus the Full Paper reference to sparse SPD construction.
+- Figures used as visual truth: not a final visual result stage; M5 is a numerical solver milestone supporting Fig. 14-17 later.
+- Tables/parameters: paper-scale grid `1024 x 2048`, `dt=0.002`, typical paper discussion of CG iterations, and paper parameter mode enabled.
 
 ## Current Gap
 
-- Algorithm gap: M3 uses Huang velocity-aligned spherical advection, but thickness detail is still transported by repeated semi-Lagrangian/BFECC lookup in the coupled solver. Huang Section 4.2.1 requires BiMocq2 backward and forward mappings extended to spherical coordinates.
-- Numeric gap: no persistent backward map `X(x(t)) -> x(t0)`, no forward map `Y(x(t0)) -> x(t)`, no spherical linear interpolation of map coordinates, and no distortion-based reset at `pi/128`.
-- Rendering gap: unchanged; M4 does not claim Section 5 rendering.
-- Result figure gap: the M3 pole transport remained continuous but diffusive. M4 must prove that BiMocq2 preserves a sharper continuous thickness front than semi-Lagrangian transport under the same full-size test.
+- Algorithm gap: M5 now expresses the Huang Eq. 24-26 structure in matrix-free form:
+  - `base = (eta* u* + Cr dt u_air + dt eta* g)/(eta* + Cr dt)`;
+  - `beta = M dt/(eta* + Cr dt)`;
+  - `A(Gamma)=Gamma-dt*div_s(GammaStar*beta*grad_s(Gamma))`;
+  - `rhs=GammaStar-dt*GammaStar*div_s(base)`;
+  - `u = base - beta grad_s(Gamma)`;
+  - `eta = eta* - dt eta* div_s(u)`.
+- Numeric gap remaining: this is a CPU/JS matrix-free reference path. The raw L2 residual samples are not strictly monotone at every CG step, but the full 22-iteration run reduces residual by roughly 1600x and the operator symmetry test is near machine precision for this implementation.
+- Rendering gap: unchanged; M5 does not claim Huang Section 5 rendering.
+- Result figure gap: M5 supports later Fig. 14-17 reproduction but does not claim visual scene parity.
 
 ## Tasks
 
-1. Re-read Huang Section 4.2.1 and record the exact constraints: backward map, forward map, spherical interpolation, and `pi/128` distortion reset. Done.
-2. Add full-size map storage to the standalone simulator using unit-vector maps on the sphere to avoid phi seam artifacts. Done.
-3. Implement spherical map sampling with normalized vector interpolation and conversion back to `(theta, phi)`. Done.
-4. Implement backward map update by velocity-aligned backtrace and forward map update by velocity-aligned forward trace. Done.
-5. Compute pair distortion by composing the current backward map with the forward map and measuring great-circle distance to the current cell center. Done.
-6. Reset maps whose distortion exceeds `pi/128`, and output `mapError` and `resetMask`. Done.
-7. Add a full-size `biMocqPole` scenario that compares repeated semi-Lagrangian thickness transport against BiMocq2 thickness acquisition from the initial state. Done.
-8. Save BiMocq2 thickness, semi-Lagrangian thickness, map error, reset mask, velocity, divergence, beauty, and diagnostics. Done.
-9. Update diagnostics so `paperModel` no longer calls BFECC a BiMocq2 substitute after the M4 path exists. Done.
-10. Run the full-size test at `1024 x 2048`; do not downsample unless runtime exceeds 30 minutes, and if it exceeds, record failure instead of substituting low-resolution acceptance. Done.
+1. Done - Re-read Huang Section 4.3 and Eq. 24-26 before editing code.
+2. Done - Add an explicit matrix-free Eq. 26 operator using area-weighted inner products.
+3. Done - Separate scratch face arrays used by the operator from persistent physical face velocities.
+4. Done - Build RHS in the equivalent Eq. 26 form multiplied by `Gamma* dt`; documented in diagnostics and solver report.
+5. Done - Store `gammaRhs`, residual history, CG iteration count, final relative residual, and operator symmetry diagnostics.
+6. Done - Update face velocity strictly from Eq. 24a using solved Gamma.
+7. Done - Add `gammaProjection` scenario with paper-scale surfactant perturbation and no image reference tuning.
+8. Done - Run a full-size `1024 x 2048` validation with `dt=0.002` and paper params.
+9. Done - Save beauty, eta, Gamma, velocity, divergence, mapError, diagnostics, and textual solver report.
+10. Done - Record remaining mismatch: viscosity/diffusion are not added to this M5 isolated solve; L2 residual history is globally decreasing but not pointwise monotone; full coupled behavior remains M6.
 
 ## Full-Size Run Command
 
 ```bash
-node artifacts/huang-clean/huang-clean-sim.mjs --simTheta=1024 --simPhi=2048 --paperParams=1 --scenario=biMocqPole --steps=4 --dt=0.002 --cg=22 --render=1200 --tag=M4-bimocq-pole --outDir=artifacts/huang-clean/runs/M4-bimocq-pole-YYYYMMDD-HHMMSS
+node artifacts/huang-clean/huang-clean-sim.mjs --simTheta=1024 --simPhi=2048 --paperParams=1 --scenario=gammaProjection --steps=1 --dt=0.002 --cg=22 --render=1200 --tag=M5-gamma-projection --outDir=artifacts/huang-clean/runs/M5-gamma-projection-20260604-053501
 ```
 
 ## Acceptance
 
-- Physics: not a final physical scene; this stage validates Huang's non-diffusive thickness transport requirement.
+- Physics:
+  - Passed: `Gamma` gradient produces velocity response in the `-grad_s(Gamma)` Marangoni direction.
+  - Passed: no visual field feeds back into `eta/Gamma/u`.
 - Numerics:
-  - Full-size grid `1024 x 2048`.
-  - `dt=0.002`.
-  - Backward and forward maps finite everywhere.
-  - Distortion threshold is `pi/128`.
-  - `mapError`, `resetMask`, and reset count are saved.
-  - BiMocq2 final total variation is greater than the semi-Lagrangian final total variation for the same initial condition and velocity field.
-  - The BiMocq2 thickness front remains continuous across pole topology without visible seam.
-- Rendering: diagnostic lat-long plus current beauty output only; Section 5 rendering is deferred to M7.
-- Paper figure comparison: corresponds to Section 4.2.1's purpose of preventing high-frequency thickness detail from blurring out.
-- Runtime <= 30 min: required for full-size acceptance.
+  - Passed: full-size grid `1024 x 2048`.
+  - Passed with note: residual drops from `1.9658219054583247e-5` to `1.2249744356244108e-8`, reduction factor `1604.7860659690248`; raw L2 samples are not strictly monotone at every step.
+  - Passed: final relative residual `6.23136018691791e-4`.
+  - Passed: matrix-free operator relative asymmetry `6.925791170645115e-11` under area-weighted probes.
+  - Passed: velocity finite everywhere, max speed `0.006997541389180135`.
+  - Passed: `eta` update follows `eta = eta* - dt eta* div_s(u)` with mass correction disabled.
+- Rendering: diagnostic output only; Huang Section 5 rendering remains deferred to M7.
+- Paper figure comparison: this stage supports later Fig. 14-17 reproduction but does not claim visual scene parity.
+- Runtime: passed, `2752 ms` under the 30 minute limit.
 
 ## Results
 
-- Primary accepted output directory: `artifacts/huang-clean/runs/M4-bimocq-pole-20260604-035641`.
-- Primary full-size command:
-  - `node artifacts/huang-clean/huang-clean-sim.mjs --simTheta=1024 --simPhi=2048 --paperParams=1 --scenario=biMocqPole --steps=4 --dt=0.002 --cg=22 --render=1200 --tag=M4-bimocq-pole --outDir=artifacts/huang-clean/runs/M4-bimocq-pole-20260604-035641`
-- Primary diagnostics:
-  - `nTheta=1024`, `nPhi=2048`, `expectedPaperGrid=true`.
-  - Runtime: `32459 ms`.
-  - `threshold=0.02454369260617026`, equal to `pi/128`.
-  - `finiteMaps=true`, `finiteVelocity=true`.
-  - `resetCount=133120`, `resetFraction=0.0634765625`.
-  - `maxMapError=0.1806424709389071`, `meanMapError=0.0033069245674641036`.
-  - `initialTotalVariation=2.2990424974753307`.
-  - `semiLagrangianTotalVariation=0.3639875620189837`.
-  - `biMocqTotalVariation=0.36731693422274925`.
-  - `biMocqVsSemiVariationRatio=1.0091469394868826`.
-  - `biMocqEtaMassError=-0.03278628709336674`; this is still a pure-advection map test and does not yet include the paper's coupled eta source accumulation along the forward map.
-- Supplementary full-size stress output directory: `artifacts/huang-clean/runs/M4-bimocq-pole-extended-20260604-035801`.
-- Supplementary stress diagnostics:
-  - Steps: `16`, runtime: `114001 ms`.
-  - Semi-Lagrangian thickness collapsed to a constant: `semiLagrangianTotalVariation=0`.
-  - BiMocq2 retained sharp advected eta structure: `biMocqTotalVariation=11.617474697706117`.
-  - Reset fraction increased to `0.38671875`; this records a remaining gap in the public Huang text path: original BiMocq2 error correction/reset details are referenced but not fully specified in Huang Section 4.2.1.
-- Screenshots saved:
-  - `M4-bimocq-pole-initial-thickness.png`.
-  - `M4-bimocq-pole-thickness.png`.
-  - `M4-bimocq-pole-semi-lagrangian-thickness.png`.
-  - `M4-bimocq-pole-map-error.png`.
-  - `M4-bimocq-pole-reset-mask.png`.
-  - `M4-bimocq-pole-velocity.png`.
-  - `M4-bimocq-pole-divergence.png`.
-  - `M4-bimocq-pole-beauty.png`.
-- Interpretation:
-  - M4 now implements Huang Section 4.2.1's spherical backward/forward material maps and distortion reset path for eta pure advection.
-  - This is not yet the final coupled paper solver: the paper's extra eta change term `-eta div(u)` must still be accumulated along the forward map after M5/M6 connect the full eta/Gamma/u solve.
-  - The next correct milestone is M5 Gamma projection-like implicit SPD solve.
-- Git commit: completed by the M4 completion commit containing this plan update.
-- Git push: completed by pushing the M4 completion commit to GitHub.
+- Primary output directory: `artifacts/huang-clean/runs/M5-gamma-projection-20260604-053501`.
+- Early-stop diagnostic run: `artifacts/huang-clean/runs/M5-gamma-projection-20260604-053131`; this run exposed that the previous absolute residual threshold stopped after one CG step and is not the primary M5 acceptance run.
+- Diagnostics: `artifacts/huang-clean/runs/M5-gamma-projection-20260604-053501/M5-gamma-projection-diagnostics.json`.
+- Solver report: `artifacts/huang-clean/runs/M5-gamma-projection-20260604-053501/M5-gamma-projection-solver-report.md`.
+- Screenshots:
+  - `M5-gamma-projection-beauty.png`
+  - `M5-gamma-projection-thickness.png`
+  - `M5-gamma-projection-surfactant.png`
+  - `M5-gamma-projection-velocity.png`
+  - `M5-gamma-projection-divergence.png`
+  - `M5-gamma-projection-gamma-rhs.png`
+  - `M5-gamma-projection-map-error.png`
+  - `M5-gamma-projection-reset-mask.png`
+- Git commit: pending this heartbeat.
+- Git push: pending this heartbeat.
+
+## Next Stage
+
+M6 - eta/Gamma/u 全耦合论文场景。下一阶段要把 M2-M5 的网格、advection、BiMocq2 和 Gamma projection 组合成论文 Fig. 14、Fig. 15/16、Fig. 17 的三个真实场景；不得使用参考图调参或视觉补偿。

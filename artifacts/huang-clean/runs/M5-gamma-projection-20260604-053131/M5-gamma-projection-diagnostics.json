@@ -1,0 +1,128 @@
+{
+  "solver": "standalone-huang-clean",
+  "paperModel": [
+    "eta half-thickness on fixed sphere",
+    "Gamma surfactant concentration",
+    "tangent velocity u(theta,phi)",
+    "1024x2048 paper-scale staggered spherical grid by default",
+    "sphere metric grad/div/laplace",
+    "velocity-aligned great-circle half-step advection",
+    "BiMocq2 spherical backward/forward maps available for eta detail preservation",
+    "legacy BFECC eta transport remains only in the pre-M6 coupled fallback path",
+    "matrix-free CG implicit Gamma/projection-like update",
+    "eta_t = -eta div(u)",
+    "thin-film spectral interference from 2*eta, view angle and Fresnel coefficients"
+  ],
+  "scenario": "gammaProjection",
+  "nTheta": 1024,
+  "nPhi": 2048,
+  "paperParams": true,
+  "gridDiagnostics": {
+    "grid": "1024x2048",
+    "expectedPaperGrid": true,
+    "aspectPhiOverTheta": 2,
+    "area": 12.5663755426642,
+    "areaRelativeError": 3.9218205314127053e-7,
+    "maxZeroDivergence": 0,
+    "maxConstantLaplacian": 0,
+    "poleVectorSignError": 0,
+    "staggeredVelocityPrimary": true
+  },
+  "etaMass": 7.791152899378837,
+  "gammaMass": 10.348484165140304,
+  "massError": 2.513891174344823e-11,
+  "gammaMassError": 8.433895135275106e-7,
+  "meanAbsDivergence": 0.0021951343200634684,
+  "maxGradEta": 4714.312764280019,
+  "maxGradGamma": 2.6314190385918987,
+  "maxSpeed": 0.006998006184044148,
+  "gammaResidualInitial": 0.000019658219054583247,
+  "gammaResidualFinal": 0.0000061794747795846645,
+  "gammaResidualRelativeFinal": 0.31434560589780086,
+  "gammaCgIterationsUsed": 1,
+  "gammaResidualHistory": [
+    0.000019658219054583247,
+    0.0000061794747795846645
+  ],
+  "gammaEquationForm": "A(Gamma)=Gamma-dt*div_s(GammaStar*beta*grad_s(Gamma)); rhs=GammaStar-dt*GammaStar*div_s(base), equivalent to Huang Eq.26 multiplied by GammaStar*dt.",
+  "gammaOperatorSymmetry": {
+    "weightedAAb": -0.20556076096033737,
+    "weightedBAa": -0.2055607609888108,
+    "relativeAsymmetry": 6.925791170645115e-11,
+    "positiveProbeA": 1.389088898070173,
+    "positiveProbeB": 1.0873721084817747
+  },
+  "gammaClampCount": 0,
+  "gammaClampFraction": 0,
+  "marangoniDirection": {
+    "cosine": 1.0000000000000406,
+    "positiveAreaFraction": 0.5882912227334286,
+    "weightedDot": 0.005419336139312094
+  },
+  "massCorrectionApplied": false,
+  "elapsedMs": 1619,
+  "steps": 1,
+  "dt": 0.002,
+  "cgIterations": 22,
+  "gammaProjectionScenario": {
+    "purpose": "Full-size Huang Eq.24-26 isolated Gamma projection-like SPD solve; no visual reference or texture input.",
+    "externalAirDisabled": true,
+    "gravityDisabled": true,
+    "advectionDisabledForIsolation": true
+  },
+  "debugRanges": {
+    "eta": {
+      "min": 0.5756271481513977,
+      "max": 0.6643728613853455
+    },
+    "gamma": {
+      "min": 0.4800656735897064,
+      "max": 1.5396978855133057
+    },
+    "speed": {
+      "min": 0,
+      "max": 0.006998006254434586
+    },
+    "divVelocity": {
+      "min": -35.78458023071289,
+      "max": 35.78458023071289
+    },
+    "foam": {
+      "min": 0,
+      "max": 0.8999999761581421
+    },
+    "gammaRhs": {
+      "min": 0.4800002872943878,
+      "max": 1.5399919748306274
+    },
+    "semiEta": {
+      "min": 0,
+      "max": 0
+    },
+    "mapError": {
+      "min": 0,
+      "max": 0
+    },
+    "resetMask": {
+      "min": 0,
+      "max": 0
+    }
+  },
+  "outputs": {
+    "beauty": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-beauty.png",
+    "thickness": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-thickness.png",
+    "surfactant": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-surfactant.png",
+    "velocity": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-velocity.png",
+    "divergence": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-divergence.png",
+    "foam": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-foam.png",
+    "gamma-rhs": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-gamma-rhs.png",
+    "semi-lagrangian-thickness": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-semi-lagrangian-thickness.png",
+    "map-error": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-map-error.png",
+    "reset-mask": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-reset-mask.png",
+    "solverReport": "artifacts\\huang-clean\\runs\\M5-gamma-projection-20260604-053131\\M5-gamma-projection-solver-report.md"
+  },
+  "beautyByteStats": {
+    "max": 252,
+    "mean": 164.81566180555555
+  }
+}

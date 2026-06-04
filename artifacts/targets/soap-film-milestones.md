@@ -115,7 +115,7 @@
 
 ## M5 Gamma projection-like implicit SPD solve
 
-状态：待开始。
+状态：已完成。已按 Huang Section 4.3 与 Eq. 24-26 实现 matrix-free Gamma projection-like SPD solve，并保存全尺寸 `1024 x 2048` 验收结果到 `artifacts/huang-clean/runs/M5-gamma-projection-20260604-053501`。主验收运行使用 `dt=0.002`、`cg=22`、paper 参数，残差从 `1.9658219054583247e-5` 降到 `1.2249744356244108e-8`，reduction factor 为 `1604.7860659690248`，operator area-weighted relative asymmetry 为 `6.925791170645115e-11`，Marangoni 方向加权余弦约 `1.0`，Gamma clamp fraction 为 `0`，运行耗时 `2752 ms`。注意：raw L2 residual samples 不是每一步严格单调，但整体下降约 1600x；这已记录在当前阶段计划和 solver report 中。
 
 目标：
 

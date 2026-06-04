@@ -215,6 +215,9 @@ class HuangCleanSimulator {
     this.betaPhi = new Float32Array(this.length);
     this.baseTheta = new Float32Array((this.nTheta + 1) * this.nPhi);
     this.basePhi = new Float32Array(this.length);
+    this.opThetaFace = new Float32Array((this.nTheta + 1) * this.nPhi);
+    this.opPhiFace = new Float32Array(this.length);
+    this.gammaRhs = new Float32Array(n);
     // Huang 2020 stores velocity on staggered spherical cell faces. Center
     // arrays are derived only for interpolation and rendering diagnostics.
     this.uThetaFace = new Float32Array((this.nTheta + 1) * this.nPhi);
@@ -432,6 +435,11 @@ class HuangCleanSimulator {
       etaMass = masses.etaMass;
       gammaMass = masses.gammaMass;
     }
+    if (this.scenario === "gammaProjection") {
+      const masses = this.applyGammaProjectionInitialCondition();
+      etaMass = masses.etaMass;
+      gammaMass = masses.gammaMass;
+    }
     this.eta0.set(this.eta);
     this.gamma0.set(this.gamma);
     this.initialEtaMass = etaMass;
@@ -471,6 +479,33 @@ class HuangCleanSimulator {
     return { etaMass, gammaMass };
   }
 
+  applyGammaProjectionInitialCondition() {
+    let etaMass = 0;
+    let gammaMass = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const phi = this.phi(j);
+        const id = this.idx(i, j);
+        const d1 = Math.atan2(Math.sin(phi - 1.1), Math.cos(phi - 1.1));
+        const d2 = Math.atan2(Math.sin(phi - 4.45), Math.cos(phi - 4.45));
+        const patch =
+          0.72 * Math.exp(-((theta - 1.05) ** 2) / 0.055 - (d1 * d1) / 0.12) -
+          0.34 * Math.exp(-((theta - 2.02) ** 2) / 0.08 - (d2 * d2) / 0.18);
+        this.eta[id] = 0.62;
+        this.gamma[id] = clamp(0.82 + patch, 0.12, 1.85);
+        etaMass += this.eta[id] * this.weights[id];
+        gammaMass += this.gamma[id] * this.weights[id];
+      }
+    }
+    this.uTheta.fill(0);
+    this.uPhi.fill(0);
+    this.uThetaFace.fill(0);
+    this.uPhiFace.fill(0);
+    this.divVelocity.fill(0);
+    return { etaMass, gammaMass };
+  }
+
   gravityVector(theta, phi) {
     const { w, eTheta, ePhi } = sphereBasis(theta, phi);
     const gWorld = [0.22, -1.0, -0.08];
@@ -484,6 +519,7 @@ class HuangCleanSimulator {
     let air = [0.62, -0.16, 0.38];
     if (this.scenario === "gravityDrainage") air = [0.05, 0.0, 0.0];
     if (this.scenario === "marangoniPatch") air = [0.2, -0.05, 0.12];
+    if (this.scenario === "gammaProjection") air = [0.0, 0.0, 0.0];
     const radial = dot3(air, w);
     const tangential = add3(air, w, 1, -radial);
     const band = 0.55 + 0.45 * Math.sin(theta * 2.0 + phi * 0.7);
@@ -493,8 +529,7 @@ class HuangCleanSimulator {
   buildBaseAndBeta(dt, gammaField = this.gammaAdv, etaField = this.etaAdv, uThetaField = this.uThetaAdv, uPhiField = this.uPhiAdv) {
     const M = this.paperParams ? 0.83 : (this.scenario === "marangoniPatch" ? 0.92 : 0.72);
     const Cr = this.paperParams ? 2.1 : (this.scenario === "gravityDrainage" ? 0.22 : 0.58);
-    const gravityScale = this.paperParams ? 0.49 : (this.scenario === "gravityDrainage" ? 0.46 : 0.24);
-    const viscosity = this.paperParams ? 1 / 5.6e4 : 0.008;
+    const gravityScale = this.scenario === "gammaProjection" ? 0 : (this.paperParams ? 0.49 : (this.scenario === "gravityDrainage" ? 0.46 : 0.24));
 
     for (let i = 0; i <= this.nTheta; i += 1) {
       const thetaFace = clamp(i * this.dTheta, 0.5 * this.dTheta, PI - 0.5 * this.dTheta);
@@ -508,7 +543,7 @@ class HuangCleanSimulator {
         const [aT] = this.airVelocity(thetaFace, this.phi(j));
         const uStar = 0.5 * (uThetaField[idA] + uThetaField[idB]);
         this.baseTheta[idf] = (eta * uStar + Cr * dt * aT + dt * eta * gravityScale * gT) / denom;
-        this.betaTheta[idf] = (M * dt) / denom + viscosity * dt;
+        this.betaTheta[idf] = (M * dt) / denom;
       }
     }
 
@@ -524,7 +559,7 @@ class HuangCleanSimulator {
         const [, aP] = this.airVelocity(theta, j * this.dPhi);
         const uStar = 0.5 * (uPhiField[idA] + uPhiField[idB]);
         this.basePhi[idf] = (eta * uStar + Cr * dt * aP + dt * eta * gravityScale * gP) / denom;
-        this.betaPhi[idf] = (M * dt) / denom + viscosity * dt;
+        this.betaPhi[idf] = (M * dt) / denom;
       }
     }
 
@@ -556,7 +591,7 @@ class HuangCleanSimulator {
         const idB = this.idx(i, j);
         const grad = (input[idB] - input[idA]) / this.dTheta;
         const gammaFace = 0.5 * (gammaStar[idA] + gammaStar[idB]);
-        this.uThetaFace[idf] = gammaFace * this.betaTheta[idf] * grad;
+        this.opThetaFace[idf] = i === 0 || i === this.nTheta ? 0 : gammaFace * this.betaTheta[idf] * grad;
       }
     }
     for (let i = 0; i < this.nTheta; i += 1) {
@@ -567,44 +602,60 @@ class HuangCleanSimulator {
         const idB = this.idx(i, j);
         const grad = (input[idB] - input[idA]) / (this.dPhi * sinC);
         const gammaFace = 0.5 * (gammaStar[idA] + gammaStar[idB]);
-        this.uPhiFace[idf] = gammaFace * this.betaPhi[idf] * grad;
+        this.opPhiFace[idf] = gammaFace * this.betaPhi[idf] * grad;
       }
     }
-    this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.tmpC);
-    const Ds = 0.00012;
+    this.divergenceFromFaces(this.opThetaFace, this.opPhiFace, this.tmpC);
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        out[id] = input[id] - dt * this.tmpC[id];
+      }
+    }
+  }
+
+  buildGammaPreconditioner(dt, gammaStar = this.gammaAdv) {
     for (let i = 0; i < this.nTheta; i += 1) {
       const theta = this.theta(i);
       const sinC = Math.max(1e-4, Math.sin(theta));
-      const sinInv2 = 1 / (sinC * sinC);
+      const sinSouth = Math.sin(i * this.dTheta);
+      const sinNorth = Math.sin((i + 1) * this.dTheta);
       for (let j = 0; j < this.nPhi; j += 1) {
         const id = this.idx(i, j);
-        const lapTheta = (input[this.idx(i + 1, j)] - 2 * input[id] + input[this.idx(i - 1, j)]) / (this.dTheta * this.dTheta);
-        const cotTerm =
-          (Math.cos(theta) / sinC) *
-          (input[this.idx(i + 1, j)] - input[this.idx(i - 1, j)]) /
-          (2 * this.dTheta);
-        const lapPhi =
-          (input[this.idx(i, j + 1)] - 2 * input[id] + input[this.idx(i, j - 1)]) /
-          (this.dPhi * this.dPhi) *
-          sinInv2;
-        out[id] = input[id] - dt * this.tmpC[id] - dt * Ds * (lapTheta + cotTerm + lapPhi);
+        const idN = this.idx(i + 1, j);
+        const idS = this.idx(i - 1, j);
+        const idE = this.idx(i, j + 1);
+        const idW = this.idx(i, j - 1);
+        const gammaN = 0.5 * (gammaStar[id] + gammaStar[idN]);
+        const gammaS = 0.5 * (gammaStar[id] + gammaStar[idS]);
+        const gammaE = 0.5 * (gammaStar[id] + gammaStar[idE]);
+        const gammaW = 0.5 * (gammaStar[id] + gammaStar[idW]);
+        const thetaDiag =
+          (gammaN * this.betaTheta[this.fTheta(i + 1, j)] * sinNorth +
+            gammaS * this.betaTheta[this.fTheta(i, j)] * sinSouth) /
+          (this.dTheta * this.dTheta * sinC);
+        const phiDiag =
+          (gammaE * this.betaPhi[this.idx(i, j + 1)] + gammaW * this.betaPhi[this.idx(i, j)]) /
+          (this.dPhi * this.dPhi * sinC * sinC);
+        this.diag[id] = 1 / Math.max(1e-8, 1 + dt * (thetaDiag + phiDiag));
       }
     }
   }
 
   solveGammaImplicit(dt, iterations) {
+    const forceRequestedIterations = this.scenario === "gammaProjection";
     this.buildBaseAndBeta(dt);
     for (let id = 0; id < this.length; id += 1) {
-      this.tmpA[id] = clamp(this.gammaAdv[id] - dt * this.gammaAdv[id] * this.divBase[id], 0.015, 2.5);
+      this.gammaRhs[id] = this.gammaAdv[id] - dt * this.gammaAdv[id] * this.divBase[id];
       this.tmpB[id] = this.gammaAdv[id];
     }
+    this.buildGammaPreconditioner(dt);
     this.applyGammaOperator(this.tmpB, this.ap, dt);
     let rz = 0;
     let r0 = 0;
+    const residualHistory = [];
     for (let id = 0; id < this.length; id += 1) {
-      const diag = 1 + 4 * dt * this.gammaAdv[id] * 0.02;
-      this.diag[id] = 1 / diag;
-      const rr = this.tmpA[id] - this.ap[id];
+      const rr = this.gammaRhs[id] - this.ap[id];
       this.r[id] = rr;
       this.z[id] = rr * this.diag[id];
       this.p[id] = this.z[id];
@@ -613,10 +664,16 @@ class HuangCleanSimulator {
     }
     const initialResidual = Math.sqrt(Math.max(0, r0 / this.area));
     let finalResidual = initialResidual;
+    let iterationCount = 0;
+    residualHistory.push(initialResidual);
     for (let k = 0; k < iterations; k += 1) {
       this.applyGammaOperator(this.p, this.ap, dt);
       let denom = 0;
       for (let id = 0; id < this.length; id += 1) denom += this.p[id] * this.ap[id] * this.weights[id];
+      if (!(denom > 0) || !Number.isFinite(denom)) {
+        this.lastStats.gammaCgBreakdown = { iteration: k, denom };
+        break;
+      }
       const alpha = rz / Math.max(1e-20, denom);
       let nextRz = 0;
       let r2 = 0;
@@ -628,14 +685,66 @@ class HuangCleanSimulator {
         r2 += this.r[id] * this.r[id] * this.weights[id];
       }
       finalResidual = Math.sqrt(Math.max(0, r2 / this.area));
-      if (finalResidual < 2e-5) break;
+      residualHistory.push(finalResidual);
+      iterationCount = k + 1;
+      const relativeResidual = finalResidual / Math.max(EPS, initialResidual);
+      if (!forceRequestedIterations && (finalResidual < 2e-5 || relativeResidual < 1e-4)) break;
       const beta = nextRz / Math.max(1e-20, rz);
       for (let id = 0; id < this.length; id += 1) this.p[id] = this.z[id] + beta * this.p[id];
       rz = nextRz;
     }
-    for (let id = 0; id < this.length; id += 1) this.gamma[id] = clamp(this.tmpB[id], 0.015, 2.7);
+    let gammaClampCount = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      const g = this.tmpB[id];
+      if (g < 0.015 || g > 2.7) gammaClampCount += 1;
+      this.gamma[id] = clamp(g, 0.015, 2.7);
+    }
     this.lastStats.gammaResidualInitial = initialResidual;
     this.lastStats.gammaResidualFinal = finalResidual;
+    this.lastStats.gammaResidualRelativeFinal = finalResidual / Math.max(EPS, initialResidual);
+    this.lastStats.gammaCgIterationsUsed = iterationCount;
+    this.lastStats.gammaProjectionForcedIterations = forceRequestedIterations;
+    this.lastStats.gammaResidualStopRule = forceRequestedIterations
+      ? "M5 gammaProjection records the full requested CG iteration budget for auditability."
+      : "Stop when absolute residual < 2e-5 or relative residual < 1e-4.";
+    this.lastStats.gammaResidualHistory = residualHistory;
+    this.lastStats.gammaEquationForm =
+      "A(Gamma)=Gamma-dt*div_s(GammaStar*beta*grad_s(Gamma)); rhs=GammaStar-dt*GammaStar*div_s(base), equivalent to Huang Eq.26 multiplied by GammaStar*dt.";
+    this.lastStats.gammaOperatorSymmetry = this.computeGammaOperatorSymmetry(dt);
+    this.lastStats.gammaClampCount = gammaClampCount;
+    this.lastStats.gammaClampFraction = gammaClampCount / this.length;
+  }
+
+  computeGammaOperatorSymmetry(dt) {
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const phi = this.phi(j);
+        const id = this.idx(i, j);
+        this.tmpA[id] = 0.41 * Math.sin(3 * theta + 2 * phi) + 0.23 * Math.cos(5 * phi - 0.7 * theta);
+        this.tmpB[id] = 0.37 * Math.cos(4 * theta - 3 * phi) + 0.19 * Math.sin(2 * phi + 1.3 * theta);
+      }
+    }
+    this.applyGammaOperator(this.tmpA, this.r, dt);
+    this.applyGammaOperator(this.tmpB, this.ap, dt);
+    let aAb = 0;
+    let bAa = 0;
+    let aAa = 0;
+    let bAb = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      const w = this.weights[id];
+      aAb += this.tmpA[id] * this.ap[id] * w;
+      bAa += this.tmpB[id] * this.r[id] * w;
+      aAa += this.tmpA[id] * this.r[id] * w;
+      bAb += this.tmpB[id] * this.ap[id] * w;
+    }
+    return {
+      weightedAAb: aAb,
+      weightedBAa: bAa,
+      relativeAsymmetry: Math.abs(aAb - bAa) / Math.max(EPS, Math.abs(aAb) + Math.abs(bAa)),
+      positiveProbeA: aAa,
+      positiveProbeB: bAb,
+    };
   }
 
   updateVelocityFromGamma(dt) {
@@ -660,6 +769,36 @@ class HuangCleanSimulator {
     }
     this.lastStats.maxSpeed = this.syncCentersFromFaces();
     this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
+    this.lastStats.marangoniDirection = this.computeMarangoniDirectionScore();
+  }
+
+  computeMarangoniDirectionScore() {
+    let dot = 0;
+    let u2 = 0;
+    let g2 = 0;
+    let positiveWeight = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      const sinC = Math.max(1e-4, Math.sin(theta));
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const gt = (this.gamma[this.idx(i + 1, j)] - this.gamma[this.idx(i - 1, j)]) / (2 * this.dTheta);
+        const gp = (this.gamma[this.idx(i, j + 1)] - this.gamma[this.idx(i, j - 1)]) / (2 * this.dPhi * sinC);
+        const mt = -gt;
+        const mp = -gp;
+        const localDot = this.uTheta[id] * mt + this.uPhi[id] * mp;
+        const w = this.weights[id];
+        dot += localDot * w;
+        u2 += (this.uTheta[id] * this.uTheta[id] + this.uPhi[id] * this.uPhi[id]) * w;
+        g2 += (mt * mt + mp * mp) * w;
+        if (localDot > 0) positiveWeight += w;
+      }
+    }
+    return {
+      cosine: dot / Math.max(EPS, Math.sqrt(u2 * g2)),
+      positiveAreaFraction: positiveWeight / Math.max(EPS, this.area),
+      weightedDot: dot,
+    };
   }
 
   syncCentersFromFaces() {
@@ -885,12 +1024,15 @@ class HuangCleanSimulator {
     }
   }
 
-  updateEtaContinuity(dt) {
+  updateEtaContinuity(dt, correctMass = true) {
     for (let id = 0; id < this.length; id += 1) {
       this.eta[id] = clamp(this.etaAdv[id] - dt * this.etaAdv[id] * this.divVelocity[id], 0.035, 2.2);
     }
-    this.correctMass(this.eta, this.initialEtaMass, 0.035, 2.2);
-    this.correctMass(this.gamma, this.initialGammaMass, 0.015, 2.7);
+    if (correctMass) {
+      this.correctMass(this.eta, this.initialEtaMass, 0.035, 2.2);
+      this.correctMass(this.gamma, this.initialGammaMass, 0.015, 2.7);
+    }
+    this.lastStats.massCorrectionApplied = correctMass;
   }
 
   correctMass(field, targetMass, minV, maxV) {
@@ -916,6 +1058,10 @@ class HuangCleanSimulator {
     }
     if (this.scenario === "biMocqPole") {
       this.runBiMocqPole(steps, dt);
+      return;
+    }
+    if (this.scenario === "gammaProjection") {
+      this.runGammaProjection(steps, dt, cg);
       return;
     }
     const start = Date.now();
@@ -1047,6 +1193,30 @@ class HuangCleanSimulator {
       ...lastMapStats,
       sourceAccumulationStatus:
         "M4 validates Huang's pure advection detail-preservation path; eta source accumulation along the forward map is deferred to the coupled eta/Gamma/u stage after M5.",
+    };
+  }
+
+  runGammaProjection(steps = 1, dt = 0.002, cg = 22) {
+    const start = Date.now();
+    for (let s = 0; s < steps; s += 1) {
+      this.etaAdv.set(this.eta);
+      this.gammaAdv.set(this.gamma);
+      this.uThetaAdv.set(this.uTheta);
+      this.uPhiAdv.set(this.uPhi);
+      this.solveGammaImplicit(dt, cg);
+      this.updateVelocityFromGamma(dt);
+      this.updateEtaContinuity(dt, false);
+    }
+    this.deriveFields();
+    this.lastStats.elapsedMs = Date.now() - start;
+    this.lastStats.steps = steps;
+    this.lastStats.dt = dt;
+    this.lastStats.cgIterations = cg;
+    this.lastStats.gammaProjectionScenario = {
+      purpose: "Full-size Huang Eq.24-26 isolated Gamma projection-like SPD solve; no visual reference or texture input.",
+      externalAirDisabled: true,
+      gravityDisabled: true,
+      advectionDisabledForIsolation: true,
     };
   }
 
@@ -1398,7 +1568,11 @@ function main() {
     ["divVelocity", "divergence"],
     ["foam", "foam"],
   ];
-  if (args.scenario === "biMocqPole") {
+  if (args.scenario === "gammaProjection") {
+    debugFields.push(["gammaRhs", "gamma-rhs"]);
+    debugFields.push(["mapError", "map-error"]);
+    debugFields.push(["resetMask", "reset-mask"]);
+  } else if (args.scenario === "biMocqPole") {
     debugFields.push(["semiEta", "semi-lagrangian-thickness"]);
     debugFields.push(["mapError", "map-error"]);
     debugFields.push(["resetMask", "reset-mask"]);
@@ -1422,6 +1596,42 @@ function main() {
   diagnostics.beautyByteStats = { max: beautyMax, mean: beautyMean };
   const jsonPath = path.join(args.outDir, `${args.tag}-diagnostics.json`);
   fs.writeFileSync(jsonPath, `${JSON.stringify(diagnostics, null, 2)}\n`, "utf8");
+  if (args.scenario === "gammaProjection") {
+    const reportPath = path.join(args.outDir, `${args.tag}-solver-report.md`);
+    const hist = diagnostics.gammaResidualHistory ?? [];
+    const monotoneL2 = hist.every((value, index) => index === 0 || value <= hist[index - 1] * (1 + 1e-12));
+    const reductionFactor = diagnostics.gammaResidualInitial / Math.max(1e-30, diagnostics.gammaResidualFinal);
+    diagnostics.gammaResidualMonotoneL2 = monotoneL2;
+    diagnostics.gammaResidualReductionFactor = reductionFactor;
+    fs.writeFileSync(
+      reportPath,
+      [
+        "# M5 Gamma Projection Solver Report",
+        "",
+        `- Scenario: ${args.scenario}`,
+        `- Grid: ${diagnostics.nTheta} x ${diagnostics.nPhi}`,
+        `- dt: ${diagnostics.dt}`,
+        `- CG requested: ${diagnostics.cgIterations}`,
+        `- CG used: ${diagnostics.gammaCgIterationsUsed}`,
+        `- Residual initial: ${diagnostics.gammaResidualInitial}`,
+        `- Residual final: ${diagnostics.gammaResidualFinal}`,
+        `- Residual relative final: ${diagnostics.gammaResidualRelativeFinal}`,
+        `- Residual reduction factor: ${reductionFactor}`,
+        `- Residual raw L2 monotone: ${monotoneL2}`,
+        `- Residual history: ${hist.join(", ")}`,
+        `- Operator relative asymmetry: ${diagnostics.gammaOperatorSymmetry?.relativeAsymmetry}`,
+        `- Marangoni cosine with -grad(Gamma): ${diagnostics.marangoniDirection?.cosine}`,
+        `- Marangoni positive area fraction: ${diagnostics.marangoniDirection?.positiveAreaFraction}`,
+        `- Gamma clamp fraction: ${diagnostics.gammaClampFraction}`,
+        `- Mass correction applied: ${diagnostics.massCorrectionApplied}`,
+        "",
+        "This M5 report is a numerical solver diagnostic for Huang Eq.24-26. It is not a final visual-result comparison.",
+      ].join("\n") + "\n",
+      "utf8",
+    );
+    diagnostics.outputs.solverReport = reportPath;
+    fs.writeFileSync(jsonPath, `${JSON.stringify(diagnostics, null, 2)}\n`, "utf8");
+  }
   console.log(`[huang-clean] wrote ${beautyPath}`);
   console.log(`[huang-clean] center eta=${centerEta}, gamma=${centerGamma}, edge=${centerEdge}, foam=${centerFoam}, speed=${centerSpeed}, color=${centerColor.join(",")}, bytes=${beauty[centerPixel]},${beauty[centerPixel + 1]},${beauty[centerPixel + 2]}`);
   console.log(`[huang-clean] massError=${diagnostics.massError}, gammaResidual=${diagnostics.gammaResidualInitial}->${diagnostics.gammaResidualFinal}, beautyMax=${beautyMax}, beautyMean=${beautyMean}, elapsedMs=${diagnostics.elapsedMs}`);
