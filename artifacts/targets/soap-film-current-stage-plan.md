@@ -51,5 +51,5 @@ node artifacts/huang-clean/huang-clean-sim.mjs --simTheta=1024 --simPhi=2048 --p
 - Screenshots: 已复制 `huang-clean-512-spd-v4-beauty/thickness/surfactant/velocity/divergence/foam.png`。
 - Automation: 已更新现有 `automation` heartbeat 为 ACTIVE，每 2 小时一次，绑定当前线程。
 - Branch: 已切换到 `codex/huang-clean-paper-reproduction`。
-- Git commit: 待完成。
-- Git push: 待完成。
+- Git commit: 已完成，baseline 提交为 `a41b786`，M0 完成状态记录将随本文件更新提交。
+- Git push: 已推送到 `origin/codex/huang-clean-paper-reproduction`。

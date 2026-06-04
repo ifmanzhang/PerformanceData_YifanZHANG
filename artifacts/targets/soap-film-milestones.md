@@ -2,6 +2,8 @@
 
 ## M0 文档、自动化和分支锁定
 
+状态：已完成。文档、当前阶段计划、当前线程 2 小时 heartbeat、新分支、M0 legacy baseline、commit 和 GitHub push 均已完成。
+
 目标：
 
 - 创建 `soap-film-final-goal.md`。
