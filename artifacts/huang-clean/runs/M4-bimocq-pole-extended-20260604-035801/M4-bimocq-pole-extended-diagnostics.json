@@ -1,0 +1,115 @@
+{
+  "solver": "standalone-huang-clean",
+  "paperModel": [
+    "eta half-thickness on fixed sphere",
+    "Gamma surfactant concentration",
+    "tangent velocity u(theta,phi)",
+    "1024x2048 paper-scale staggered spherical grid by default",
+    "sphere metric grad/div/laplace",
+    "velocity-aligned great-circle half-step advection",
+    "BiMocq2 spherical backward/forward maps available for eta detail preservation",
+    "legacy BFECC eta transport remains only in the pre-M6 coupled fallback path",
+    "matrix-free CG implicit Gamma/projection-like update",
+    "eta_t = -eta div(u)",
+    "thin-film spectral interference from 2*eta, view angle and Fresnel coefficients"
+  ],
+  "scenario": "biMocqPole",
+  "nTheta": 1024,
+  "nPhi": 2048,
+  "paperParams": true,
+  "gridDiagnostics": {
+    "grid": "1024x2048",
+    "expectedPaperGrid": true,
+    "aspectPhiOverTheta": 2,
+    "area": 12.5663755426642,
+    "areaRelativeError": 3.9218205314127053e-7,
+    "maxZeroDivergence": 0,
+    "maxConstantLaplacian": 0,
+    "poleVectorSignError": 0,
+    "staggeredVelocityPrimary": true
+  },
+  "etaMass": 2.84590266084354,
+  "gammaMass": 6.911506700744943,
+  "massError": -0.006233349048431494,
+  "gammaMassError": 0,
+  "meanAbsDivergence": 32.71795574178118,
+  "maxGradEta": 675.2525557425146,
+  "maxGradGamma": 0,
+  "maxSpeed": 24,
+  "biMocqMapsInitialized": true,
+  "elapsedMs": 114001,
+  "steps": 16,
+  "dt": 0.002,
+  "cgIterations": 0,
+  "biMocqDiagnostics": {
+    "scheme": "Huang Section 4.2.1 BiMocq2 spherical backward/forward maps for eta pure advection",
+    "initialTotalVariation": 2.2990424974753307,
+    "semiLagrangianTotalVariation": 0,
+    "biMocqTotalVariation": 11.617474697706117,
+    "semiLagrangianTotalVariationRatio": 0,
+    "biMocqTotalVariationRatio": 5.053179621718051,
+    "biMocqVsSemiVariationRatio": 11617474.697706116,
+    "biMocqEtaMassError": -0.006233349048431494,
+    "semiLagrangianEtaMassError": -0.03462268397534072,
+    "finiteVelocity": true,
+    "maxVectorSpeed": 24,
+    "threshold": 0.02454369260617026,
+    "resetCount": 811008,
+    "resetFraction": 0.38671875,
+    "maxMapError": 0.6890128466194643,
+    "meanMapError": 0.034617293179793486,
+    "finiteMaps": true,
+    "resetMode": "cell-local identity reset when composed forward/backward spherical maps exceed pi/128",
+    "sourceAccumulationStatus": "M4 validates Huang's pure advection detail-preservation path; eta source accumulation along the forward map is deferred to the coupled eta/Gamma/u stage after M5."
+  },
+  "debugRanges": {
+    "eta": {
+      "min": 0.2199999988079071,
+      "max": 1.2000000476837158
+    },
+    "gamma": {
+      "min": 0.550000011920929,
+      "max": 0.550000011920929
+    },
+    "speed": {
+      "min": 0.2628815770149231,
+      "max": 24
+    },
+    "divVelocity": {
+      "min": -15645.548828125,
+      "max": 15645.548828125
+    },
+    "foam": {
+      "min": 0.04946442320942879,
+      "max": 1
+    },
+    "semiEta": {
+      "min": 0.2199999988079071,
+      "max": 0.2199999988079071
+    },
+    "mapError": {
+      "min": 0,
+      "max": 0.6890128254890442
+    },
+    "resetMask": {
+      "min": 0,
+      "max": 1
+    }
+  },
+  "outputs": {
+    "initialThickness": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-initial-thickness.png",
+    "beauty": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-beauty.png",
+    "thickness": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-thickness.png",
+    "surfactant": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-surfactant.png",
+    "velocity": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-velocity.png",
+    "divergence": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-divergence.png",
+    "foam": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-foam.png",
+    "semi-lagrangian-thickness": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-semi-lagrangian-thickness.png",
+    "map-error": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-map-error.png",
+    "reset-mask": "artifacts\\huang-clean\\runs\\M4-bimocq-pole-extended-20260604-035801\\M4-bimocq-pole-extended-reset-mask.png"
+  },
+  "beautyByteStats": {
+    "max": 250,
+    "mean": 155.2481875
+  }
+}

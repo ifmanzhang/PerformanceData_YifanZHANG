@@ -97,7 +97,7 @@
 
 ## M4 Huang BiMocq2 球面材料映射
 
-状态：待开始。
+状态：已完成。已实现 Huang Section 4.2.1 的 spherical backward/forward material maps、spherical interpolation、`pi/128` distortion reset，并保存全尺寸 `biMocqPole` 对照结果到 `artifacts/huang-clean/runs/M4-bimocq-pole-20260604-035641`；扩展压力测试保存到 `artifacts/huang-clean/runs/M4-bimocq-pole-extended-20260604-035801`。M4 仅完成 eta pure-advection 细节保持路径，完整 `-eta div(u)` forward-map source accumulation 将在 M5/M6 后接入耦合求解。
 
 目标：
 

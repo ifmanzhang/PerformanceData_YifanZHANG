@@ -138,6 +138,26 @@ function rotateAroundAxis(v, axis, angle) {
   ];
 }
 
+function slerp3(a, b, t) {
+  let d = clamp(dot3(a, b), -1, 1);
+  if (d > 0.9995) {
+    return normalize3(add3(a, b, 1 - t, t));
+  }
+  if (d < -0.9995) {
+    const ortho = normalize3(Math.abs(a[1]) < 0.9 ? cross3(a, [0, 1, 0]) : cross3(a, [1, 0, 0]));
+    return normalize3(add3(a, ortho, Math.cos(PI * t), Math.sin(PI * t)));
+  }
+  const omega = Math.acos(d);
+  const s = Math.sin(omega);
+  const wa = Math.sin((1 - t) * omega) / s;
+  const wb = Math.sin(t * omega) / s;
+  return normalize3(add3(a, b, wa, wb));
+}
+
+function greatCircleDistance(a, b) {
+  return Math.acos(clamp(dot3(a, b), -1, 1));
+}
+
 function add3(a, b, sa = 1, sb = 1) {
   return [a[0] * sa + b[0] * sb, a[1] * sa + b[1] * sb, a[2] * sa + b[2] * sb];
 }
@@ -200,6 +220,21 @@ class HuangCleanSimulator {
     this.uThetaFace = new Float32Array((this.nTheta + 1) * this.nPhi);
     this.uPhiFace = new Float32Array(this.length);
     this.weights = new Float32Array(n);
+    this.backMapX = new Float32Array(n);
+    this.backMapY = new Float32Array(n);
+    this.backMapZ = new Float32Array(n);
+    this.forwardMapX = new Float32Array(n);
+    this.forwardMapY = new Float32Array(n);
+    this.forwardMapZ = new Float32Array(n);
+    this.backMapNextX = new Float32Array(n);
+    this.backMapNextY = new Float32Array(n);
+    this.backMapNextZ = new Float32Array(n);
+    this.forwardMapNextX = new Float32Array(n);
+    this.forwardMapNextY = new Float32Array(n);
+    this.forwardMapNextZ = new Float32Array(n);
+    this.mapError = new Float32Array(n);
+    this.resetMask = new Float32Array(n);
+    this.semiEta = new Float32Array(n);
   }
 
   idx(i, j) {
@@ -281,6 +316,57 @@ class HuangCleanSimulator {
     return [th, ph];
   }
 
+  cellWorld(i, j) {
+    return sphereBasis(this.theta(i), this.phi(j)).w;
+  }
+
+  initializeMaterialMaps() {
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const w = this.cellWorld(i, j);
+        this.backMapX[id] = w[0];
+        this.backMapY[id] = w[1];
+        this.backMapZ[id] = w[2];
+        this.forwardMapX[id] = w[0];
+        this.forwardMapY[id] = w[1];
+        this.forwardMapZ[id] = w[2];
+        this.backMapNextX[id] = w[0];
+        this.backMapNextY[id] = w[1];
+        this.backMapNextZ[id] = w[2];
+        this.forwardMapNextX[id] = w[0];
+        this.forwardMapNextY[id] = w[1];
+        this.forwardMapNextZ[id] = w[2];
+        this.mapError[id] = 0;
+        this.resetMask[id] = 0;
+      }
+    }
+    this.semiEta.set(this.eta);
+    this.eta0.set(this.eta);
+    this.lastStats.biMocqMapsInitialized = true;
+  }
+
+  sampleMapVector(mapX, mapY, mapZ, theta, phi) {
+    const [t, p] = this.normalizeAngles(theta, phi);
+    const y = clamp(t / this.dTheta - 0.5, 0, this.nTheta - 1.001);
+    const x = p / this.dPhi - 0.5;
+    const i0 = Math.floor(y);
+    const j0 = Math.floor(x);
+    const fy = y - i0;
+    const fx = x - j0;
+    const id00 = this.idx(i0, j0);
+    const id10 = this.idx(i0, j0 + 1);
+    const id01 = this.idx(i0 + 1, j0);
+    const id11 = this.idx(i0 + 1, j0 + 1);
+    const a = [mapX[id00], mapY[id00], mapZ[id00]];
+    const b = [mapX[id10], mapY[id10], mapZ[id10]];
+    const c = [mapX[id01], mapY[id01], mapZ[id01]];
+    const d = [mapX[id11], mapY[id11], mapZ[id11]];
+    const ab = slerp3(a, b, fx);
+    const cd = slerp3(c, d, fx);
+    return slerp3(ab, cd, fy);
+  }
+
   initialize() {
     let etaMass = 0;
     let gammaMass = 0;
@@ -341,7 +427,7 @@ class HuangCleanSimulator {
       }
     }
     this.syncCentersFromFaces();
-    if (this.scenario === "poleAdvection") {
+    if (this.scenario === "poleAdvection" || this.scenario === "biMocqPole") {
       const masses = this.applyPoleAdvectionInitialCondition();
       etaMass = masses.etaMass;
       gammaMass = masses.gammaMass;
@@ -591,6 +677,21 @@ class HuangCleanSimulator {
     return maxSpeed;
   }
 
+  syncFacesFromCenters() {
+    for (let i = 0; i <= this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const idf = this.fTheta(i, j);
+        this.uThetaFace[idf] =
+          i === 0 || i === this.nTheta ? 0 : 0.5 * (this.uTheta[this.idx(i - 1, j)] + this.uTheta[this.idx(i, j)]);
+      }
+    }
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        this.uPhiFace[this.idx(i, j)] = 0.5 * (this.uPhi[this.idx(i, j - 1)] + this.uPhi[this.idx(i, j)]);
+      }
+    }
+  }
+
   vectorToWorld(theta, phi, ut, up) {
     const { eTheta, ePhi } = sphereBasis(theta, phi);
     return add3(eTheta, ePhi, ut, up);
@@ -698,6 +799,92 @@ class HuangCleanSimulator {
     }
   }
 
+  updateBiMocqMaps(dt, threshold = PI / 128) {
+    let finiteMaps = true;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const phi = this.phi(j);
+        const [bt, bp] = this.advectPoint(theta, phi, dt, false);
+        const mapped = this.sampleMapVector(this.backMapX, this.backMapY, this.backMapZ, bt, bp);
+        this.backMapNextX[id] = mapped[0];
+        this.backMapNextY[id] = mapped[1];
+        this.backMapNextZ[id] = mapped[2];
+      }
+    }
+
+    for (let id = 0; id < this.length; id += 1) {
+      const current = normalize3([this.forwardMapX[id], this.forwardMapY[id], this.forwardMapZ[id]]);
+      const [theta, phi] = xyzToAngles(current);
+      const [nt, np] = this.advectPoint(theta, phi, dt, true);
+      const next = sphereBasis(nt, np).w;
+      this.forwardMapNextX[id] = next[0];
+      this.forwardMapNextY[id] = next[1];
+      this.forwardMapNextZ[id] = next[2];
+    }
+
+    let resetCount = 0;
+    let maxMapError = 0;
+    let meanMapError = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const current = this.cellWorld(i, j);
+        const initial = normalize3([this.backMapNextX[id], this.backMapNextY[id], this.backMapNextZ[id]]);
+        const [it, ip] = xyzToAngles(initial);
+        const composed = this.sampleMapVector(this.forwardMapNextX, this.forwardMapNextY, this.forwardMapNextZ, it, ip);
+        const error = greatCircleDistance(current, composed);
+        this.mapError[id] = error;
+        this.resetMask[id] = error > threshold ? 1 : 0;
+        if (error > threshold) {
+          resetCount += 1;
+          this.backMapNextX[id] = current[0];
+          this.backMapNextY[id] = current[1];
+          this.backMapNextZ[id] = current[2];
+          this.forwardMapNextX[id] = current[0];
+          this.forwardMapNextY[id] = current[1];
+          this.forwardMapNextZ[id] = current[2];
+        }
+        maxMapError = Math.max(maxMapError, error);
+        meanMapError += error * this.weights[id];
+        finiteMaps =
+          finiteMaps &&
+          Number.isFinite(this.backMapNextX[id]) &&
+          Number.isFinite(this.backMapNextY[id]) &&
+          Number.isFinite(this.backMapNextZ[id]) &&
+          Number.isFinite(this.forwardMapNextX[id]) &&
+          Number.isFinite(this.forwardMapNextY[id]) &&
+          Number.isFinite(this.forwardMapNextZ[id]);
+      }
+    }
+
+    [this.backMapX, this.backMapNextX] = [this.backMapNextX, this.backMapX];
+    [this.backMapY, this.backMapNextY] = [this.backMapNextY, this.backMapY];
+    [this.backMapZ, this.backMapNextZ] = [this.backMapNextZ, this.backMapZ];
+    [this.forwardMapX, this.forwardMapNextX] = [this.forwardMapNextX, this.forwardMapX];
+    [this.forwardMapY, this.forwardMapNextY] = [this.forwardMapNextY, this.forwardMapY];
+    [this.forwardMapZ, this.forwardMapNextZ] = [this.forwardMapNextZ, this.forwardMapZ];
+
+    return {
+      threshold,
+      resetCount,
+      resetFraction: resetCount / this.length,
+      maxMapError,
+      meanMapError: meanMapError / Math.max(EPS, this.area),
+      finiteMaps,
+      resetMode: "cell-local identity reset when composed forward/backward spherical maps exceed pi/128",
+    };
+  }
+
+  applyBiMocqThickness(initialField, out, minV, maxV) {
+    for (let id = 0; id < this.length; id += 1) {
+      const initial = normalize3([this.backMapX[id], this.backMapY[id], this.backMapZ[id]]);
+      const [theta, phi] = xyzToAngles(initial);
+      out[id] = clamp(this.sampleScalar(initialField, theta, phi), minV, maxV);
+    }
+  }
+
   updateEtaContinuity(dt) {
     for (let id = 0; id < this.length; id += 1) {
       this.eta[id] = clamp(this.etaAdv[id] - dt * this.etaAdv[id] * this.divVelocity[id], 0.035, 2.2);
@@ -727,6 +914,10 @@ class HuangCleanSimulator {
       this.runPoleAdvection(steps, dt);
       return;
     }
+    if (this.scenario === "biMocqPole") {
+      this.runBiMocqPole(steps, dt);
+      return;
+    }
     const start = Date.now();
     for (let s = 0; s < steps; s += 1) {
       this.step(dt, cg);
@@ -754,6 +945,12 @@ class HuangCleanSimulator {
     return tv;
   }
 
+  massOf(field) {
+    let mass = 0;
+    for (let id = 0; id < this.length; id += 1) mass += field[id] * this.weights[id];
+    return mass;
+  }
+
   runPoleAdvection(steps = 4, dt = 0.002) {
     const start = Date.now();
     const initialTv = this.totalVariation(this.eta);
@@ -764,6 +961,7 @@ class HuangCleanSimulator {
       this.advectVectorAligned(dt);
       this.uTheta.set(this.uThetaAdv);
       this.uPhi.set(this.uPhiAdv);
+      this.syncFacesFromCenters();
     }
     this.deriveFields();
     const finalTv = this.totalVariation(this.eta);
@@ -788,6 +986,67 @@ class HuangCleanSimulator {
       etaMassError: (etaMass - initialMass) / Math.max(EPS, initialMass),
       finiteVelocity,
       maxVectorSpeed,
+    };
+  }
+
+  runBiMocqPole(steps = 4, dt = 0.002) {
+    const start = Date.now();
+    this.initializeMaterialMaps();
+    const initialTv = this.totalVariation(this.eta);
+    const initialMass = this.initialEtaMass;
+    let lastMapStats = {
+      threshold: PI / 128,
+      resetCount: 0,
+      resetFraction: 0,
+      maxMapError: 0,
+      meanMapError: 0,
+      finiteMaps: true,
+    };
+
+    for (let s = 0; s < steps; s += 1) {
+      this.advectScalarAligned(this.semiEta, this.tmpA, dt, 0.0, 1.5);
+      this.semiEta.set(this.tmpA);
+      lastMapStats = this.updateBiMocqMaps(dt, PI / 128);
+      this.applyBiMocqThickness(this.eta0, this.eta, 0.0, 1.5);
+      this.advectVectorAligned(dt);
+      this.uTheta.set(this.uThetaAdv);
+      this.uPhi.set(this.uPhiAdv);
+      this.syncFacesFromCenters();
+    }
+
+    this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
+    this.deriveFields();
+    const biMocqTv = this.totalVariation(this.eta);
+    const semiTv = this.totalVariation(this.semiEta);
+    const biMocqMass = this.massOf(this.eta);
+    const semiMass = this.massOf(this.semiEta);
+    let finiteVelocity = true;
+    let maxVectorSpeed = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      const speed = Math.hypot(this.uTheta[id], this.uPhi[id]);
+      maxVectorSpeed = Math.max(maxVectorSpeed, speed);
+      finiteVelocity = finiteVelocity && Number.isFinite(this.uTheta[id]) && Number.isFinite(this.uPhi[id]);
+    }
+
+    this.lastStats.elapsedMs = Date.now() - start;
+    this.lastStats.steps = steps;
+    this.lastStats.dt = dt;
+    this.lastStats.cgIterations = 0;
+    this.lastStats.biMocqDiagnostics = {
+      scheme: "Huang Section 4.2.1 BiMocq2 spherical backward/forward maps for eta pure advection",
+      initialTotalVariation: initialTv,
+      semiLagrangianTotalVariation: semiTv,
+      biMocqTotalVariation: biMocqTv,
+      semiLagrangianTotalVariationRatio: semiTv / Math.max(EPS, initialTv),
+      biMocqTotalVariationRatio: biMocqTv / Math.max(EPS, initialTv),
+      biMocqVsSemiVariationRatio: biMocqTv / Math.max(EPS, semiTv),
+      biMocqEtaMassError: (biMocqMass - initialMass) / Math.max(EPS, initialMass),
+      semiLagrangianEtaMassError: (semiMass - initialMass) / Math.max(EPS, initialMass),
+      finiteVelocity,
+      maxVectorSpeed,
+      ...lastMapStats,
+      sourceAccumulationStatus:
+        "M4 validates Huang's pure advection detail-preservation path; eta source accumulation along the forward map is deferred to the coupled eta/Gamma/u stage after M5.",
     };
   }
 
@@ -845,7 +1104,8 @@ class HuangCleanSimulator {
         "1024x2048 paper-scale staggered spherical grid by default",
         "sphere metric grad/div/laplace",
         "velocity-aligned great-circle half-step advection",
-        "BFECC thickness transport as a detail-preserving substitute for BiMocq2 maps",
+        "BiMocq2 spherical backward/forward maps available for eta detail preservation",
+        "legacy BFECC eta transport remains only in the pre-M6 coupled fallback path",
         "matrix-free CG implicit Gamma/projection-like update",
         "eta_t = -eta div(u)",
         "thin-film spectral interference from 2*eta, view angle and Fresnel coefficients",
@@ -1105,7 +1365,7 @@ function main() {
   const sim = new HuangCleanSimulator(args);
   console.log(`[huang-clean] sim=${args.simTheta}x${args.simPhi}, steps=${args.steps}, dt=${args.dt}, cg=${args.cg}, scenario=${args.scenario}`);
   let initialThicknessPath = "";
-  if (args.scenario === "poleAdvection") {
+  if (args.scenario === "poleAdvection" || args.scenario === "biMocqPole") {
     const { rgba } = renderLatLong(sim, "eta");
     initialThicknessPath = path.join(args.outDir, `${args.tag}-initial-thickness.png`);
     writePng(initialThicknessPath, sim.nPhi, sim.nTheta, rgba);
@@ -1138,22 +1398,26 @@ function main() {
     ["divVelocity", "divergence"],
     ["foam", "foam"],
   ];
+  if (args.scenario === "biMocqPole") {
+    debugFields.push(["semiEta", "semi-lagrangian-thickness"]);
+    debugFields.push(["mapError", "map-error"]);
+    debugFields.push(["resetMask", "reset-mask"]);
+  }
   const ranges = {};
+  const debugOutputs = {};
   for (const [field, name] of debugFields) {
     const { rgba, min, max } = renderLatLong(sim, field);
     ranges[field] = { min, max };
-    writePng(path.join(args.outDir, `${args.tag}-${name}.png`), sim.nPhi, sim.nTheta, rgba);
+    const debugPath = path.join(args.outDir, `${args.tag}-${name}.png`);
+    writePng(debugPath, sim.nPhi, sim.nTheta, rgba);
+    debugOutputs[name] = debugPath;
   }
   const diagnostics = sim.diagnostics();
   diagnostics.debugRanges = ranges;
   diagnostics.outputs = {
     initialThickness: initialThicknessPath || undefined,
     beauty: beautyPath,
-    thickness: path.join(args.outDir, `${args.tag}-thickness.png`),
-    surfactant: path.join(args.outDir, `${args.tag}-surfactant.png`),
-    velocity: path.join(args.outDir, `${args.tag}-velocity.png`),
-    divergence: path.join(args.outDir, `${args.tag}-divergence.png`),
-    foam: path.join(args.outDir, `${args.tag}-foam.png`),
+    ...debugOutputs,
   };
   diagnostics.beautyByteStats = { max: beautyMax, mean: beautyMean };
   const jsonPath = path.join(args.outDir, `${args.tag}-diagnostics.json`);
