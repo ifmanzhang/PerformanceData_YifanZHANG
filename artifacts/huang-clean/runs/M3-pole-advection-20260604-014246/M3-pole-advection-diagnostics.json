@@ -1,0 +1,86 @@
+{
+  "solver": "standalone-huang-clean",
+  "paperModel": [
+    "eta half-thickness on fixed sphere",
+    "Gamma surfactant concentration",
+    "tangent velocity u(theta,phi)",
+    "1024x2048 paper-scale staggered spherical grid by default",
+    "sphere metric grad/div/laplace",
+    "velocity-aligned great-circle half-step advection",
+    "BFECC thickness transport as a detail-preserving substitute for BiMocq2 maps",
+    "matrix-free CG implicit Gamma/projection-like update",
+    "eta_t = -eta div(u)",
+    "thin-film spectral interference from 2*eta, view angle and Fresnel coefficients"
+  ],
+  "scenario": "poleAdvection",
+  "nTheta": 1024,
+  "nPhi": 2048,
+  "paperParams": true,
+  "gridDiagnostics": {
+    "grid": "1024x2048",
+    "expectedPaperGrid": true,
+    "aspectPhiOverTheta": 2,
+    "area": 12.5663755426642,
+    "areaRelativeError": 3.9218205314127053e-7,
+    "maxZeroDivergence": 0,
+    "maxConstantLaplacian": 0,
+    "poleVectorSignError": 0,
+    "staggeredVelocityPrimary": true
+  },
+  "etaMass": 15.079651255894275,
+  "gammaMass": 6.911506700744943,
+  "massError": 0.016467486212603712,
+  "gammaMassError": 0,
+  "meanAbsDivergence": 43.999982818314116,
+  "maxGradEta": 0,
+  "maxGradGamma": 0,
+  "maxSpeed": 44,
+  "elapsedMs": 15023,
+  "steps": 4,
+  "dt": 0.002,
+  "cgIterations": 0,
+  "advectionDiagnostics": {
+    "scheme": "Huang Section 4.2 velocity-aligned great-circle half-step",
+    "initialTotalVariation": 1.7715202283659965,
+    "finalTotalVariation": 0,
+    "totalVariationRatio": 0,
+    "etaMassError": 0.016467486212603712,
+    "finiteVelocity": true,
+    "maxVectorSpeed": 44
+  },
+  "debugRanges": {
+    "eta": {
+      "min": 1.2000000476837158,
+      "max": 1.2000000476837158
+    },
+    "gamma": {
+      "min": 0.550000011920929,
+      "max": 0.550000011920929
+    },
+    "speed": {
+      "min": 3.030052900314331,
+      "max": 44
+    },
+    "divVelocity": {
+      "min": -28683.505859375,
+      "max": 28683.505859375
+    },
+    "foam": {
+      "min": 0.2199999988079071,
+      "max": 0.2199999988079071
+    }
+  },
+  "outputs": {
+    "initialThickness": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-initial-thickness.png",
+    "beauty": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-beauty.png",
+    "thickness": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-thickness.png",
+    "surfactant": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-surfactant.png",
+    "velocity": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-velocity.png",
+    "divergence": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-divergence.png",
+    "foam": "artifacts\\huang-clean\\runs\\M3-pole-advection-20260604-014246\\M3-pole-advection-foam.png"
+  },
+  "beautyByteStats": {
+    "max": 233,
+    "mean": 154.73170416666667
+  }
+}

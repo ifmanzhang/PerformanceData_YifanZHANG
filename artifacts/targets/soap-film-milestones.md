@@ -70,7 +70,7 @@
 
 ## M3 velocity-aligned spherical advection
 
-状态：待开始。
+状态：已完成。已按 Huang Section 4.2 和 Appendix B 将点回溯改成 velocity-aligned great-circle half-step，并将向量搬运改成球面 geodesic frame transport；全尺寸 Fig. 8 类 pole-advection 测试保存到 `artifacts/huang-clean/runs/M3-pole-advection-20260604-014415`，失败的第一次测试也保留为 `M3-pole-advection-20260604-014246` 以记录偏差原因。
 
 目标：
 
@@ -84,6 +84,16 @@
 - 速度向量平流无极区爆炸和纬向断裂。
 - 全尺寸运行保存 advection debug。
 - commit 并 push。
+
+结果：
+
+- full-size grid: `1024 x 2048`。
+- `dt=0.002`，4 个 pole-crossing advection steps。
+- `finiteVelocity=true`。
+- `poleVectorSignError=0`。
+- 最终 `eta` 范围保持 `0.22..1.2`，未塌成常量。
+- `totalVariationRatio=0.1583213717966035`，说明半拉格朗日仍耗散；M4 必须实现 BiMocq2。
+- full-size runtime about `19.4s`。
 
 ## M4 Huang BiMocq2 球面材料映射
 

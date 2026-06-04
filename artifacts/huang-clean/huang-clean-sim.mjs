@@ -126,6 +126,18 @@ function cross3(a, b) {
   ];
 }
 
+function rotateAroundAxis(v, axis, angle) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const d = dot3(axis, v);
+  const kxv = cross3(axis, v);
+  return [
+    v[0] * c + kxv[0] * s + axis[0] * d * (1 - c),
+    v[1] * c + kxv[1] * s + axis[1] * d * (1 - c),
+    v[2] * c + kxv[2] * s + axis[2] * d * (1 - c),
+  ];
+}
+
 function add3(a, b, sa = 1, sb = 1) {
   return [a[0] * sa + b[0] * sb, a[1] * sa + b[1] * sb, a[2] * sa + b[2] * sb];
 }
@@ -329,6 +341,11 @@ class HuangCleanSimulator {
       }
     }
     this.syncCentersFromFaces();
+    if (this.scenario === "poleAdvection") {
+      const masses = this.applyPoleAdvectionInitialCondition();
+      etaMass = masses.etaMass;
+      gammaMass = masses.gammaMass;
+    }
     this.eta0.set(this.eta);
     this.gamma0.set(this.gamma);
     this.initialEtaMass = etaMass;
@@ -336,6 +353,36 @@ class HuangCleanSimulator {
     this.area = areaMass;
     this.lastStats = {};
     this.deriveFields();
+  }
+
+  applyPoleAdvectionInitialCondition() {
+    let etaMass = 0;
+    let gammaMass = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const phi = this.phi(j);
+        const id = this.idx(i, j);
+        const bandCenter = 0.18 + 0.035 * Math.sin(2 * phi + 0.4);
+        const front = 0.045 - Math.abs(theta - bandCenter);
+        const sharp = smoothstep(-0.005, 0.005, front);
+        this.eta[id] = 0.22 + 0.98 * sharp;
+        this.gamma[id] = 0.55;
+        etaMass += this.eta[id] * this.weights[id];
+        gammaMass += this.gamma[id] * this.weights[id];
+      }
+    }
+    for (let i = 0; i <= this.nTheta; i += 1) {
+      const thetaFace = clamp(i * this.dTheta, 0, PI);
+      const poleTaper = smoothstep(0.0, 0.035, Math.sin(thetaFace));
+      for (let j = 0; j < this.nPhi; j += 1) {
+        this.uThetaFace[this.fTheta(i, j)] = i === 0 || i === this.nTheta ? 0 : -24.0 * poleTaper;
+      }
+    }
+    this.uPhiFace.fill(0);
+    this.syncCentersFromFaces();
+    this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
+    return { etaMass, gammaMass };
   }
 
   gravityVector(theta, phi) {
@@ -544,17 +591,57 @@ class HuangCleanSimulator {
     return maxSpeed;
   }
 
-  advectPoint(theta, phi, dt, forward = false) {
-    const [ut, up] = this.sampleVector(theta, phi);
-    const { w, eTheta, ePhi, sinTheta } = sphereBasis(theta, phi);
-    const tangent = add3(eTheta, ePhi, ut, up);
+  vectorToWorld(theta, phi, ut, up) {
+    const { eTheta, ePhi } = sphereBasis(theta, phi);
+    return add3(eTheta, ePhi, ut, up);
+  }
+
+  worldToVector(theta, phi, v) {
+    const { eTheta, ePhi } = sphereBasis(theta, phi);
+    return [dot3(v, eTheta), dot3(v, ePhi)];
+  }
+
+  transportVector(thetaA, phiA, ut, up, thetaB, phiB) {
+    const basisA = sphereBasis(thetaA, phiA);
+    const basisB = sphereBasis(thetaB, phiB);
+    const vA = add3(basisA.eTheta, basisA.ePhi, ut, up);
+    const axisRaw = cross3(basisA.w, basisB.w);
+    const axisLen = Math.hypot(axisRaw[0], axisRaw[1], axisRaw[2]);
+    if (axisLen < 1e-9) return this.worldToVector(thetaB, phiB, vA);
+    const axis = [axisRaw[0] / axisLen, axisRaw[1] / axisLen, axisRaw[2] / axisLen];
+    const angle = Math.atan2(axisLen, clamp(dot3(basisA.w, basisB.w), -1, 1));
+    const transported = rotateAroundAxis(vA, axis, angle);
+    return this.worldToVector(thetaB, phiB, transported);
+  }
+
+  moveAlongVelocity(theta, phi, ut, up, signedDt) {
     const speed = Math.hypot(ut, up);
-    if (speed < 1e-8) return [theta, phi];
-    const dir = normalize3(tangent);
-    const s = clamp(speed * dt, 0, 0.8) * (forward ? 1 : -1);
-    const next = add3(w, dir, Math.cos(s), Math.sin(s));
-    const n = normalize3(next);
-    return xyzToAngles(n);
+    if (speed < 1e-10 || Math.abs(signedDt) < 1e-12) return [theta, phi];
+    const { w, eTheta, ePhi } = sphereBasis(theta, phi);
+    const tangent = normalize3(add3(eTheta, ePhi, ut, up));
+    const arc = clamp(speed * Math.abs(signedDt), 0, 0.8) * Math.sign(signedDt);
+    const next = add3(w, tangent, Math.cos(arc), Math.sin(arc));
+    return xyzToAngles(normalize3(next));
+  }
+
+  advectPoint(theta, phi, dt, forward = false) {
+    const signedDt = forward ? dt : -dt;
+    const [ut0, up0] = this.sampleVector(theta, phi);
+    if (Math.hypot(ut0, up0) < 1e-10) return [theta, phi];
+    const [halfTheta, halfPhi] = this.moveAlongVelocity(theta, phi, ut0, up0, 0.5 * signedDt);
+    const [utHalf, upHalf] = this.sampleVector(halfTheta, halfPhi);
+    const [utAtStart, upAtStart] = this.transportVector(halfTheta, halfPhi, utHalf, upHalf, theta, phi);
+    return this.moveAlongVelocity(theta, phi, utAtStart, upAtStart, signedDt);
+  }
+
+  advectScalarAligned(field, out, dt, minV, maxV) {
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const [bt, bp] = this.advectPoint(this.theta(i), this.phi(j), dt, false);
+        out[id] = clamp(this.sampleScalar(field, bt, bp), minV, maxV);
+      }
+    }
   }
 
   advectScalarBfecc(field, out, dt, minV, maxV) {
@@ -597,28 +684,16 @@ class HuangCleanSimulator {
         const phi = this.phi(j);
         const id = this.idx(i, j);
         const [ut, up] = this.sampleVector(theta, phi);
-        const { w, eTheta, ePhi } = sphereBasis(theta, phi);
-        const tangent = add3(eTheta, ePhi, ut, up);
-        const speed = Math.hypot(ut, up);
-        if (speed < 1e-8) {
+        if (Math.hypot(ut, up) < 1e-10) {
           this.uThetaAdv[id] = this.uTheta[id];
           this.uPhiAdv[id] = this.uPhi[id];
           continue;
         }
-        const dir = normalize3(tangent);
-        const s = clamp(speed * dt, 0, 0.8);
-        const wBack = normalize3(add3(w, dir, Math.cos(s), -Math.sin(s)));
-        const [bt, bp] = xyzToAngles(wBack);
+        const [bt, bp] = this.advectPoint(theta, phi, dt, false);
         const [utb, upb] = this.sampleVector(bt, bp);
-        const basisBack = sphereBasis(bt, bp);
-        const vBack = add3(basisBack.eTheta, basisBack.ePhi, utb, upb);
-        const binormal = normalize3(cross3(w, dir));
-        const dirBackForward = normalize3(add3(w, dir, Math.sin(s), Math.cos(s)));
-        const along = dot3(vBack, dirBackForward);
-        const cross = dot3(vBack, binormal);
-        const vTransported = add3(dir, binormal, along, cross);
-        this.uThetaAdv[id] = dot3(vTransported, eTheta);
-        this.uPhiAdv[id] = dot3(vTransported, ePhi);
+        const [utt, upt] = this.transportVector(bt, bp, utb, upb, theta, phi);
+        this.uThetaAdv[id] = utt;
+        this.uPhiAdv[id] = upt;
       }
     }
   }
@@ -648,6 +723,10 @@ class HuangCleanSimulator {
   }
 
   run({ steps = 96, dt = 0.002, cg = 22 } = {}) {
+    if (this.scenario === "poleAdvection") {
+      this.runPoleAdvection(steps, dt);
+      return;
+    }
     const start = Date.now();
     for (let s = 0; s < steps; s += 1) {
       this.step(dt, cg);
@@ -658,6 +737,58 @@ class HuangCleanSimulator {
     this.lastStats.steps = steps;
     this.lastStats.dt = dt;
     this.lastStats.cgIterations = cg;
+  }
+
+  totalVariation(field) {
+    let tv = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      const sinC = Math.max(1e-4, Math.sin(theta));
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const dt = (field[this.idx(i + 1, j)] - field[this.idx(i - 1, j)]) / (2 * this.dTheta);
+        const dp = (field[this.idx(i, j + 1)] - field[this.idx(i, j - 1)]) / (2 * this.dPhi * sinC);
+        tv += Math.hypot(dt, dp) * this.weights[id];
+      }
+    }
+    return tv;
+  }
+
+  runPoleAdvection(steps = 4, dt = 0.002) {
+    const start = Date.now();
+    const initialTv = this.totalVariation(this.eta);
+    const initialMass = this.initialEtaMass;
+    for (let s = 0; s < steps; s += 1) {
+      this.advectScalarAligned(this.eta, this.etaAdv, dt, 0.0, 1.5);
+      this.eta.set(this.etaAdv);
+      this.advectVectorAligned(dt);
+      this.uTheta.set(this.uThetaAdv);
+      this.uPhi.set(this.uPhiAdv);
+    }
+    this.deriveFields();
+    const finalTv = this.totalVariation(this.eta);
+    let etaMass = 0;
+    let finiteVelocity = true;
+    let maxVectorSpeed = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      etaMass += this.eta[id] * this.weights[id];
+      const speed = Math.hypot(this.uTheta[id], this.uPhi[id]);
+      maxVectorSpeed = Math.max(maxVectorSpeed, speed);
+      finiteVelocity = finiteVelocity && Number.isFinite(this.uTheta[id]) && Number.isFinite(this.uPhi[id]);
+    }
+    this.lastStats.elapsedMs = Date.now() - start;
+    this.lastStats.steps = steps;
+    this.lastStats.dt = dt;
+    this.lastStats.cgIterations = 0;
+    this.lastStats.advectionDiagnostics = {
+      scheme: "Huang Section 4.2 velocity-aligned great-circle half-step",
+      initialTotalVariation: initialTv,
+      finalTotalVariation: finalTv,
+      totalVariationRatio: finalTv / Math.max(EPS, initialTv),
+      etaMassError: (etaMass - initialMass) / Math.max(EPS, initialMass),
+      finiteVelocity,
+      maxVectorSpeed,
+    };
   }
 
   deriveFields() {
@@ -713,7 +844,7 @@ class HuangCleanSimulator {
         "tangent velocity u(theta,phi)",
         "1024x2048 paper-scale staggered spherical grid by default",
         "sphere metric grad/div/laplace",
-        "velocity-aligned great-circle advection",
+        "velocity-aligned great-circle half-step advection",
         "BFECC thickness transport as a detail-preserving substitute for BiMocq2 maps",
         "matrix-free CG implicit Gamma/projection-like update",
         "eta_t = -eta div(u)",
@@ -973,6 +1104,12 @@ function main() {
   fs.mkdirSync(args.outDir, { recursive: true });
   const sim = new HuangCleanSimulator(args);
   console.log(`[huang-clean] sim=${args.simTheta}x${args.simPhi}, steps=${args.steps}, dt=${args.dt}, cg=${args.cg}, scenario=${args.scenario}`);
+  let initialThicknessPath = "";
+  if (args.scenario === "poleAdvection") {
+    const { rgba } = renderLatLong(sim, "eta");
+    initialThicknessPath = path.join(args.outDir, `${args.tag}-initial-thickness.png`);
+    writePng(initialThicknessPath, sim.nPhi, sim.nTheta, rgba);
+  }
   sim.run(args);
   const centerNormal = rotateNormal([0, 0, 1], -0.45, 0.15);
   const [centerTheta, centerPhi] = xyzToAngles(centerNormal);
@@ -1010,6 +1147,7 @@ function main() {
   const diagnostics = sim.diagnostics();
   diagnostics.debugRanges = ranges;
   diagnostics.outputs = {
+    initialThickness: initialThicknessPath || undefined,
     beauty: beautyPath,
     thickness: path.join(args.outDir, `${args.tag}-thickness.png`),
     surfactant: path.join(args.outDir, `${args.tag}-surfactant.png`),
