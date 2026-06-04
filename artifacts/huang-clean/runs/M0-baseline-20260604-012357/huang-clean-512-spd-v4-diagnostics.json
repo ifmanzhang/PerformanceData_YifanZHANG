@@ -1,0 +1,65 @@
+{
+  "solver": "standalone-huang-clean",
+  "paperModel": [
+    "eta half-thickness on fixed sphere",
+    "Gamma surfactant concentration",
+    "tangent velocity u(theta,phi)",
+    "sphere metric grad/div/laplace",
+    "velocity-aligned great-circle advection",
+    "BFECC thickness transport as a detail-preserving substitute for BiMocq2 maps",
+    "matrix-free CG implicit Gamma/projection-like update",
+    "eta_t = -eta div(u)",
+    "thin-film spectral interference from 2*eta, view angle and Fresnel coefficients"
+  ],
+  "scenario": "referenceFlow",
+  "nTheta": 512,
+  "nPhi": 512,
+  "etaMass": 7.669809665557593,
+  "gammaMass": 7.544396187278388,
+  "massError": -4.1135203605130194e-10,
+  "gammaMassError": 4.090527298441596e-11,
+  "meanAbsDivergence": 0.3715904729055557,
+  "maxGradEta": 494.25541457967057,
+  "maxGradGamma": 26.72314338605877,
+  "maxSpeed": 0.4200000195022757,
+  "gammaResidualInitial": 0.0033795925986238916,
+  "gammaResidualFinal": 0.0032335264359359,
+  "elapsedMs": 273923,
+  "steps": 300,
+  "dt": 0.0015,
+  "cgIterations": 36,
+  "debugRanges": {
+    "eta": {
+      "min": 0.15788161754608154,
+      "max": 1.3096786737442017
+    },
+    "gamma": {
+      "min": 0.4950765371322632,
+      "max": 0.8056991100311279
+    },
+    "speed": {
+      "min": 0,
+      "max": 0.42000001668930054
+    },
+    "divVelocity": {
+      "min": -31.497068405151367,
+      "max": 31.497068405151367
+    },
+    "foam": {
+      "min": 0,
+      "max": 1
+    }
+  },
+  "outputs": {
+    "beauty": "artifacts\\huang-clean\\output\\huang-clean-512-spd-v4-beauty.png",
+    "thickness": "artifacts\\huang-clean\\output\\huang-clean-512-spd-v4-thickness.png",
+    "surfactant": "artifacts\\huang-clean\\output\\huang-clean-512-spd-v4-surfactant.png",
+    "velocity": "artifacts\\huang-clean\\output\\huang-clean-512-spd-v4-velocity.png",
+    "divergence": "artifacts\\huang-clean\\output\\huang-clean-512-spd-v4-divergence.png",
+    "foam": "artifacts\\huang-clean\\output\\huang-clean-512-spd-v4-foam.png"
+  },
+  "beautyByteStats": {
+    "max": 252,
+    "mean": 159.59444609375
+  }
+}

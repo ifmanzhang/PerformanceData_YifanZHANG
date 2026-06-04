@@ -1,0 +1,1072 @@
+Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles
+
+WEIZHEN HUANG, JULIAN ISERINGHAUSEN, and TOM KNEIPHOF, University of Bonn, Germany
+ZIYIN QU and CHENFANFU JIANG, University of Pennsylvania, USA
+MATTHIAS B. HULLIN, University of Bonn, Germany
+
+Fig. 1. Spatially varying iridescence of a soap bubble evolving over time (left to right). The complex interplay of soap and water induces a complex flow on the
+film surface, resulting in an ever changing distribution of film thickness and hence a highly dynamic iridescent texture. This image was simulated using the
+method described in this paper, and path-traced in Mitsuba [Jakob 2010] using a custom shader under environment lighting.
+
+Soap bubbles are widely appreciated for their fragile nature and their colorful             In the computer graphics community, it is now widely understood
+appearance. The natural sciences and, in extension, computer graphics, have                 how films, bubbles and foams form, evolve and break. On the ren-
+comprehensively studied the mechanical behavior of films and foams, as                      dering side, it has become possible to recreate their characteristic
+well as the optical properties of thin liquid layers. In this paper, we focus on            iridescent appearance in physically based renderers. The main pa-
+the dynamics of material flow within the soap film, which results in fasci-                 rameter governing this appearance, the thickness of the film, has so
+nating, extremely detailed patterns. This flow is characterized by a complex                far only been driven using ad-hoc noise textures [Glassner 2000],
+coupling between surfactant concentration and Marangoni surface tension.                    or was assumed to be constant. The resulting renderings appear
+We propose a novel chemomechanical simulation framework rooted in lu-                       largely plausible but static, as they lack the rich dynamics known
+brication theory, which makes use of a custom semi-Lagrangian advection                     from real-world soap films.
+solver to enable the simulation of soap film dynamics on spherical bubbles
+both in free flow as well as under body forces such as gravity or external                     With this paper, we aim to close this gap in order to achieve
+air flow. By comparing our simulated outcomes to videos of real-world soap                  greater realism. We do so by contributing a chemomechanical frame-
+bubbles recorded in a studio environment, we show that our framework, for                   work targeted specifically at simulating the rich and detailed mi-
+the first time, closely recreates a wide range of dynamic effects that are also             croscopic flow on spherical soap bubbles. Our framework employs
+observed in experiment.                                                                     a leading-order approximation for the soap film dynamics devel-
+                                                                                            oped by [Chomaz 2001; Ida and Miksis 1998a]. A soap bubble is
+CCS Concepts: ‚Ä¢ Computing methodologies ‚Üí Physical simulation;                              modeled as a two-dimensional flow on a static spherical surface
+Reflectance modeling.                                                                       with two associated scalar fields: the film thickness and the soap
+                                                                                            concentration. We are able to show that this state-of-the-art model,
+ACM Reference Format:                                                                       paired with a custom solver, is capable of expressing the intricate
+Weizhen Huang, Julian Iseringhausen, Tom Kneiphof, Ziyin Qu, Chenfanfu                      flows found on real-world soap bubbles (Figure 1) under the mu-
+Jiang, and Matthias B. Hullin. 2020. Chemomechanical Simulation of Soap                     tual influence of mechanical stress, film thickness and surfactant
+Film Flow on Spherical Bubbles. ACM Trans. Graph. 39, 4, Article 1 (July 2020),             concentration as well as body and surface forces like gravity and
+14 pages. https://doi.org/10.1145/3386569.3392094                                           air friction. Our simulation is performed on a staggered grid, using
+                                                                                            finite differences in space and time. An advection scheme based on
+1 MOTIVATION                                                                                BiMocq2 [Qu et al. 2019] minimizes numerical dissipation in order
+                                                                                            to prevent fine details from washing out over time. The resulting
+The beauty of soap films and bubbles is of great appeal to people of                        thickness maps are presented in real time using a custom, very
+all ages and cultures, and the scientific community is no exception.                        efficient polarization-aware spectral rendering scheme.
+                                                                                            Besides the underlying physical model, our framework is enabled
+This work was supported by the European Research Council under ERC starting grant           by the following key contributions:
+‚ÄúECHO‚Äù, the National Science Foundation (CAREER IIS-1943199 and CCF-1813624) and            ‚Ä¢ We propose a novel advection scheme for vector and scalar quan-
+the Department of Energy (ORNL 4000171342).
+Authors‚Äô e-mail addresses: {whuang|iseringhausen|kneiphof}@cs.uni-bonn.de,                    tities in spherical coordinates. Our scheme, which constructs a
+{ziyinq|cffjiang}@seas.upenn.edu, hullin@cs.uni-bonn.de.                                      local coordinate frame aligned with the direction of the flow, is
+
+¬© 2020 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+This is the author‚Äôs version of the work. It is posted here for your personal use. Not for
+redistribution. The definitive Version of Record was published in ACM Transactions on
+Graphics, https://doi.org/10.1145/3386569.3392094.
+
+                                                                                            ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:2 ‚Ä¢ Huang, W. et al
+
+  unconditionally stable and maintains continuous behavior even                We turn to the fluid mechanics and physics communities, where
+  near and across the poles.                                                several comprehensive models for soap film flow have been devised.
+‚Ä¢ We propose an implicit update step for the soap concentration,            Chomaz et al. [2001] derived a highly accurate model for the dynam-
+  which avoids solving a stiff indefinite system and enables the use        ics of a flat soap film, which is based on the asymptotic lubrication
+  of significantly larger time steps when applying body forces.             theory, assuming the thickness of the film is small compared to its
+‚Ä¢ We introduce a novel real-time shader that is designed to reflect         lateral extent. The main contribution of that work is on the construc-
+  spectrally and polarization-dependent effects under environment           tion of similarities between soap film flows and compressible fluid
+  lighting in a physically accurate manner. This even holds for             flows in a planar, two-dimensional domain. The model provided by
+  contributions which are reflected multiple times in a spherical           Ida and Miksis [1998a] is in principle capable of expressing general
+  bubble.                                                                   and time-varying three-dimensional soap films. In order to simulate
+‚Ä¢ We investigate the influence of material parameters, geometric            flow using their model [Ida and Miksis 1998b], they employ a pseu-
+  scale and external forces on the flow, and compare our results to         dospectral Chebychev spatial collocation and restrict the solution
+  real-world examples captured under lab conditions.                        to the one-dimensional axisymmetric case.
+
+2 RELATED WORK                                                                 Since the pioneering work by Foster and Metaxas [1996], physics-
+                                                                            based animation of fluids has been an important topic in computer
+With their tendency to evolve into minimal surfaces, soap films             graphics due to its wide range of applications for capturing effects
+embody a fundamental mathematical and physical principle in a               of smoke [Fedkiw et al. 2001], free surface flow [Foster and Fedkiw
+way that is immediately relatable and fascinating to experts and            2001], or fire [Nguyen et al. 2002]. We note that even lubrication
+laypersons alike. Consequently, they have inspired a large body             theory, which forms the foundation of our framework, has at least
+of research in mathematics, physics and materials science. Some             once before been employed by other members of the computer
+mathematicians even went so far as to use them as analog comput-            graphics community: [Azencot et al. 2015] used it to simulate the
+ers to solve mathematical minimization problems [Isenberg 1978].            flow of thin liquid films across solid surfaces. Regarding the geomet-
+Within the computer graphics community, the geometric properties            ric discretization, various possible choices exist [Ando et al. 2015;
+of minimal surfaces as well as the formation, evolution and destruc-        Bridson 2015; Ferstl et al. 2016; Ihmsen et al. 2014; Macklin and
+tion of films, bubbles and foams have inspired a large number of            M√ºller 2013]. Grid-based Eulerian simulation of fluid remains popu-
+groundbreaking works [Da et al. 2015; Glassner 2000; Ishida et al.          lar and widely adopted due to its superior efficiency and versatility,
+2017; Iwasaki et al. 2004; Kim et al. 2015; ƒéurikoviƒç 2001; Zhu et al.      despite its well-known problems in numerical diffusion. In graphics,
+2014].                                                                      the semi-Lagrangian advection scheme presented by Stam [1999]
+                                                                            builds the foundation for many more advanced future developments
+   Besides their geometry, the beauty of soap bubbles also stems from       on Eulerian fluids, including some recent impressively successful
+their dynamic iridescent patterns. The chaotic mixing, highly non-          examples [Narain et al. 2019; Qu et al. 2019; Zehnder et al. 2018].
+linear vortices and turbulence of the fluid flow are not only visually      Indeed, the advection equation is such a mathematically simple, yet
+interesting, but they have also led to a body of scientific work that       numerically challenging equation that consistently draws a lot of
+is just as varied and colorful as its subject of study. Examples range      attention. The difficulty is pronounced at an even higher level when
+from the visualization and study of 2D flow [Gharib and Derango             one tries to solve for fluid dynamics on a spherical geometry [Hill
+1989] or using soap bubbles as a small-scale surrogate model for            and Henderson 2016; Yang et al. 2019] due to the notoriously diffi-
+planetary atmospheres [Meuel et al. 2013; Seychelles et al. 2008]           cult ‚Äúpole singularity problem‚Äù [Randall et al. 2002]. In this paper,
+via the visualization of sound and music [Gaulon et al. 2017] to            we look into an even more challenging scenario where we need to
+using soap films as volatile display surfaces [Ochiai et al. 2013]. In      efficiently and robustly advect multiple physical quantities related
+computer graphics, the simple optical effect behind the characteristic      to the chemomechanical physics on a soap film.
+iridescent colors (thin film interference) has long been understood
+and used [Belcour and Barla 2017; Glassner 2000; Iwasaki et al. 2004;       3 PHYSICAL MODEL
+Jaszkowski and Rzeszut 2003; Kneiphof et al. 2019; Smits and Meyer
+1992; Sun 2006]. However, the film thickness, which is the main             The mechanical properties of soap solutions are characterized by
+governing parameter besides the liquid‚Äôs refractive index, has rarely       the interplay of water and the soap dissolved in it. Soap molecules,
+been driven by proper physical simulation. While some works [Saye           which have a polar (hydrophobic) and a nonpolar (hydrophilic) end,
+and Sethian 2013, 2016; Zhu et al. 2014] have coupled thickness in          tend to settle at the water surface, so that their hydrophobic part
+their models, they use it more or less as an intermediate variable          can avoid the contact with water. As a result, the soap concentration
+that influences the macroscopic motion and serves as a bursting             at surfaces is usually much higher than in the bulk fluid. Soap
+condition. Most recently, such models have been equipped with               further acts as a surfactant, i.e., the presence of soap molecules
+the ability to propagate turbulent flow across Plateau boundaries           reduces the surface tension of the fluid. When the distance between
+[Ishida et al. 2020]. In contrast, our goal is to simulate the rich         soap molecules at the surface increases, surface tension increases
+and detailed dynamics of the microscopic flow that is observable            accordingly. By adding soap to water, it becomes possible to make
+through thin film interference, while staying as close as possible to       bubbles that can last several seconds to minutes, since the surface
+a state-of-the-art physical model.                                          tension prevents them from bursting. The resulting structure of soap
+                                                                            films consists of three layers [Couder et al. 1989]: two water-air
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+                                                                                                   Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles ‚Ä¢ 1:3
+
+                                                                                                   is the mass density, and f represents body accelerations such as
+                                                                                                   gravity and air friction.
+
+                                                                                                      At a film surface, the stress condition applies as [Couder et al.
+                                                                                                   1989; Ida and Miksis 1998a]
+
+                                                                                                                                Ì†µÌºé ¬∑ n = (2C Ì†µÌªæ ‚àí Ì†µÌ±ùÌ†µÌ±é)n + ‚àásÌ†µÌªæ,                                         (2)
+
+                                                                                                   where n is the outward normal vector at the respective surface, Ì†µÌ±ùÌ†µÌ±é
+                                                                                                   the air pressure, Ì†µÌªæ the surface tension, and 2C = ‚àí‚àá ¬∑ n is twice the
+
+                                                                                                   mean surface curvature. (In general, the values of these quantities
+
+Fig. 2. Cross-section of a soap film (image adapted from Couder et al. [1989]).                    differ between one surface of the film and the other.) The 2D gradient
+A thin layer of liquid (thickness 2Ì†µÌºÇ) is centered around a macroscopically                        operator ‚àás within the surface acts on a scalar field Œ¶ as
+defined surface. The polar chemistry of surfactant molecules causes them
+to concentrate at the liquid-air interface. We assume the number of soap                                                              ‚àáÌ†µÌ±† Œ¶ = ‚àáŒ¶ ‚àí n(n ¬∑ ‚àáŒ¶).                                            (3)
+molecules in the bulk fluid (here marked in gray) to be negligible.
+                                                                                                   The surface tension depends on the surfactant concentration Œì, i.e.,
+                                                                                                   the concentration of soap molecules on the surface,
+
+     Liquid nitrogen (n = 1.2)        Water (n = 1.33)  Crown glass (n = 1.52) Diamond (n = 2.42)                                           Ì†µÌªæ = Ì†µÌªæÌ†µÌ±é ‚àí Ì†µÌªæÌ†µÌ±ü Œì,                                          (4)
+5Œºm
+                                                                                                   where Ì†µÌªæÌ†µÌ±é is the surface tension of pure water, and Ì†µÌªæÌ†µÌ±ü accounts for
+Œ∑                                                                                                  the elasticity of the film. In the small concentration range, Ì†µÌªæÌ†µÌ±ü is
+                                                                                                   considered to be constant [Couder et al. 1989].
+
+                                                                                                      Finally, the surfactant concentration Œì is driven by the advection-
+
+ 0Œºm                                                                                               diffusion equation
+       0¬∞ Incidence angle Œ± 90¬∞
+                                                                                                                                Ì†µÌºïŒì + ‚àáÌ†µÌ±† ¬∑ (uŒì) = Ì†µÌ∞∑Ì†µÌ±† ‚àáÌ†µÌ±† 2Œì,                                          (5)
+Fig. 3. Interference color of light reflected by a thin layer of dielectric as
+a function of film thickness and incidence angle. Shown are simulations                                                            Ì†µÌºïÌ†µÌ±°
+with a spectral resolution of 5nm for materials of different refractive index,
+including the most relevant material for our purpose, water. Colors are                            with Ì†µÌ∞∑Ì†µÌ±† being the diffusivity for surfactant molecules.
+scaled so that white corresponds to a reflectance of 100%. We refer the
+reader to established literature [Belcour and Barla 2017; Glassner 2000] on                        3.2 Thin-film analysis and governing equation on spheres
+how to compute these colors. Somewhat counterintuitively, we note that
+the optical path difference decreases with increasing angle. Therefore, under                      In the following, we will restrict ourselves to spherical bubbles with
+oblique observation it takes a thicker film to produce the same color.
+                                                                                                   radius Ì†µÌ±Ö. For small (centimeter-sized) bubbles, this approximation
+
+                                                                                                   is reasonable. It is thus convenient to parameterize the problem in
+
+                                                                                                   spherical coordinates (Ì†µÌ±ü, Ì†µÌºÉ, Ì†µÌºô). The fluid velocity u then reads as
+
+                                                                                                                                         u = (Ì†µÌ±¢Ì†µÌ±ü , Ì†µÌ±¢Ì†µÌºÉ , Ì†µÌ±¢Ì†µÌºô )‚ä§.                                     (6)
+
+interfaces populated by soap molecules and a thin layer of bulk                                    We further note that the thickness of a soap bubble is very small
+fluid in between (Figure 2). The thickness of a soap film is usually                               compared to its lateral extent. Using lubrication theory [Oron et al.
+around 1¬µm, which explains the colorful interference between light                                 1997; Reynolds 1886], we reduce the three-dimensional problem to
+reflected at the two interfaces (Figure 3).                                                        a two-dimensional one. The extent of the film along the normal
+                                                                                                   direction (the thickness) is introduced as a variable rather than a
+   As a soap solution‚Äôs refractive index is only weakly affected by the                            third dimension of the simulation domain. Suppose the inner and
+soap concentration, the two dominant influences on the color of the                                outer sides of the bubble are symmetrically deformed with half
+film are its large-scale geometry and hence the viewing angle, and                                 thickness Ì†µÌºÇ to either side (Figure 2), then the kinematic condition
+the spatially varying thickness of the fluid layer. For the purpose of                             (see supplemental material) describing the interaction between the
+this paper, we assume the shape of the bubble to be fixed. This leaves                             time and spatially varying film thickness Ì†µÌºÇ = Ì†µÌºÇ (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±°) and the
+material transport within the film manifold as the main source of                                  velocity u at the interface Ì†µÌ±ü = Ì†µÌ±Ö ¬± Ì†µÌºÇ can be written as
+texture. In order to recreate the intricate dynamics found in real-
+world soap films, we have to understand, model and simulate this                                                             Ì†µÌºïÌ†µÌºÇ   + Ì†µÌ±¢Ì†µÌºÉ  Ì†µÌºïÌ†µÌºÇ     +    Ì†µÌ±¢Ì†µÌºô     Ì†µÌºïÌ†µÌºÇ  = ¬±Ì†µÌ±¢Ì†µÌ±ü .                       (7)
+flow.                                                                                                                        Ì†µÌºïÌ†µÌ±°      Ì†µÌ±Ö   Ì†µÌºïÌ†µÌºÉ        Ì†µÌ±Ö sin Ì†µÌºÉ  Ì†µÌºïÌ†µÌºô
+
+3.1 Governing equations in 3D                                                                         With the mean half thickness Ì†µÌºÇ0 and the expansion parameter
+                                                                                                   Ì†µÌºñ = Ì†µÌºÇ0/Ì†µÌ±Ö, we non-dimensionalize the variables as
+
+We formulate the fluid flow in terms of the incompressible three-                                            =       ‚Ä≤                   = Ì†µÌ±à Ì†µÌ±¢‚Ä≤ ,            =       ‚Ä≤           =  Ì†µÌºáÌ†µÌ±à    ‚Ä≤
+dimensional Navier-Stokes equations,
+                                                                                                         Ì†µÌºÇ     Ì†µÌºÇ0Ì†µÌºÇ ,         Ì†µÌ±¢Ì†µÌºÉ            Ì†µÌºÉ      Ì†µÌ±¢Ì†µÌºô      Ì†µÌ±àÌ†µÌ±¢ ,    Ì†µÌºé              Ì†µÌºé ,
+
+                                                                                                                                                                      Ì†µÌºô              Ì†µÌ±Ö
+
+                                                                                                                                                           Ì†µÌ±Ö ‚Ä≤                              Ì†µÌºáÌ†µÌ±à        (8)
+                                                                                                                                                             Ì†µÌ±° ,
+                                Ì†µÌºïu + (u ¬∑ ‚àá) u = 1 ‚àá ¬∑ Ì†µÌºé + f,  (1a)                              Ì†µÌ±¢Ì†µÌ±ü  =        ‚Ä≤      Ì†µÌ±ü  =  Ì†µÌ±Ö  +         ‚Ä≤      Ì†µÌ±° =          Œì     =  Œì0  Œì  ‚Ä≤  Ì†µÌ±ù  =          ‚Ä≤
+
+                                                                                                            Ì†µÌºñÌ†µÌ±à Ì†µÌ±¢Ì†µÌ±ü ,                  Ì†µÌºñÌ†µÌ±ÖÌ†µÌ±ü ,                                  ,               Ì†µÌ±ù ,
+
+                                                                                                                                                           Ì†µÌ±à                                Ì†µÌ±ÖÌ†µÌºñ
+
+                                Ì†µÌºïÌ†µÌ±°                    Ì†µÌºå                                         where Ì†µÌ±à is the characteristic velocity and Œì0 is the mean surfactant
+
+                                      ‚àá ¬∑ u = 0,                 (1b)                              concentration. We substitute these variables in Equations (1), (2),
+
+where ‚àá is the nabla operator in three dimensions, u is the fluid                                  (4), (5) and (7), expand u, Œì and Ì†µÌºÇ asymptotically with a power
+velocity, Ì†µÌºé is the Cauchy stress tensor [Batchelor 1967, Ch. 1.3], Ì†µÌºå
+                                                                                                   series, and drop all terms except those with leading order of Ì†µÌºñ (see
+
+                                                                                                             ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:4 ‚Ä¢ Huang, W. et al
+
+[Chomaz 2001; Ida and Miksis 1998a] for more details). Note that
+our non-dimensionalization is adapted to spherical coordinates and
+thus differs from the literature examples. The nabla operator ‚àá now
+only acts within the surface,
+
+                        ‚àá = ‚àáÌ†µÌ±†             Ì†µÌºï          +     1 Ì†µÌºï                          (9)
+                                      = eÌ†µÌºÉ                 sin Ì†µÌºÉ eÌ†µÌºô Ì†µÌºïÌ†µÌºô ,
+
+                                            Ì†µÌºïÌ†µÌºÉ
+
+where eÌ†µÌºÉ and eÌ†µÌºô are the respective basis vectors. The governing
+equations are thus reduced to
+
+       Ô£Æ  Ì†µÌ∞∑ u‚Ä≤   =  ‚àí  Ì†µÌ±Ä    ‚àáŒì  ‚Ä≤  +   f  + Re‚àí1V,                                        (10a)     (a) Typical dimensions                (b) Soap bubble photograph
+       Ô£Ø  Ì†µÌ∞∑Ì†µÌ±° ‚Ä≤        Ì†µÌºÇ ‚Ä≤                                                                (10b)
+       Ô£Ø                                                                                    (10c)
+
+       Ô£Ø                                                                                           Fig. 4. Under the influence of gravity and with surface tension as opposing
+
+       Ô£Ø  Ì†µÌ∞∑ Œì‚Ä≤   =  ‚àíŒì  ‚Ä≤‚àá   ¬∑  u‚Ä≤   +       ‚Ä≤   ‚àá2  Œì  ‚Ä≤                                         force, bubbles assume an equilibrium state where the film thickness gradu-
+       Ô£Ø  Ì†µÌ∞∑Ì†µÌ±° ‚Ä≤
+       Ô£Ø                                    Ì†µÌ∞∑Ì†µÌ±†         ,
+       Ô£Ø
+                                                                                                   ally increases from top to bottom. This is reflected by the horizontal fringe
+       Ô£Ø  Ì†µÌ∞∑Ì†µÌºÇ ‚Ä≤
+       Ô£Ø  Ì†µÌ∞∑Ì†µÌ±° ‚Ä≤  =  ‚àíÌ†µÌºÇ‚Ä≤‚àá ¬∑ u‚Ä≤,                                                                   pattern observed on real-world bubbles.
+       Ô£Ø
+       Ô£Ø
+
+       Ô£∞
+
+where Ì†µÌ±Ä = Œì0Ì†µÌªæÌ†µÌ±ü/Ì†µÌºåÌ†µÌºÇ0Ì†µÌ±à 2 is the Marangoni number, Re = Ì†µÌ±à Ì†µÌ±ÖÌ†µÌºå/Ì†µÌºá is the
+
+Reynolds number, Ì†µÌºá and Ì†µÌºå are the dynamic viscosity and the mass
+
+density of the soap solution, respectively. The thermodynamic quan-                                There are mainly two contributions for the evolution of soap film
+                                                                                                   thickness Ì†µÌºÇ and surfactant concentration Œì: they are passively ad-
+tity Ì†µÌªæÌ†µÌ±ü = Ì†µ¬ØÌ±ÖÌ†µÌ±á combines gas constant Ì†µ¬ØÌ±Ö and temperature Ì†µÌ±á [Couder                             vected by the flow field [Yang et al. 2019], but also affected by inflow
+et al. 1989]. Ì†µÌ∞∑Ì†µ‚Ä≤Ì±† = Ì†µÌ∞∑Ì†µÌ±†/Ì†µÌ±à Ì†µÌ±Ö is the scaled diffusivity, and the total deriv-                   or outflow as expressed by the divergence terms in Equations (10b)
+                                                                                                   and (10c). Unlike the full 3D incompressible flow (Equation (1b)),
+ative                                                                                              the 2D flow within a thin film behaves like a compressible, elastic
+                                                                                                   medium.
+                                      Ì†µÌ∞∑         Ì†µÌºï        + u‚Ä≤    ¬∑ ‚àá.                     (11)
+                                     Ì†µÌ∞∑Ì†µÌ±° ‚Ä≤   = Ì†µÌºïÌ†µÌ±° ‚Ä≤
+
+The vector V = (Ì†µÌ±âÌ†µÌºÉ , Ì†µÌ±âÌ†µÌºô )‚ä§ represents viscous terms including second
+
+order terms as
+
+                                      Ì†µÌºï2Ì†µÌ±¢ ‚Ä≤     Ì†µÌºïÌ†µÌºÇ  ‚Ä≤  Ì†µÌºïÌ†µÌ±¢ ‚Ä≤                                  3.3 Surface and body forces
+
+                                           Ì†µÌºÉ                 Ì†µÌºÉ                                   The most important forces governing the motion of a soap film
+                                                                                                   within its manifold are surface tension, gravity and air friction. The
+                                      Ì†µÌºïÌ†µÌºô2 , Ì†µÌºïÌ†µÌºÉ             ,...                                interaction between gravity and surface tension will cause thinner
+                                                            Ì†µÌºïÌ†µÌºÉ                                   films to float upwards and thicker films to drop downwards, so that
+                                                                                                   a soap bubble (or film) at its equilibrium state always assumes a
+The complete terms are provided in the supplementary document,                                     wedge shape (Figure 4). Let Ì†µÌ±î be the gravitational acceleration scaled
+Equation (84). For readability, we drop the primes from this point                                 by Ì†µÌ±à 2/Ì†µÌ±Ö. If we assume the north pole of the bubble to be pointing up-
+onward. Further, within the scope of this paper, we assume that                                    wards, then the gravity vector g in the spherical coordinate system
+the soap molecules are not diffusive (Ì†µÌ∞∑Ì†µÌ±† = 0) and that viscosity                                 (eÌ†µÌºÉ , eÌ†µÌºô ) is g = (Ì†µÌ±î sin Ì†µÌºÉ, 0)‚ä§.
+can be neglected. Readers interested in viscous effects may refer to
+Section 7.1. In spherical coordinates, the total derivative of u can be                               As a soap bubble is very thin, the film is easily set into motion
+written as                                                                                         by tangential air flow. If the surrounding air is still, it damps the
+                                                                                                   flow motion. For simplicity, we assume a linear Stokes drag fair =
+          Ì†µÌ∞∑ u           Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ   + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ   +         Ì†µÌ±¢Ì†µÌºô   Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ  ‚àí   Ì†µÌ±¢2     eÌ†µÌºÉ         (Cr/Ì†µÌºÇ) (uair ‚àí u), with Cr being the drag coefficient. Taking gravity
+               =         Ì†µÌºïÌ†µÌ±°           Ì†µÌºïÌ†µÌºÉ               sin Ì†µÌºÉ  Ì†µÌºïÌ†µÌºô                            and air friction into account, Equation (10) becomes
+                                                                                 Ì†µÌºô
+          Ì†µÌ∞∑Ì†µÌ±°
+                                                                              tan Ì†µÌºÉ
+
+                                                                                            (12)
+
+                     +   Ì†µÌºïÌ†µÌ±¢Ì†µÌºô   + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌºô       + Ì†µÌ±¢Ì†µÌºô Ì†µÌºïÌ†µÌ±¢Ì†µÌºô        + Ì†µÌ±¢Ì†µÌºÉÌ†µÌ±¢Ì†µÌºô  eÌ†µÌºô
+                          Ì†µÌºïÌ†µÌ±°          Ì†µÌºïÌ†µÌºÉ            sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô          tan Ì†µÌºÉ
+
+and its divergence as
+
+                     ‚àá¬∑u= 1                       Ì†µÌºïÌ†µÌ±¢Ì†µÌºô + Ì†µÌºï (Ì†µÌ±¢Ì†µÌºÉ sin Ì†µÌºÉ ) .                     Ô£Æ  Ì†µÌ∞∑ u  =    Ì†µÌ±Ä    +   Cr             + g,  (17a)
+                              sin Ì†µÌºÉ              Ì†µÌºïÌ†µÌºô Ì†µÌºïÌ†µÌºÉ                                        Ô£Ø           ‚àí ‚àáŒì           (uair ‚àí u)        (17b)
+                                                                                            (13)                                                (17c)
+                                                                                                   Ô£Ø Ì†µÌ∞∑Ì†µÌ±° Ì†µÌºÇ               Ì†µÌºÇ
+
+The derivatives of a scalar field Œ¶ (which could either be the thick-                              Ô£Ø  Ì†µÌ∞∑ Œì  =  ‚àíŒì‚àá  ¬∑  u,
+ness Ì†µÌºÇ or the soap concentration Œì), are                                                          Ô£Ø
+                                                                                                   Ô£Ø
+
+                                                                                                   Ô£Ø Ì†µÌ∞∑Ì†µÌ±°
+
+                                                                                                   Ô£Ø
+
+          ‚àáŒ¶ =           Ì†µÌºïŒ¶         1        Ì†µÌºïŒ¶ ‚ä§                                                Ô£Ø Ì†µÌ∞∑Ì†µÌºÇ
+                            ,                        ,                                             Ô£Ø = ‚àíÌ†µÌºÇ‚àá ¬∑ u.
+                                                                                                   Ô£Ø Ì†µÌ∞∑Ì†µÌ±°
+                                                                                                   Ô£∞
+
+                         Ì†µÌºïÌ†µÌºÉ sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                                   (14)
+
+          Ì†µÌ∞∑ Œ¶         Ì†µÌºïŒ¶    + Ì†µÌ±¢Ì†µÌºÉ    Ì†µÌºïŒ¶   +    Ì†µÌ±¢Ì†µÌºô     Ì†µÌºïŒ¶                             (15)   Interestingly, from Equation (17a), we observe that surface forces
+          Ì†µÌ∞∑Ì†µÌ±°       =                  Ì†µÌºïÌ†µÌºÉ      sin Ì†µÌºÉ       ,                                   as surface tension and air drag are divided by the film thickness, so
+                                                                                                   that thinner films are more easily driven into motion, whereas body
+                       Ì†µÌºïÌ†µÌ±°                                 Ì†µÌºïÌ†µÌºô                                   forces like gravity act throughout the volume of the body and thus
+                                                                                                   do not depend on the thickness.
+          ‚àá2Œ¶ = 1                    Ì†µÌºï               Ì†µÌºïŒ¶ Ì†µÌºï                  1 Ì†µÌºïŒ¶
+                                              sin Ì†µÌºÉ +                                   .
+                                                                                            (16)
+                        sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ                     Ì†µÌºïÌ†µÌºÉ Ì†µÌºïÌ†µÌºô sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+                                                                                  Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles ‚Ä¢ 1:5
+
+Fig. 5. The staggered spherical grid. Film thickness Ì†µÌºÇ and soap concentration    Fig. 6. The staggered spherical grid unrolled in Ì†µÌºÉ and Ì†µÌºô direction, with the
+Œì are evaluated at the cell center, while the Ì†µÌºÉ and Ì†µÌºô components of the         north pole at Ì†µÌºÉ = 0 and the south pole at Ì†µÌºÉ = Ì†µÌºã . Cells with the same color
+velocity vector u are sampled at the midpoints of cell boundaries.                indicate direct neighborhood. Specifically, in Ì†µÌºô-direction, periodic boundary
+                                                                                  conditions are employed, while in Ì†µÌºÉ -direction, Ì†µÌºô is shifted by 180‚ó¶ when
+                                                                                  crossing the pole. The velocity vector is not stored explicitly at the poles and
+                                                                                  instead we sample the vectors close to the pole bi-linearly from neighboring
+                                                                                  cells.
+
+4 METHOD                                                                                                                     query point
+
+In this section we develop novel spatial and temporal discretization                                                         intermediate samples
+schemes for the governing equations. In particular, via using a stag-                                                        interpolated along œï
+gered spherical grid (Section 4.1), we develop an unconditionally
+stable advection scheme (Section 4.2) that can smoothly propagate                 Fig. 7. Sampling velocities bi-linearly at the pole. As samples are interpolated
+flow across the poles, as well as a projection-like implicit solver for           across the pole, it is important to take into account the sign flip of u caused
+handling chemomechanical forces (Section 4.3).                                    by the parameterization singularity.
+
+4.1 Spatial discretization                                                        velocity field through advection. Afterwards, we treat the remaining
+
+We discretize the spherical domain with a staggered grid [Yang et al.             force terms in treated in a separate step (Section 4.3).
+2019], where velocities and scalar quantities are stored at different
+locations (illustrated in Figures 5 and 6). This allows the accurate                 On the spherical domain, the pure advection of a time-dependent
+evaluation of the concentration gradient ‚àáŒì and the velocity di-                  scalar field Œ¶(x, Ì†µÌ±°), x = (Ì†µÌºÉ, Ì†µÌºô)‚ä§, along the velocity field u(x, Ì†µÌ±°) =
+vergence ‚àá ¬∑ u using central differences without the formation of                 (Ì†µÌ±¢Ì†µÌºÉ (x, Ì†µÌ±°), Ì†µÌ±¢Ì†µÌºô (x, Ì†µÌ±°))‚ä§ can be written as the initial value problem
+checkerboard patterns [Bridson 2015, Ch. 2.4]. Also, a regular grid
+discretization makes it possible to build a symmetric positive defi-              [Pironneau et al. 1992]
+nite linear system that can be solved using the conjugate gradient
+method.                                                                                    Ì†µÌ∞∑Œ¶ Ì†µÌºïŒ¶ Ì†µÌºïŒ¶ Ì†µÌ±¢Ì†µÌºô Ì†µÌºïŒ¶
+                                                                                                 =        + Ì†µÌ±¢Ì†µÌºÉ      +              = 0,
+   The velocity vector is split in two components, Ì†µÌ±¢Ì†µÌºô and Ì†µÌ±¢Ì†µÌºÉ , which                                        Ì†µÌºïÌ†µÌºÉ    sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô
+are located at the center of the cell boundaries, whereas the concen-                      Ì†µÌ∞∑Ì†µÌ±°     Ì†µÌºïÌ†µÌ±°                                                (18)
+tration Œì and the thickness Ì†µÌºÇ are sampled at the cell center. Assuming
+the staggered grid consists of Ì†µÌ±ÅÌ†µÌºÉ √ó Ì†µÌ±ÅÌ†µÌºô cells, then the dimension of              Œ¶(x, 0) = Œ¶0 (x).
+Ì†µÌ±¢Ì†µÌºô, Œì and Ì†µÌºÇ is Ì†µÌ±ÅÌ†µÌºÉ √ó Ì†µÌ±ÅÌ†µÌºô , and the dimension of Ì†µÌ±¢Ì†µÌºÉ is (Ì†µÌ±ÅÌ†µÌºÉ ‚àí 1) √ó Ì†µÌ±ÅÌ†µÌºô .
+                                                                                  We seek to evaluate the advected quantity at a grid point xÌ†µÌ±ñ Ì†µÌ±ó =
+   Quantities that do not lie exactly on the respective grid points are           (Ì†µÌºÉÌ†µÌ±ñ, Ì†µÌºô Ì†µÌ±ó )‚ä§. In keeping with standard practice in fluid simulation, we
+bi-linearly interpolated between neighboring grid points (Figure 7).
+Special care needs to be taken when sampling near the poles, as                   introduce a virtual particle that passes the grid point at time Ì†µÌ±°,
+neighborhood relations reach across the pole. At this point, both eÌ†µÌºÉ
+and eÌ†µÌºô experience a sign change, so velocity samples drawn from                  and trace it backward in time. This results in the time-dependent
+across the pole have to be negated.                                               trajectory Ì†µÌ±ã (xÌ†µÌ±ñÌ†µÌ±ó ,Ì†µÌ±°) (Ì†µÌºè) for the seed point (xÌ†µÌ±ñ Ì†µÌ±ó , Ì†µÌ±°) and time parameter
+
+4.2 Advection                                                                     Ì†µÌºè < Ì†µÌ±°. Substituting this trajectory into Equation (18) yields
+
+Taking an operator splitting approach, we first solve the material                0 = Ì†µÌ∞∑ Œ¶ Ì†µÌ±ã (xÌ†µÌ±ñ Ì†µÌ±ó ,Ì†µÌ±°) (Ì†µÌºè), Ì†µÌºè
+derivative (Ì†µÌ∞∑/Ì†µÌ∞∑Ì†µÌ±°) parts of u, Ì†µÌºÇ, and Œì in Equation (17) along the                Ì†µÌ∞∑Ì†µÌºè
+                                                                                                                     Ì†µÌºè =Ì†µÌ±°                             (19)
+
+                                                                                  ‚âà  1     Œ¶(Ì†µÌ±ã (xÌ†µÌ±ñ Ì†µÌ±ó ,Ì†µÌ±°) (Ì†µÌ±° )) ‚àí Œ¶(Ì†µÌ±ã (xÌ†µÌ±ñ Ì†µÌ±ó ,Ì†µÌ±°) (Ì†µÌ±° ‚àí ŒîÌ†µÌ±° )) ,
+                                                                                     ŒîÌ†µÌ±°
+
+                                                                                  ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:6 ‚Ä¢ Huang, W. et al
+
+(a) Before                 (b) Single step        (c) RK3                            (d) [Yang et al. 2019]                         (e) Ours
+                          (order-1, global)  (order-3, global)                         (order-2, global)                       (order-2, aligned)
+
+Fig. 8. A scalar field with a sharp transition is advected across the north pole. Shown are film thickness maps before (a) and after (b‚Äìe) passing the pole,
+advected over 4 time steps using different methods. Using a velocity-aligned coordinate frame introduced in Section 4.2, our method is the only one to solve
+this problem without visible artifacts.
+
+                                                                                     to be uÀÜ , and the unit vector pointing from the sphere center Ì†µÌ±Ç to
+                                                                                     xÌ†µÌ±ñ Ì†µÌ±ó to be wÀÜ , and the binormal unit vector to be vÀÜ = wÀÜ √ó uÀÜ . Then the
+                                                                                     great circle can be parameterized by
+
+                          v                                                          Ì†µÌ∞∂ (Ì†µÌ±†) = sin(Ì†µÌ±†)uÀÜ + cos(Ì†µÌ±†)wÀÜ , Ì†µÌ±† ‚àà R;                     (20)
+
+                       v                                                             i.e., changing the arc parameter Ì†µÌ±† translates the current grid point
+                                                                                     xÌ†µÌ±ñ Ì†µÌ±ó = Ì†µÌ∞∂ (0) = wÀÜ back or forward in time with unit velocity. Following
+C(‚Äì‚àÜs)                    C(0)                                                       u backward for a time step ŒîÌ†µÌ±° results in a change in the arc parameter
+                                                                                     of ‚àíŒîÌ†µÌ±† = ‚àí‚à•u‚à•ŒîÌ†µÌ±°, taking us to the point
+
+Fig. 9. A single advection step for the velocity field on the sphere, executed in    Ì†µÌ∞∂ (‚àíŒîÌ†µÌ±†) = sin(‚àíŒîÌ†µÌ±†)uÀÜ + cos(‚àíŒîÌ†µÌ±†)wÀÜ .                       (21)
+a local, flow-aligned coordinate frame (great circle Ì†µÌ∞∂). A detailed description
+of the procedure is provided in Section 4.2.                                         This results in the following single-step advection scheme (Figure 9):
+
+                                                                                     (1) Evaluate the velocity u and establish the great circle Ì†µÌ∞∂ in its
+
+where the finite difference corresponds to a discretization of the                       direction.
+time domain around Ì†µÌ±° with step size ŒîÌ†µÌ±°. A particle that undergoes                  (2) Perform an interpolated lookup of the velocity u‚Ä≤ at Ì†µÌ∞∂ (‚àíŒîÌ†µÌ±†)
+pure advection experiences Œ¶ as being constant. We exploit this
+property to approximate the value for Œ¶(Ì†µÌ±ã (xÌ†µÌ±ñÌ†µÌ±ó,Ì†µÌ±°) (Ì†µÌ±°)) using a sample               using the technique described in Section 4.1.
+taken a step of ŒîÌ†µÌ±° backward through the flow field. A numerical                     (3) Decompose u‚Ä≤ into tangent and binormal components Ì†µÌ±¢‚Ä≤ and
+integration step like Euler or Runge-Kutta can be used to obtain
+Œ¶(Ì†µÌ±ã (xÌ†µÌ±ñ Ì†µÌ±ó ,Ì†µÌ±°) (Ì†µÌ±° ‚àí ŒîÌ†µÌ±° )).                                                          Ì†µÌ±£ ‚Ä≤ with respect to the great circle Ì†µÌ∞∂ at this point.
+
+   Advecting vectors on a sphere is much more challenging. As                        (4) Move components back along the circle to xÌ†µÌ±ñ Ì†µÌ±ó = Ì†µÌ∞∂ (0) with
+Ì†µÌºïeÌ†µÌºÉ/Ì†µÌºïÌ†µÌºô and Ì†µÌºïeÌ†µÌºô/Ì†µÌºïÌ†µÌºô are not equal to zero (Appendix A) as they would
+be on a Cartesian grid, Equation (12) contains the additional terms                  Ì†µÌ±£ ‚Ä≤‚Ä≤ = Ì†µÌ±£ ‚Ä≤, Ì†µÌ±¢‚Ä≤‚Ä≤ = Ì†µÌ±¢‚Ä≤.
+‚àíÌ†µÌ±¢Ì†µ2Ìºô/tan Ì†µÌºÉ and Ì†µÌ±¢Ì†µÌºÉÌ†µÌ±¢Ì†µÌºô/tan Ì†µÌºÉ that are not present in Equation (18). Yang et
+al. [2019] advect vectors in a scalar-like manner with (Ì†µÌ±¢Ì†µÌºÉ , Ì†µÌ±¢Ì†µÌºô/sin Ì†µÌºÉ)‚ä§,        (5) Project the advected quantity u‚Ä≤‚Ä≤ = Ì†µÌ±£ ‚Ä≤‚Ä≤vÀÜ + Ì†µÌ±¢‚Ä≤‚Ä≤uÀÜ back to global
+and treat the two additional terms as body forces in an additional
+backward Euler intergration step. Their method does not work well                    spherical coordinate system to obtain Ì†µÌ±¢‚àó and Ì†µÌ±¢‚àó .
+in practice when additional force terms are present. Instead, we are                                                           Ì†µÌºÉ       Ì†µÌºô
+able to perform unconditionally stable vector advection in a single
+step. We note that at the equator Ì†µÌºÉ = Ì†µÌºã/2, where tan‚àí1 Ì†µÌºÉ = 0, these               The main distinction of this approach to existing work is in the
+two extra terms vanish. There, the advection of a vector field falls
+back to the known case of advecting a scalar field. We exploit this                  choice of coordinate frame. Rather than operating in the global
+insight in order to obtain this desirable property anywhere on the
+sphere. By constructing a local coordinate system at each grid point                 spherical coordinate system, it locally creates an orthonormal co-
+that aligns with the velocity, we can treat the quantities there as if
+they were on the equator.                                                            ordinate frame that is defined by the velocity vector and therefore
+
+   For each grid point xÌ†µÌ±ñ Ì†µÌ±ó = Ì†µÌ±ã (xÌ†µÌ±ñÌ†µÌ±ó ,Ì†µÌ±°) (Ì†µÌ±° ), we draw a great circle on the  data-aligned. Since the method only interpolates values from the
+sphere that passes through this point and is tangent to the velocity u
+at this point (see Figure 9). We denote the unit vector in u-direction               last step, it is unconditionally stable.
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.           When higher accuracy is desired, the same principle can also
+
+                                                                                     be used to implement higher-order schemes involving multi-step
+                                                                                     updates. As an example, we lay out the construction of a 2nd-order
+
+                                                                                     ‚Äúhalf-step‚Äù scheme (Figure 21) in Appendix B, which was used to
+
+                                                                                     generate the results shown throughout this paper.
+
+                                                                                     By design, our advection scheme does not produce artifacts when
+
+                                                                                     advecting quantities (scalars or vectors) around the poles, see Fig-
+
+                                                                                     ure 8. [Yang et al. 2019] adapts the advection scheme in [Hill and
+
+                                                                                     Henderson 2016] to staggered grids, where boundary conditions are
+
+                                                                                     introduced at both poles to remove singularities. However, according
+
+                                                                                     to [Hill and Henderson 2016], their method is not free of artifacts:
+
+                                                                                     small disturbances will appear near the pole due to variation of grid
+                                                                            Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles ‚Ä¢ 1:7
+
+spacing (the 1/sin Ì†µÌºÉ term becomes prohibitively large near the pole).   We temporally discretize the continuous equations into
+By constructing a local frame in our advection scheme, the 1/sin Ì†µÌºÉ
+term always takes the value 1, so the variation in grid spacing does                         Ô£Æ u ‚àí u‚àó            Ì†µÌ±Ä           Cr   (uair  ‚àí  u)  +  g,               (24a)
+not affect the advection. Moreover, the so-called geometry term in                           Ô£Ø              = ‚àíÌ†µÌºÇ‚àó ‚àáŒì +       Ì†µÌºÇ‚àó                                    (24b)
+[Hill and Henderson 2016; Yang et al. 2019] that is caused by coor-                          Ô£Ø ŒîÌ†µÌ±°                                                                   (24c)
+dinate orientation changes in curvilinear coordinate systems (see                            Ô£Ø
+Appendix A) is in our case implicitly handled when transforming
+from global to local coordinates, and does not need to be solved sepa-                       Ô£Ø  Œì   ‚àí  Œì‚àó   = ‚àíŒì‚àó‚àá ¬∑ u,
+rately. By performing our global-to-local coordinate transformation                          Ô£Ø
+everywhere on the sphere, we show that all the discretization points
+on the sphere can be treated equally and there is no need for any                            Ô£Ø      ŒîÌ†µÌ±°
+special pole treatment. We expect this method to perform equally                             Ô£Ø
+well as on a Cartesian grid.
+                                                                                             Ô£Ø  Ì†µÌºÇ  ‚àí    ‚àó  = ‚àíÌ†µÌºÇ‚àó‚àá ¬∑ u,
+4.2.1 Preserving details. The interpolated look-up in our advection                          Ô£Ø
+scheme causes numerical diffusion known from all semi-Lagrangian                                       Ì†µÌºÇ
+methods. This is acceptable for u and Œì, since both PDEs include
+diffusive terms (see Equation (10)). However, the transport equation                         Ô£Ø      ŒîÌ†µÌ±°
+for Ì†µÌºÇ is non-diffusive. Therefore, it is important to prevent high-                         Ô£Ø
+frequency details in the film thickness from blurring out over time.
+                                                                                             Ô£∞
+   To achieve this goal, we make use of BiMocq2 [Qu et al. 2019] and
+extend the method to spherical coordinates. Essentially, BiMocq2         where Œì‚àó, Ì†µÌºÇ‚àó, and u‚àó denote the respective quantities after applying
+keeps a backward mapping
+                                                                         the advection step. First, we solve for Œì by rewriting Equation (24a)
+
+                                                                         and applying divergence to both sides of the result,
+
+                                                                         ‚àá  ¬∑    u  =  ‚àá  ¬∑  Ì†µÌºÇ‚àóu‚àó  +    CrŒîÌ†µÌ±° uair +  ŒîÌ†µÌ±°Ì†µÌºÇ‚àóg     ‚àí  Ì†µÌ±ÄŒîÌ†µÌ±° ‚àá    ¬∑       ‚àáŒì          (25)
+                                                                                                         Ì†µÌºÇ‚àó + CrŒîÌ†µÌ±°                                     + CrŒîÌ†µÌ±°
+                                                                                                                                                    Ì†µÌºÇ‚àó           .
+
+                                                                         Afterwards, we combine Equations (24b) and (25) and eliminate
+
+                                                                         ‚àá ¬∑ u,
+
+                                                                                                  Œì         ‚àí Ì†µÌ±ÄŒîÌ†µÌ±° ‚àá ¬∑  Ì†µÌºÇ‚àó  ‚àáŒì
+                                                                                                Œì‚àóŒîÌ†µÌ±°                         + CrŒîÌ†µÌ±°
+                                                                                                                                                                     (26)
+                                                                                                1             Ì†µÌºÇ‚àóu‚àó  + CrŒîÌ†µÌ±°uair + ŒîÌ†µÌ±°Ì†µÌºÇ‚àóg
+                                                                                             = ŒîÌ†µÌ±°       ‚àí‚àá¬∑
+                                                                                                                         Ì†µÌºÇ‚àó + CrŒîÌ†µÌ±°                .
+
+X(x(Ì†µÌ±á )) : x(Ì†µÌ±á ) ‚Üí x(Ì†µÌ±°0)   (22)                                       Finally, we express this linear system as a sparse matrix (Appen-
+                                                                         dix C), solve it for Œì using a preconditioned conjugate gradient
+which maps a spatial point x(Ì†µÌ±á ) back to its position at the initial    method [Naumov et al. 2015], and update uÌ†µÌ±õ+1 and Ì†µÌºÇÌ†µÌ±õ+1 using Equa-
+time Ì†µÌ±°0, as well as a forward mapping                                   tions (24a) and (24c). Note that this system is strictly symmetric
+                                                                         positive definite unless Œì‚àó approaches infinity, in which case we
+Y (x(Ì†µÌ±°0)) : x(Ì†µÌ±°0) ‚Üí x(Ì†µÌ±á )  (23)                                       end up with a Poisson equation that is closely related to pressure
+                                                                         projection in nearly incompressible mixed finite elements.
+which maps a spatial point at the initial position x(Ì†µÌ±°0) to its cur-
+rent position at Ì†µÌ±° = Ì†µÌ±á . Instead of repeatedly blurring the features      Our implicit treatment of the concentration based on its evolution
+from the last time step, we acquire the initial state directly from the  Equation (24b) allows us to take significantly larger time steps com-
+backward mapping, which corresponds to the pure advection part           pared to what could be permitted when treating the forces explicitly.
+Ì†µÌ∞∑/Ì†µÌ∞∑Ì†µÌ±°. The additional changes (‚àíÌ†µÌºÇ‚àá ¬∑ u in our case) are accumulated   Our method also avoids solving an extremely stiff indefinite system
+along the forward mapping and added to the acquired value from           as in standard Newton-based elasticity solvers [Gast et al. 2015].
+backward mapping. At each simulation step, both mappings are up-
+dated via the advection method in Section 4.2, and the coordinates       4.4 Implementation and runtime performance
+are interpolated using spherical linear interpolation. When the dis-
+tortion between forward and backward mapping becomes too large,          We implemented our method using CUDA and AmgX [Naumov et al.
+both mappings are re-initialized. This, however, introduces a small      2015], and executed it on an NVIDIA GeForce GTX 1080 graphics
+amount of numerical diffusion. We found that re-initializing both        card. A typical resolution for our simulation grid is 1024√ó2048 with
+mappings when the distortion is larger than Ì†µÌºã/128 provides a good       a step size of 0.002 s. At this setting, a single time step typically
+trade-off between sharpness and noise. For other implementation          takes 16‚Äì17 conjugate gradient iterations and 1.1 s to execute. The
+details, such as error correction, we refer the reader to the original   bulk of the compute time is spent on divergence/force calculation
+paper.                                                                   and advection with 75% and 25%, respectively.
+
+4.3 Concentration splitting                                              5 SOAP BUBBLE RENDERING
+
+After solving the advection part Ì†µÌ∞∑/Ì†µÌ∞∑Ì†µÌ±° = 0, we now deal with force     The iridescent effects produced by thin films are wave-optical effects
+and divergence terms in the right hand sides of Equation (17). Soap      that arise from constructive and destructive interference of light
+film exhibits elastic properties similar to a mass-spring system. Solv-  waves. To compute the light power that is reflected or transmitted
+ing such systems using an explicit time integrator would require         when interacting with a thin film, we need to consider the corre-
+prohibitively small step sizes to achieve a stable simulation. Instead,  sponding complex amplitudes of the electromagnetic wave. This
+we construct a projection-like implicit system for Œì and u. To keep      section describes a real-time renderer for spherical soap bubbles
+the system linear, we still solve for Ì†µÌºÇ explicitly.                     that is specifically targeted at the correct handling of polarization
+                                                                         and spectral sampling.
+
+                                                                         5.1 Thin film model
+
+                                                                         We follow the modeling of Belcour and Barla [2017] for the reflection
+                                                                         and transmission through a single thin film layer. In our case, the
+
+                                                                                       ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:8 ‚Ä¢ Huang, W. et al
+
+Fig. 10. Light paths in soap film. Light is refracted into the film, and attenu-  The reflectance and transmittance produced by an interaction with
+ated at each film interaction. The emitted light paths at the top and bottom      the film is computed for each wavelength and polarization by tak-
+of the film produce interference, respectively.                                   ing all light paths inside the thin film (shown in Figure 10) into
+                                                                                  account and accumulating their wave amplitudes. The light waves
+light interacts multiple times with the soap bubble surface on a given            are affected by the reflection coefficients Ì†µÌ±üÌ†µÌ±éÌ†µÌ±† , Ì†µÌ±üÌ†µÌ±†Ì†µÌ±é and transmission
+light path, so their analytical solution to the spectral integration              coefficients Ì†µÌ±°Ì†µÌ±éÌ†µÌ±† , Ì†µÌ±°Ì†µÌ±†Ì†µÌ±é, defined by Fresnel‚Äôs equations [Born and Wolf
+does not directly apply here. After each reflection, we would have                1970], where Ì†µÌ±üÌ†µÌ±éÌ†µÌ±† and Ì†µÌ±°Ì†µÌ±éÌ†µÌ±† act at the air-to-soap interface and Ì†µÌ±üÌ†µÌ±†Ì†µÌ±é and
+to retract to an RGB representation of the light, introducing an                  Ì†µÌ±°Ì†µÌ±†Ì†µÌ±é on the soap-to-air interface. The light waves of each path are
+error that increases with each interaction with the soap bubble.                  also affected by a wavelength-dependent phase shift, induced by the
+Therefore, we numerically integrate the compounded reflectance                    difference in path length between successively emitted light rays at
+and transmittance for each light path over the wavelengths Ì†µÌºÜ, which              each film interface. This difference in path length is known as the
+we sample at 5 nm intervals, and compute the fractional light power               optical path difference D = 4Ì†µÌºÇÌ†µÌ±õÌ†µÌ±† cos Ì†µÌºÉÌ†µÌ±† , which introduces a phase
+that is carried by each light path for each wavelength.                           shift ŒîÌ†µÌºô = 2Ì†µÌºã D of a light path with respect to its predecessor. The
+
+   Material model. The surface of the soap bubble is modeled locally                                   Ì†µÌºÜ
+as a thin film with parallel interfaces, sandwiched between two
+layers of air with refractive index Ì†µÌ±õÌ†µÌ±é = 1. The refractive index of             phase shifts with respect to the first light ray accumulate linearly,
+the soap water in between is Ì†µÌ±õÌ†µÌ±† = 1.33. For a single interaction of             such that the Ì†µÌ±ò-th ray is phase-shifted by Ì†µÌ±òŒîÌ†µÌºô. Summing the contri-
+the light with the soap bubble, the film thickness 2Ì†µÌºÇ is assumed                 butions from the infinitely many emitted light rays at the top and
+to be constant. For a given light direction i and surface normal n,               bottom interface yields the reflectance Ì†µÌ±Ö,
+we define the angle of incidence Ì†µÌºÉÌ†µÌ±é in air via cos Ì†µÌºÉÌ†µÌ±é = i ¬∑ n. Upon
+refraction into the soap film, the angle at which the light travels is                          ‚àû                                                   2
+found via Snell‚Äôs law: Ì†µÌ±õÌ†µÌ±é sin Ì†µÌºÉÌ†µÌ±é = Ì†µÌ±õÌ†µÌ±† sin Ì†µÌºÉÌ†µÌ±† . Since the film interfaces
+are assumed to be parallel, the angle at which the light is refracted             Ì†µÌ±Ö (Ì†µÌºÜ) = Ì†µÌ±üÌ†µÌ±éÌ†µÌ±† + Ì†µÌ±°Ì†µÌ±éÌ†µÌ±†Ì†µÌ±üÌ†µÌ±†Ì†µÌ±é Ì†µÌ±üÌ†µ2Ì±†Ì†µÌ±éÌ†µÌ±íÌ†µÌ±ñŒîÌ†µÌºô Ì†µÌ±ò Ì†µÌ±íÌ†µÌ±ñŒîÌ†µÌºô Ì†µÌ±°Ì†µÌ±†Ì†µÌ±é
+out of the film at both interfaces equals Ì†µÌºÉÌ†µÌ±é, and the direction of
+the light transmitted through the film is uninterrupted from air to                             Ì†µÌ±ò =0                                                        (27)
+air. We assume that the light enters and leaves the film at the same
+location on a macroscopic scale, since the film thickness is much                 =  Ì†µÌ±üÌ†µÌ±éÌ†µÌ±†  +  Ì†µÌ±°Ì†µÌ±éÌ†µÌ±† Ì†µÌ±üÌ†µÌ±†Ì†µÌ±é Ì†µÌ±°Ì†µÌ±†Ì†µÌ±é Ì†µÌ±í Ì†µÌ±ñ ŒîÌ†µÌºô  2
+smaller than the lateral extent of the soap bubble.                                              1 ‚àí Ì†µÌ±üÌ†µ2Ì±†Ì†µÌ±éÌ†µÌ±íÌ†µÌ±ñŒîÌ†µÌºô
+                                                                                                                                 ,
+   Thin film reflectance. The polarization-dependent reflectance Ì†µÌ±Ö
+and transmittance Ì†µÌ±á are the ratios of outgoing to incoming light                 and transmittance Ì†µÌ±á of the thin-film
+powers at an interface between two media. In order to compute
+these values for two media separated by a thin film, we consider the                            ‚àû                                               2
+complex-valued electro-magnetic wave amplitudes. The complex-
+valued reflection coefficient Ì†µÌ±ü and transmission coefficient Ì†µÌ±° describe         Ì†µÌ±á (Ì†µÌºÜ) =            Ì†µÌ±°Ì†µÌ±éÌ†µÌ±†  Ì†µÌ±üÌ†µ2Ì±†Ì†µÌ±é Ì†µÌ±í Ì†µÌ±ñ ŒîÌ†µÌºô      Ì†µÌ±ò
+the ratios of outgoing to incoming wave amplitudes. Since the power
+carried by a light wave is proportional to the square of the wave                                                                       Ì†µÌ±°Ì†µÌ±†Ì†µÌ±é
+amplitude, we have Ì†µÌ±Ö = |Ì†µÌ±ü |2 and Ì†µÌ±á = |Ì†µÌ±° |2. In addition to the power
+ratio, they also encode a phase shift of the light wave, which leads                            Ì†µÌ±ò =0                                                        (28)
+to constructive and destructive interference when two light paths
+interfere and their reflection or transmission coefficients are added.                             Ì†µÌ±°Ì†µÌ±éÌ†µÌ±† Ì†µÌ±°Ì†µÌ±†Ì†µÌ±é                2
+                                                                                                1 ‚àí Ì†µÌ±üÌ†µ2Ì±†Ì†µÌ±éÌ†µÌ±íÌ†µÌ±ñŒîÌ†µÌºô
+                                                                                             =                                     .
+
+                                                                                  Since we are not dealing with total internal reflections, |Ì†µÌ±üÌ†µÌ±†Ì†µÌ±é | < 1
+                                                                                  holds and taking the limit of the geometric series yields a closed
+                                                                                  form solution for each wavelength.
+
+                                                                                  5.2 Soap bubble ray tracing
+
+                                                                                  The wave nature of light only needs to be taken into account when
+                                                                                  computing the reflectance and transmittance for a single interaction
+                                                                                  with the soap bubble. Since soap bubbles are inherently transparent,
+                                                                                  many light paths contribute to a given view ray. To compute the
+                                                                                  light transport along these paths, we multiply the reflectance and
+                                                                                  transmittance produced at each soap bubble interaction along the
+                                                                                  path. The light transport R (Ì†µÌ±õ) for the Ì†µÌ±õ-th order light path is defined
+                                                                                  as
+
+                                                                                                                                      Ì†µÌ±ò ‚àí1
+
+                                                                                  R (0) = Ì†µÌ±Ö (0) and R (Ì†µÌ±ò) = Ì†µÌ±á (0)                              (Ì†µÌ±ñ) (Ì†µÌ±ò)  (29)
+
+                                                                                                                                                Ì†µÌ±Ö Ì†µÌ±á ,
+
+                                                                                                                                      Ì†µÌ±ñ =1
+
+                                                                                  for Ì†µÌ±ò ‚â• 1, where Ì†µÌ±Ö (Ì†µÌ±ñ) and Ì†µÌ±á (Ì†µÌ±ñ) are the iridescent reflectance and
+                                                                                  transmittance produced at the Ì†µÌ±ñ-th interaction with the soap bubble
+                                                                                  along the path traced backwards from the observer. The reflectance
+                                                                                  Ì†µÌ±Ö (Ì†µÌ±ñ) and transmittance Ì†µÌ±á (Ì†µÌ±ñ) produced by different interactions along
+                                                                                  a path change only due to differences in film thickness. The angle
+                                                                                  of incidence is constant for all interactions along a light path (see
+                                                                                  Figure 11) and the index of refraction is constant as well.
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+                                                                                      Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles ‚Ä¢ 1:9
+
+                                                                               Table 1. Typical values and ranges of dimensional parameters used in our
+                                                                               simulation. For values associated with air and soap solution, such as density
+                                                                               and viscosity, we take common literature values for air and water, respec-
+                                                                               tively, under standard conditions.
+
+Fig. 11. Light paths in a spherical soap bubble. All angles marked in red are           Description              Symbol               Value / Range               Unit
+equal.                                                                                Bubble radiusa                Ì†µÌ±Ö                   0.02‚Äì0.1
+                                                                                  Mean half thicknessa              Ì†µÌºÇ0                                           m
+                                                                                 Characteristic velocity            U              4 √ó 10‚àí7 ‚Äì1 √ó 10‚àí6
+                                                                               Mean soap concentrationb             Œì0                       1                    m
+                                                                                    Surface tension of                                                            m s‚àí1
+                                                                                   water-air interface             Ì†µÌªæÌ†µÌ±é            1 √ó 10‚àí8 ‚Äì1 √ó 10‚àí6             mol m‚àí2
+                                                                                       Gas constant                 Ì†µ¬ØÌ±Ö
+                                                                                   Room Temperature                 Ì†µÌ±á                7.275 √ó 10‚àí2                N m‚àí1
+                                                                                   Water mass density               Ì†µÌºå
+                                                                                Water dynamic viscosity             Ì†µÌºá                  8.3144598                 J mol‚àí1 K‚àí1
+                                                                                                                   Ì†µÌºåÌ†µÌ±é                   298.15
+                                                                                        Air density                 Ì†µÌºàÌ†µÌ±é                    997                   K
+                                                                                Air kinematic viscosity             Ì†µÌ∞∫                                            kg m‚àí3
+                                                                               Gravitational acceleration          Ì†µÌ∞∑Ì†µÌ±†                 8.9 √ó 10‚àí4
+                                                                                 Surfactant diffusivityc                                   1.184                  Pa s
+                                                                                                                                                                  kg m‚àí3
+                                                                                                                                      1.562 √ó 10‚àí5                m2 s‚àí1
+                                                                                                                                            9.8                   m s‚àí2
+                                                                                                                                             (0)                  m2 s‚àí1
+
+   Polarization. Due to the spherical geometry of the soap bubble,                                                     aEmpirical values.
+the incoming and outgoing light directions for all interactions lie in
+the same plane. This implies that the light polarization basis (the                bTaken from [Couder et al. 1989, Figure 1(a)] in the low concentration range.
+decomposition into s and p component) does not change between                             cWe assume advection to be the dominant transport mechanism.
+successive soap film interactions. Therefore, we are able to correctly
+handle polarization effects by first evaluating Equation (29) for                          Table 2. Typical values of dimensionless parameters.
+each polarization direction independently, and then averaging both
+frames.                                                                                        Description                         Symbol         Definition      Value
+                                                                                         Expansion parameter                          Ì†µÌºñ                          1 √ó 10‚àí5
+   Tracing rays. For the computation of the light paths through the                        Marangoni number                           Ì†µÌ±Ä                Ì†µÌºÇ0       0.83
+                                                                                                                                      Re                Ì†µÌ±Ö        5.6 √ó 104
+soap bubble, illustrated in Figure 11, we exploit the assumption that                       Reynolds number                           Cr              Œì0Ì†µ¬ØÌ±ÖÌ†µÌ±á     2.1
+the soap bubble is spherical. We evaluate the first Ì†µÌ±Å = 8 light paths                       Drag coefficient                         Ì†µÌ±î             Ì†µÌºåÌ†µÌºÇ0Ì†µÌ±à 2    0.49
+                                                                                   Scaled gravitational acceleration
+through the soap bubble. Since we assume distant illumination, we                                                                                     Ì†µÌ±à Ì†µÌ±ÖÌ†µÌºå
+
+do not track the world-space location of the film interactions, and                                                                                      Ì†µÌºá
+                                                                                                                                                        ‚àö
+only consider the relevant directions: the incoming light direction                                                                                 Ì†µÌºåÌ†µÌ±é Ì†µ‚àöÌºàÌ†µÌ±éÌ†µÌ±Ö
+i(Ì†µÌ±ñ) of the Ì†µÌ±ñ-th order light path to sample the environment map,                                                                                   Ì†µÌºåÌ†µÌºÇ0 Ì†µÌ±à
+the surface normal n(Ì†µÌ±ñ) to sample the film thickness 2Ì†µÌºÇ at the Ì†µÌ±ñ-th
+interaction, and the (virtual) viewing direction o(Ì†µÌ±ñ) , which is used to                                                                              Ì†µÌ∞∫ Ì†µÌ±Ö
+                                                                                                                                                       Ì†µÌ±à 2
+compute the directions for the succeeding interaction with the soap
+                                                                               where Ì†µÌ∞øÌ†µÌ±ú,Ì†µÌ±ó is the integrated response for the Ì†µÌ±ó-th color channel, and
+film. Given these values for the Ì†µÌ±ñ-th film interaction, the directions
+for the Ì†µÌ±ñ + 1-th interaction are defined as                                     (Ì†µÌ±õ)  is  the  incoming  light  of      the       Ì†µÌ±õ-th   light  path.  Since    we  use    an
+
+                                                                               Ì†µÌ∞ø
+
+n(Ì†µÌ±ñ+1) = n(Ì†µÌ±ñ) ‚àí 2n(Ì†µÌ±ñ) ¬∑ o(Ì†µÌ±ñ) o(Ì†µÌ±ñ) ,                                       Ì†µÌ±ñ
+
+                                                                               RGB environment map for illumination, Ì†µÌ∞ø (Ì†µÌ±õ) is not know. For each
+                                                                                                                                           Ì†µÌ±ñ
+
+i(Ì†µÌ±ñ+1) = ‚àío(Ì†µÌ±ñ) ,                                              (30)           color   channel  Ì†µÌ±ó ,  we  assume Ì†µÌ∞ø (Ì†µÌ±õ)        =    (Ì†µÌ±õ)  to  be  constant.      Under  this
+
+                                                                                                                                   Ì†µÌ∞ø
+
+                                                                                                                         Ì†µÌ±ñ        Ì†µÌ±ñ, Ì†µÌ±ó
+
+o(Ì†µÌ±ñ+1) = o(Ì†µÌ±ñ) ‚àí 2o(Ì†µÌ±ñ) ¬∑ n(Ì†µÌ±ñ+1) n(Ì†µÌ±ñ+1) .                                   assumption Equation (31) simplifies to
+
+The surface normal n(Ì†µÌ±ñ+1) is defined by a reflection of ‚àín(Ì†µÌ±ñ) at the                                     Ì†µÌ±Å                   ‚à´
+outgoing light direction o(Ì†µÌ±ñ) , and the new outgoing light direction
+o(Ì†µÌ±ñ+1) is then the reflection of the incoming light direction i(Ì†µÌ±ñ+1) at                       Ì†µÌ∞øÌ†µÌ±ú,Ì†µÌ±ó ‚âà          (Ì†µÌ±õ)      ¬∑     Ì†µÌ±† Ì†µÌ±ó (Ì†µÌºÜ)RÌ†µÌ±õ (Ì†µÌºÜ) dÌ†µÌºÜ.               (32)
+the surface normal n(Ì†µÌ±ñ+1) (see Figure 11).
+                                                                                                                 Ì†µÌ∞ø
+
+                                                                                                                 Ì†µÌ±ñ, Ì†µÌ±ó
+
+                                                                                                           Ì†µÌ±õ=0
+
+   Spectral integration. To produce an sRGB color image, we have to            6 RESULTS
+integrate the response to the respective color-matching functions
+Ì†µÌ±† Ì†µÌ±ó for Ì†µÌ±ó ‚àà {Ì†µÌ±Ö, Ì†µÌ∞∫, Ì†µÌ∞µ} of the color space:                                In the following, we perform a selection of synthetic experiments
+                                                                               and discuss the influence of the most important parameters and
+           ‚à´                ‚àû                                                  variables. From various sources, we attempted to gather as realistic
+                                                                               a set of parameters as possible. The numbers used for simulations
+Ì†µÌ∞øÌ†µÌ±ú,Ì†µÌ±ó =     Ì†µÌ±† Ì†µÌ±ó (Ì†µÌºÜ) ¬∑        RÌ†µÌ±õ  (Ì†µÌºÜ)Ì†µÌ∞ø (Ì†µÌ±õ)  (Ì†µÌºÜ)  dÌ†µÌºÜ,  (31)           throughout this section, as well as sources for the more exotic values,
+                                                                               are listed in Tables 1 and 2.
+                                             Ì†µÌ±ñ
+
+                            Ì†µÌ±õ=0
+
+                                                                                           ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:10 ‚Ä¢ Huang, W. et al
+
+                                                                                  The other two Equations (17b) and (17c) can be rewritten as
+
+                                                                                                            Ì†µÌ∞∑ (Œì/Ì†µÌºÇ)    = 0,                  (34)
+
+                                                                                                            Ì†µÌ∞∑Ì†µÌ±°
+
+Œì0 = 3.33 √ó 10‚àí8 Ì†µÌ±Ö = 0.0225 Reference photograph Œì0 = 6.67 √ó 10‚àí8 Ì†µÌ±Ö = 0.045     i.e., Œì/Ì†µÌºÇ remains constant. If the simulation is started with uniform
+                                                                                  surfactant concentration and thickness, we can non-dimensionalize
+Fig. 12. Influence of soap concentration Œì0 and bubble radius Ì†µÌ±Ö on the           the variables so that Œì(Ì†µÌ±° = 0) = Ì†µÌºÇ (Ì†µÌ±° = 0) = 1. Combining the above
+thickness gradient in equilibrium state. The ratio of both parameters, Œì0/Ì†µÌ±Ö,     two equations, this yields
+is kept constant for both simulations, causing a similar appearance.
+                                                                                  ‚àí                         Ì†µÌ±Ä Ì†µÌºïÌ†µÌºÇ  + Ì†µÌ±î sin Ì†µÌºÉ = 0,
+
+                                                                                                                                               (35)
+
+                                                                                                            Ì†µÌºÇ Ì†µÌºïÌ†µÌºÉ
+
+                                                                                  the solution of which is
+
+                                                                                               Ì†µÌºã                          ‚àí Ì†µÌ±î cos Ì†µÌºÉ         (36)
+                                                                                  Ì†µÌºÇ =
+                                                                                                                          Ì†µÌ±í Ì†µÌ±Ä .
+                                                                                       ‚à´ Ì†µÌºã ‚àí Ì†µÌ±î cos Ì†µÌºÉ
+                                                                                                            0 Ì†µÌ±í Ì†µÌ±Ä Ì†µÌ±ëÌ†µÌºÉ
+
+    Ì†µÌ±Ö = 0.025          Ì†µÌ±Ö = 0.05                  Ì†µÌ±Ö = 0.1                       From this, we can draw at least three conclusions:
+                                                                                  ‚Ä¢ Soap films under the influence of gravity are thinner at the top and
+Fig. 13. Equilibrium state as a function of Ì†µÌ±Ö, for a film initialized with soap
+concentration Œì0 = 6.67 √ó 10‚àí8 and thickness Ì†µÌºÇ0 = 4 √ó 10‚àí7 and relaxed             thicker at the bottom, leading to colorful bands on soap bubbles
+under standard gravity. For larger bubbles, the gravity drag causes a stronger      (Figure 12). As noted in Figure 3, the film color is also influenced
+                                                                                    by the viewing angle. On a bubble, the bands are bent downwards;
+displacement of material from top to bottom.                                        on a flat film they appear horizontal.
+                                                                                  ‚Ä¢ A constant ratio Ì†µÌ±î/Ì†µÌ±Ä will lead to the same equilibrium state (albeit
+                                                                                    through a different dynamic process). From the definitions of Ì†µÌ±Ä
+                                                                                    and Ì†µÌ±î (Table 2), this is equivalent to keeping Ì†µÌ±Ö/Œì0 constant.
+                                                                                  ‚Ä¢ The larger Ì†µÌ±Ö/Œì0, the thinner the film is at the top, and thicker at
+                                                                                    the bottom.
+                                                                                  This expected behavior is confirmed in experiment and simulation
+                                                                                  (Figures 12 and 13).
+
+                                                                                  6.2 Gravity and buoyancy
+                                                                                  The momentum equation of a soap bubble
+
+                                                                                  Ì†µÌ∞∑u = ‚àí Ì†µÌ±Ä ‚àáŒì + Cr (uair ‚àí u) + g                            (37)
+
+                                                                                  Ì†µÌ∞∑Ì†µÌ±° Ì†µÌºÇ                            Ì†µÌºÇ
+
+                                                                                  has great resemblance with the compressible Navier-Stokes equation
+
+                                                                                  Ì†µÌ∞∑u = ‚àí 1 ‚àáÌ†µÌ±ù + Ì†µÌºá ‚àá2u + Ì†µÌºá ‚àá(‚àá ¬∑ u) + g,                    (38)
+                                                                                                                          3Ì†µÌºå
+                                                                                  Ì†µÌ∞∑Ì†µÌ±° Ì†µÌºå Ì†µÌºå
+
+    (a) Simulation                 (b) Photograph                                 where the surfactant concentration Œì takes the role of pressure Ì†µÌ±ù and
+                                                                                  the variable thickness Ì†µÌºÇ substitutes the variable density Ì†µÌºå. In fact,
+Fig. 14. Under the influence of gravity, thicker (heavier) regions form           just as smoke with smaller density flows upwards in the air, thinner
+downward-moving tears; thinner (lighter) regions rise from the bottom.            soap film regions also tend to flow upwards. This is confirmed by
+These effects can be observed both in simulation (a) and experiment (b).          our observation. As thinner regions on a soap bubble flow upwards
+                                                                                  (and thicker regions downwards), they form drop-shaped ‚Äúislands‚Äù,
+                                                                                  and leave ‚Äúrivers‚Äù behind (Figure 14).
+
+6.1 Mean surfactant concentration and bubble radius                               6.3 Air friction
+
+According to the momentum equation (17a), a soap film under grav-                 Soap films are highly susceptible to air flow, and assume beautiful
+                                                                                  patterns in windy environments. When a bubble is blown, a rapidly
+ity but without other sources of excitation has its equilibrium state             rotating wind field is produced inside and induces a shear motion
+                                                                                  on the soap film. Advection along the air flow results in thin stripes
+at                                                                                that remain stable even after the external influence has stopped (Fig-
+                                                                                  ure 15). See Figure 16 for a false-color visualization of the external
+                        ‚àí Ì†µÌ±Ä Ì†µÌºïŒì + Ì†µÌ±î sin Ì†µÌºÉ = 0.                           (33)  air flow and the resulting velocity field in multiple time steps of an
+                                                                                  experiment.
+                        Ì†µÌºÇ Ì†µÌºïÌ†µÌºÉ
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+                                                                     Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles ‚Ä¢ 1:11
+
+                 (a) Simulation                                      (b) Photograph
+
+Fig. 15. Inflating a soap bubble with a straw generates a rotating ‚Äúball of air‚Äù trapped inside the bubble. The resulting velocity gradient leads to a shear motion
+and the formation of thin stripes.
+
+(a) Ì†µÌ±° = 0.52 s  (b) Ì†µÌ±° = 1.00 s  (c) Ì†µÌ±° = 2.04 s                    (d) Ì†µÌ±° = 3.08 s  (e) Ì†µÌ±° = 3.56 s
+
+Fig. 16. False-color visualization of a time-varying airflow (top) and the resulting velocity field (bottom) on a soap bubble using line integral convolution
+[Cabral and Leedom 1993]. From left to right, the correlation of the lines shows the direction of the respective vector field, while the magnitude is encoded in
+the color. (a) After initialization with a noise texture, the fluid sags down under the influence of gravity. (b)‚Äì(d) Over a corridor on the surface, air gradually
+starts flowing and slows down again. The soap fluid follows the excitation. (e) After the air has stopped flowing, the bubble remains in a rotating motion.
+
+6.4 Evaporation                                                      6.5 Real-world experiments
+                                                                     To capture stills and videos of real-world bubbles under laboratory
+Due to evaporation, a soap bubble exposed to air becomes thinner     conditions, we constructed simple studio environments consisting
+and thinner and eventually breaks down. Since evaporation mostly     of 1200 mm√ó600 mm LED panels, black theater curtain and a Sony
+depends on the exposed surface (which is constant), we model this    ILCE-7RM3 system camera with a ZEISS Batis 135 mm Ì†µÌ±ì /2.8 lens.
+effect by subtracting a small constant amount of Ì†µÌºÇ at each simula-  We use Pustefix brand soap solution for all experiments.
+tion step. Once a point on the surface reaches thickness zero, the
+simulation is terminated. Our model in its current form does not     7 DISCUSSION AND FUTURE WORK
+support the simulation of bursting bubbles. Figure 17 shows a soap   We have been able to show that our model and solver, which is fast
+bubble over its whole lifetime. Starting from a random thickness     and stable, can recreate the most prominent effects found on spheri-
+distribution, thicker regions are moving downwards and horizontal    cal soap bubbles in the real world. An obvious next step will be to
+color bands. Shortly before bursting, the top of the bubble becomes  look into more general cases, like complex film shapes or groups of
+very thin and exhibits a gray appearance.                            bubbles. Although we focus on spherical geometry in this paper, the
+
+                                                                     ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:12 ‚Ä¢ Huang, W. et al
+
+(a) t=1 s               (b) t=3 s  (c) t=5 s                                  (d) t=7 s              (e) t=9 s  (f) t=11 s
+
+Fig. 17. Life of a soap bubble. The bubble was initialized with a Perlin noise texture and excited by curl-noise air flow. As water evaporates and the film
+becomes thinner, the colorful bands move gradually downwards and the top of the bubble fades to gray.
+
+                                                                              (a) Viscous soap film             (b) Inviscid soap film
+
+Fig. 18. A vertical soap film with marginal regeneration. Picture taken from  Fig. 19. Two simulations with/without viscosity term Re‚àí1V, otherwise
+[Nierstrasz and Frens 1999].                                                  under the same condition and after same frame numbers. A viscous film
+                                                                              tends to keep its texture longer in shape and has a reduced tendency to
+ideas underlying our scheme are not limited to spherical domains.             break into fractal structures.
+The model in [Ida and Miksis 1998a] is valid for general manifolds;
+following their derivation, one arrives exactly at Equation (10), with        experiments, for example, has a dynamic viscosity of 1.2 √ó 10‚àí1 Pa s,
+the definition of the differential operators adjusted to the corre-           which is about 100 times greater than that of water and thus shows
+sponding curvilinear coordinate frame. Furthermore, the idea of our           different dynamics. The example in Figure 19 was obtained by adding
+advection scheme is independent of the underlying manifold shape,             a very basic explicit step to compute viscosity; however, this is slow
+as long as a proper local coordinate frame is constructed. Finally,           and unstable and thus not included in our standard solver.
+the special force and divergence terms treatment in Equation (26)
+holds for arbitrary shapes and can be expressed as a sparse matrix,           7.2 Black film
+as long as the neighborhood of each point is well-defined. How-
+ever, nice-to-have properties (such as the matrix being symmetric             As a film keeps thinning through evaporation or gravity drag, at
+positive definite) might be lost in other types of meshes or grids.           some point it becomes so thin that destructive interference takes
+Consequently, our scheme should not be difficult to generalize to             place, and the film appears completely black. The thickness is then
+bubbles that are diffeomorphic to a sphere. Groups of bubbles with            about 5 nm‚Äì30 nm [Isenberg 1978; R√ºcker 1877]. At such a small
+Plateau borders, as well as bounded films, are not manifolds and              scale, molecular forces come into play, such as Van der Waals attrac-
+hence have to be left to future consideration. The treatment of film          tion, electrostatic repulsion, and Born repulsion. These molecular
+boundaries deserves particular attention also because a complicated           forces cause black film to be surprisingly stable and form sharply
+mechanism called marginal regeneration [Isenberg 1978] causes the             defined ‚Äúislands‚Äù within the colorful film (Figure 20). In future work,
+film to become even thinner at the boundaries, producing regions              it will be interesting to include such molecular forces in an extended
+that flow upwards erratically (see Figure 18).                                model.
+
+7.1 Viscous film                                                              REFERENCES
+Soap films with larger viscosity tend to be more stable and last
+longer, which can be achieved by adding glycerin to home-made                 Ryoichi Ando, Nils Thuerey, and Chris Wojtan. 2015. A stream function solver for
+soap solution. Some commercial soap solution also includes addi-                  liquid simulations. ACM Transactions on Graphics (TOG) 34, 4 (2015), 1‚Äì9.
+tional formula to make it more viscous. The soap solution we used in
+                                                                              Omri Azencot, Orestis Vantzos, Max Wardetzky, Martin Rumpf, and Mirela Ben-
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.        Chen. 2015. Functional thin films on surfaces. In Proceedings of the 14th ACM
+                                                                                  SIGGRAPH/Eurographics Symposium on Computer Animation. 137‚Äì146.
+
+                                                                              G. K. Batchelor. 1967. An Introduction to Fluid Dynamics. Cambridge University Press.
+                                                                              Laurent Belcour and Pascal Barla. 2017. A Practical Extension to Microfacet Theory
+
+                                                                                  for the Modeling of Varying Iridescence. ACM Trans. Graph. 36, 4, Article 65 (July
+                                                                                            Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles ‚Ä¢ 1:13
+
+               Fig. 20. Black film on a soap bubble (photograph)                            Dariusz Jaszkowski and Janusz Rzeszut. 2003. Interference colours of soap bubbles. The
+                                                                                                Visual Computer 19, 4 (2003), 252‚Äì270.
+    2017), 14 pages. https://doi.org/10.1145/3072959.3073620
+Max Born and Emil Wolf. 1970. Principles of optics: electromagnetic theory of propagation,  Namjung Kim, SaeWoon Oh, and Kyoungju Park. 2015. Giant soap bubble creation
+                                                                                                model. Computer Animation and Virtual Worlds 26, 3-4 (2015), 445‚Äì455.
+    interference and diffraction of light. Pergamon Press. 40 pages.
+Robert Bridson. 2015. Fluid simulation for computer graphics. AK Peters/CRC Press.          Tom Kneiphof, Tim Golla, and Reinhard Klein. 2019. Real-time Image-based Lighting of
+Brian Cabral and Leith Casey Leedom. 1993. Imaging Vector Fields Using Line Integral            Microfacet BRDFs with Varying Iridescence. Computer Graphics Forum 38, 4 (2019).
+
+    Convolution. In Proceedings of the 20th Annual Conference on Computer Graphics and      Miles Macklin and Matthias M√ºller. 2013. Position based fluids. ACM Transactions on
+    Interactive Techniques (Anaheim, CA) (SIGGRAPH ‚Äô93). Association for Computing              Graphics (TOG) 32, 4 (2013), 1‚Äì12.
+    Machinery, New York, NY, USA, 263‚Äì270. https://doi.org/10.1145/166117.166151
+Jean-Marc Chomaz. 2001. The dynamics of a viscous soap film with soluble surfactant.        Tinihau Meuel, Yong Liang Xiong, Patrick Fischer, Charles-Henri Bruneau, Miloud
+    Journal of Fluid Mechanics 442 (2001), 387‚Äì409.                                             Bessafi, and Hamid Kellay. 2013. Intensity of vortices: from soap bubbles to hurri-
+Y Couder, JM Chomaz, and M Rabaud. 1989. On the hydrodynamics of soap films.                    canes. Scientific reports 3 (2013), 3455.
+    Physica D: Nonlinear Phenomena 37, 1-3 (1989), 384‚Äì405.
+Fang Da, Christopher Batty, Chris Wojtan, and Eitan Grinspun. 2015. Double Bubbles          Rahul Narain, Jonas Zehnder, and Bernhard Thomaszewski. 2019. A Second-Order
+    Sans Toil and Trouble: Discrete Circulation-Preserving Vortex Sheets for Soap Films        Advection-Reflection Solver. Proceedings of the ACM on Computer Graphics and
+    and Foams. ACM Trans. on Graphics (SIGGRAPH 2015) (2015).                                   Interactive Techniques 2, 2 (2019), 1‚Äì14.
+Ronald Fedkiw, Jos Stam, and Henrik Wann Jensen. 2001. Visual simulation of smoke.
+    In Proceedings of the 28th annual conference on Computer graphics and interactive       Maxim Naumov, M Arsaev, Patrice Castonguay, J Cohen, Julien Demouth, Joe Eaton,
+    techniques. 15‚Äì22.                                                                          S Layton, N Markovskiy, Istv√°n Reguly, Nikolai Sakharnykh, et al. 2015. AmgX:
+Florian Ferstl, Ryoichi Ando, Chris Wojtan, R√ºdiger Westermann, and Nils Thuerey.              A library for GPU accelerated algebraic multigrid and preconditioned iterative
+    2016. Narrow band FLIP for liquid simulations. 35, 2 (2016), 225‚Äì232.                       methods. SIAM Journal on Scientific Computing 37, 5 (2015), S602‚ÄìS626.
+Nick Foster and Ronald Fedkiw. 2001. Practical animation of liquids. In Proceedings of
+    the 28th annual conference on Computer graphics and interactive techniques. 23‚Äì30.      Duc Quang Nguyen, Ronald Fedkiw, and Henrik Wann Jensen. 2002. Physically based
+Nick Foster and Dimitri Metaxas. 1996. Realistic animation of liquids. Graphical models         modeling and animation of fire. In Proceedings of the 29th annual conference on
+    and image processing 58, 5 (1996), 471‚Äì483.                                                 Computer graphics and interactive techniques. 721‚Äì728.
+Theodore F Gast, Craig Schroeder, Alexey Stomakhin, Chenfanfu Jiang, and Joseph M
+   Teran. 2015. Optimization integrator for large time steps. IEEE transactions on          Vincent Adriaan Nierstrasz and Gert Frens. 1999. Marginal regeneration and the
+    visualization and computer graphics 21, 10 (2015), 1103‚Äì1115.                               Marangoni effect. Journal of colloid and interface science 215, 1 (1999), 28‚Äì35.
+C Gaulon, C Derec, T Combriat, Philippe Marmottant, and F Elias. 2017. Sound and
+   vision: visualization of music with a soap film. European Journal of Physics 38, 4       Yoichi Ochiai, Alexis Oyama, Takayuki Hoshi, and Jun Rekimoto. 2013. Theory and
+   (2017), 045804.                                                                             Application of the Colloidal Display: Programmable Bubble Screen for Computer
+Morteza Gharib and Philip Derango. 1989. A liquid film (soap film) tunnel to study two-         Entertainment. In Advances in Computer Entertainment, Dennis Reidsma, Haruhiro
+    dimensional laminar and turbulent shear flows. Physica D: Nonlinear Phenomena 37,           Katayose, and Anton Nijholt (Eds.). Springer, 198‚Äì214.
+   1-3 (1989), 406‚Äì416.
+Andrew Glassner. 2000. Soap Bubbles: Part 2. IEEE Computer Graphics and Applications        Alexander Oron, Stephen H Davis, and S George Bankoff. 1997. Long-scale evolution
+    20, 6 (2000), 99‚Äì109.                                                                       of thin liquid films. Reviews of modern physics 69, 3 (1997), 931.
+David J Hill and Ronald D Henderson. 2016. Efficient fluid simulation on the surface of
+    a sphere. ACM Transactions on Graphics (TOG) 35, 2 (2016), 1‚Äì9.                         Olivier Pironneau, J Liou, and T Tezduyar. 1992. Characteristic-Galerkin and
+MP Ida and Michael J Miksis. 1998a. The dynamics of thin films I: General theory. SIAM          Galerkin/least-squares space-time formulations for the advection-diffusion equa-
+    J. Appl. Math. 58, 2 (1998), 456‚Äì473.                                                       tion with time-dependent domains. Computer Methods in Applied Mechanics and
+MP Ida and Michael J Miksis. 1998b. The dynamics of thin films II: Applications. SIAM           Engineering 100, 1 (1992), 117‚Äì141.
+    J. Appl. Math. 58, 2 (1998), 474‚Äì500.
+Markus Ihmsen, Jens Orthmann, Barbara Solenthaler, Andreas Kolb, and Matthias               Ziyin Qu, Xinxin Zhang, Ming Gao, Chenfanfu Jiang, and Baoquan Chen. 2019. Efficient
+   Teschner. 2014. SPH Fluids in Computer Graphics. In Eurographics 2014 - State of             and conservative fluids using bidirectional mapping. ACM Transactions on Graphics
+    the Art Reports, Sylvain Lefebvre and Michela Spagnuolo (Eds.). The Eurographics           (TOG) 38, 4 (2019), 128.
+   Association. https://doi.org/10.2312/egst.20141034
+Cyril Isenberg. 1978. The science of soap films and soap bubbles. Tieto Cleveton, UK.       David A Randall, Todd D Ringler, Ross P Heikes, Phil Jones, and John Baumgardner.
+Sadashige Ishida, Peter Synak, Fumiya Narita, Toshiya Hachisuka, and Chris Wojtan.              2002. Climate modeling with spherical geodesic grids. Computing in Science &
+    2020. A Model for Soap Film Dynamics with Evolving Thickness. ACM Trans. on                 Engineering 4, 5 (2002), 32‚Äì41.
+    Graphics 39, 4 (2020). https://doi.org/10.1145/3386569.3392405
+Sadashige Ishida, Masafumi Yamamoto, Ryoichi Ando, and Toshiya Hachisuka. 2017. A           Osborne Reynolds. 1886. IV. On the theory of lubrication and its application to Mr.
+    Hyperbolic Geometric Flow for Evolving Films and Foams. ACM Trans. Graph. 36,               Beauchamp tower‚Äôs experiments, including an experimental determination of the
+    6, Article 199 (Nov. 2017), 11 pages. https://doi.org/10.1145/3130800.3130835              viscosity of olive oil. Philosophical transactions of the Royal Society of London 177
+Kei Iwasaki, Keichi Matsuzawa, and Tomoyuki Nishita. 2004. Real-time rendering                 (1886), 157‚Äì234.
+    of soap bubbles taking into account light interference. In Proceedings Computer
+    Graphics International, 2004. IEEE, 344‚Äì348.                                            AW R√ºcker. 1877. On Black Soap Films. Nature 16 (1877), 331‚Äì333.
+Wenzel Jakob. 2010. Mitsuba renderer. http://www.mitsuba-renderer.org.                      Robert I. Saye and James A. Sethian. 2013. Multiscale Modeling of Membrane Rearrange-
+
+                                                                                                ment, Drainage, and Rupture in Evolving Foams. Science 340, 6133 (2013), 720‚Äì724.
+                                                                                                https://doi.org/10.1126/science.1230623 The authors protest being forced to cite this
+                                                                                               work as condition for acceptance. Its substance is a proper subset of the more recent
+                                                                                                and more comprehensive [Saye and Sethian 2016].
+                                                                                            Robert I. Saye and James A. Sethian. 2016. Multiscale modelling of evolving foams. J.
+                                                                                                Comput. Phys. 315 (2016), 273‚Äì301.
+                                                                                            F Seychelles, Y Amarouchene, Miloud Bessafi, and H Kellay. 2008. Thermal convection
+                                                                                                and emergence of isolated vortices in soap bubbles. Physical review letters 100, 14
+                                                                                               (2008), 144501.
+                                                                                            Brian E. Smits and Gary W. Meyer. 1992. Newton‚Äôs Colors: Simulating Interference Phe-
+                                                                                                nomena in Realistic Image Synthesis. Springer Berlin Heidelberg, Berlin, Heidelberg,
+                                                                                               185‚Äì194. https://doi.org/10.1007/978-3-662-09287-3_13
+                                                                                            Jos Stam. 1999. Stable fluids. In Proceedings of the 26th annual conference on Computer
+                                                                                                graphics and interactive techniques. 121‚Äì128.
+                                                                                            Yinlong Sun. 2006. Rendering Biological Iridescences with RGB-Based Renderers. ACM
+                                                                                                Trans. Graph. 25, 1 (Jan. 2006), 100‚Äì129. https://doi.org/10.1145/1122501.1122506
+                                                                                            Roman ƒéurikoviƒç. 2001. Animation of Soap Bubble Dynamics, Cluster Formation and
+                                                                                                Collision. Comput. Graph. Forum 20 (09 2001), C‚Äì67‚ÄìC‚Äì75. https://doi.org/10.1111/
+                                                                                               1467- 8659.00499
+                                                                                            Bowen Yang, William Corse, Jiecong Lu, Joshuah Wolper, and Chenfanfu Jiang. 2019.
+                                                                                                Real-Time Fluid Simulation on the Surface of a Sphere. Proc. ACM Comput. Graph.
+                                                                                                Interact. Tech. 2, 1, Article 4 (June 2019), 17 pages. https://doi.org/10.1145/3320285
+                                                                                            Jonas Zehnder, Rahul Narain, and Bernhard Thomaszewski. 2018. An advection-
+                                                                                                reflection solver for detail-preserving fluid simulation. ACM Transactions on Graphics
+                                                                                               (TOG) 37, 4 (2018), 1‚Äì8.
+                                                                                            Bo Zhu, Ed Quigley, Matthew Cong, Justin Solomon, and Ronald Fedkiw. 2014. Codi-
+                                                                                                mensional surface tension flow on simplicial complexes. ACM Transactions on
+                                                                                                Graphics (TOG) 33, 4 (2014), 111.
+
+                                                                                                           ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+1:14 ‚Ä¢ Huang, W. et al
+
+A MATERIAL DERIVATIVE IN SPHERICAL                                                                                                                                                       velocity u at grid point
+    COORDINATES
+                                                                                                                                                                                         great circle C
+The material derivative describes the rate of change of a quantity
+moving with a time-dependent velocity field u. We denote a di-                                                                                                       C
+mensionless scalar quantity in spherical coordinates as Œ¶(Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±°).
+Applying the chain rule yields                                                                                                                                                           back-traced point
+                                                                                                                                                                                         C (‚Äì‚Äì||u ||‚àÜt)
+                              Ì†µÌ∞∑ Œ¶    =     Ì†µÌºïŒ¶   +       Ì†µÌºïŒ¶ Ì†µÌ±ëÌ†µÌºÉ      +  Ì†µÌºïŒ¶ Ì†µÌ±ëÌ†µÌºô                              (39)
+                                                                                  .                                                                                      C
+
+                              Ì†µÌ∞∑Ì†µÌ±° Ì†µÌºïÌ†µÌ±° Ì†µÌºïÌ†µÌºÉ Ì†µÌ±ëÌ†µÌ±° Ì†µÌºïÌ†µÌºô Ì†µÌ±ëÌ†µÌ±°                                                                                                                              velocity u retrieved
+                                                                                                                                                                                         at C (‚Äì‚Äì||u ||‚àÜt)
+The dimensionless velocities in spherical coordinates are defined as
+                                                                                                                                                                                         great circle C
+                                         Ì†µÌ±ëÌ†µÌºÉ                                    Ì†µÌ±ëÌ†µÌºô
+                              Ì†µÌ±¢Ì†µÌºÉ = , Ì†µÌ±¢Ì†µÌºô = sin Ì†µÌºÉ .                                                                                                                                   final lookup point
+                                                                                                                 (40)                                                                    for velocity u :
+                                                                                                                                                                                         full step to C (‚Äì||u ||‚àÜt)
+                                         Ì†µÌ±ëÌ†µÌ±°                                     Ì†µÌ±ëÌ†µÌ±°
+
+Note that we included the sphere radius Ì†µÌ±Ö in our non-dimensionaliza-
+
+tion of Ì†µÌ±° in Section 3.2, thus we do not need to take account of the
+
+sphere radius when taking the derivatives. Substituting Equation (40)                                                  Fig. 21. Construction of a multi-step scheme similar to an order-2 Runge-
+                                                                                                                       Kutta update.
+in Equation (39) gives
+
+                            Ì†µÌ∞∑ Œ¶      =     Ì†µÌºïŒ¶   + Ì†µÌ±¢Ì†µÌºÉ     Ì†µÌºïŒ¶    +     Ì†µÌ±¢Ì†µÌºô      Ì†µÌºïŒ¶                          (41)
+                            Ì†µÌ∞∑Ì†µÌ±°            Ì†µÌºïÌ†µÌ±°             Ì†µÌºïÌ†µÌºÉ        sin Ì†µÌºÉ        .
+                                                                                                                       sampled. After transforming this vector back to the original point,
+                                                                                    Ì†µÌºïÌ†µÌºô                               it generates a second great circle (also blue). A full backward step
+                                                                                                                       along this circle takes us to the look-up location (‚àó) for the value
+The material derivative of a vector quantity, for example velocity, is                                                 that is advected to the grid point.
+similarly written as
+
+                              Ì†µÌ∞∑ u       =  Ì†µÌºïu   +       Ì†µÌºïu Ì†µÌ±ëÌ†µÌºÉ  +      Ì†µÌºïu Ì†µÌ±ëÌ†µÌºô                              (42)
+                                                                                  ,
+
+                              Ì†µÌ∞∑Ì†µÌ±° Ì†µÌºïÌ†µÌ±° Ì†µÌºïÌ†µÌºÉ Ì†µÌ±ëÌ†µÌ±° Ì†µÌºïÌ†µÌºô Ì†µÌ±ëÌ†µÌ±°                                                            C LINEAR SYSTEM
+
+where                                                                                         Ì†µÌºïeÌ†µÌºô                    We solve Equation (26) on a grid of dimension Ì†µÌ±ö √ó Ì†µÌ±õ and cell size
+                                                                                               .                     ŒîÌ†µÌ±† √ó ŒîÌ†µÌ±† in matrix form Ì†µÌ∞¥Ì†µÌ∫™ = b, where
+               Ì†µÌºïu       =    Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ  eÌ†µÌºÉ   +     Ì†µÌºïÌ†µÌ±¢Ì†µÌºô  eÌ†µÌºô   + Ì†µÌ±¢Ì†µÌºÉ     Ì†µÌºïeÌ†µÌºÉ  +                              (43)  Ì†µÌ∫™ = Œì0,0, . . . , ŒìÌ†µÌ±ö‚àí1,Ì†µÌ±õ‚àí1 ‚ä§ ‚àà RÌ†µÌ±öÌ†µÌ±õ, Ì†µÌ≤É = Ì†µÌ±è0,0, . . . , Ì†µÌ±èÌ†µÌ±ö‚àí1,Ì†µÌ±õ‚àí1 ‚ä§ ‚àà RÌ†µÌ±öÌ†µÌ±õ
+                                                                            
+                                                                                        Ì†µÌ±¢Ì†µÌºô                           and Ì†µÌ∞¥ ‚àà RÌ†µÌ±öÌ†µÌ±õ√óÌ†µÌ±öÌ†µÌ±õ is a sparse, block diagonal matrix with five el-
+                                                                                                                       ements in each row, corresponding to the cell itself and its four
+               Ì†µÌºïÌ†µÌ±° Ì†µÌºïÌ†µÌ±°                          Ì†µÌºïÌ†µÌ±°                    Ì†µÌºïÌ†µÌ±° Ì†µÌºïÌ†µÌ±°                                  direct neighbors. In order to make Ì†µÌ∞¥ symmetric positive definite,
+                                                                                                                       we multiply both sides of Equation (26) by sin Ì†µÌºÉ . Then, in each row,
+To evaluate the remaining two partial derivatives, we take a step                                                      the entries of Ì†µÌ∞¥ are given by
+
+back to look at the derivatives of unit vectors in sphere coordinates.
+
+Neglecting the radial (Ì†µÌ±ü -dependent) component, they are
+
+Ì†µÌºïeÌ†µÌºÉ = 0,     Ì†µÌºïeÌ†µÌºÉ = cos Ì†µÌºÉ eÌ†µÌºô ,                     Ì†µÌºïeÌ†µÌºô                    Ì†µÌºïeÌ†µÌºô = ‚àí cos Ì†µÌºÉ eÌ†µÌºÉ .          (44)
+                                                             = 0,
+
+Ì†µÌºïÌ†µÌºÉ           Ì†µÌºïÌ†µÌºô                                       Ì†µÌºïÌ†µÌºÉ                   Ì†µÌºïÌ†µÌºô
+
+Thus,
+
+Ì†µÌºïu    =  Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ eÌ†µÌºÉ  +  Ì†µÌºïÌ†µÌ±¢Ì†µÌºô          + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïeÌ†µÌºÉ        + Ì†µÌ±¢Ì†µÌºô Ì†µÌºïeÌ†µÌºô        =   Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ eÌ†µÌºÉ  +   Ì†µÌºïÌ†µÌ±¢Ì†µÌºô            Ì†µÌ∞¥Ì†µÌ±ñ,mid =           sin Ì†µÌºÉ (ŒîÌ†µÌ±° Œì‚àó )‚àí1 + Ì†µÌ±ÄŒîÌ†µÌ±° ŒîÌ†µÌ±†‚àí2
+                              eÌ†µÌºô                                                                         eÌ†µÌºô ,
+                                                                                                                                                         Ì†µÌºÉ ,Ì†µÌºô
+
+Ì†µÌºïÌ†µÌºÉ Ì†µÌºïÌ†µÌºÉ                   Ì†µÌºïÌ†µÌºÉ                  Ì†µÌºïÌ†µÌºÉ                  Ì†µÌºïÌ†µÌºÉ Ì†µÌºïÌ†µÌºÉ                     Ì†µÌºïÌ†µÌºÉ
+
+                                                                                                                 (45)                       Ô£Æ           sin‚àí1 Ì†µÌºÉ                              sin‚àí1 Ì†µÌºÉ
+                                                                                                                                            Ô£Ø
+
+and                                                                                                                                         Ô£Ø                                  +                                        +
+
+          Ì†µÌºïu         Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ eÌ†µÌºÉ         Ì†µÌºïÌ†µÌ±¢Ì†µÌºô                    Ì†µÌºïeÌ†µÌºÉ         Ì†µÌºïeÌ†µÌºô                                                      Ô£Ø  Ì†µÌºÇ‚àó      ‚àí  ŒîÌ†µÌ±†   + CrŒîÌ†µÌ±°           Ì†µÌºÇ‚àó        ‚àí  ŒîÌ†µÌ±†    + CrŒîÌ†µÌ±°
+                                              eÌ†µÌºô                          + Ì†µÌ±¢Ì†µÌºô                                                           Ô£Ø               2                                     2
+               =                      +                   + Ì†µÌ±¢Ì†µÌºÉ                                                                            Ô£Ø   Ì†µÌºÉ ,Ì†µÌºô                              Ì†µÌºÉ ,Ì†µÌºô
+
+          Ì†µÌºïÌ†µÌºô Ì†µÌºïÌ†µÌºô Ì†µÌºïÌ†µÌºô                                           Ì†µÌºïÌ†µÌºô                 Ì†µÌºïÌ†µÌºô                                                Ô£∞
+
+                                         Ì†µÌºïÌ†µÌ±¢Ì†µÌºô                                                                  (46)                            sin     Ì†µÌºÉ   +  ŒîÌ†µÌ±†                sin        Ì†µÌºÉ   ‚àí    ŒîÌ†µÌ±†         Ô£π
+                                              eÌ†µÌºô                                                                                                                2                                       2           Ô£∫
+                      Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ
+               =              eÌ†µÌºÉ     +                   + Ì†µÌ±¢Ì†µÌºÉ   cos Ì†µÌºÉ eÌ†µÌºô     ‚àí Ì†µÌ±¢Ì†µÌºô      cos Ì†µÌºÉ eÌ†µÌºÉ .                                                                     +                                     Ô£∫,
+                                                                                                                                            Ì†µÌºÇ‚àó                 + CrŒîÌ†µÌ±°            Ì†µÌºÇ‚àó                +  Cr ŒîÌ†µÌ±°      Ô£∫
+                      Ì†µÌºïÌ†µÌºô Ì†µÌºïÌ†µÌºô                                                                                                                     ŒîÌ†µÌ±†                                   ŒîÌ†µÌ±†                        Ô£∫
+                                                                                                                                             Ì†µÌºÉ      2                              Ì†µÌºÉ ‚àí   2
+                                                                                                                                                 +       ,Ì†µÌºô                                   ,Ì†µÌºô                   Ô£∫
+
+Combining Equations (40), (43), (45) and (46) we obtain                                                                                                                                                              Ô£ª
+
+                                                                                         Ì†µÌ±¢2                           Ì†µÌ∞¥Ì†µÌ±ñ,left|right   =  ‚àí    sin‚àí1       Ì†µÌºÉ  Ì†µÌ±Ä  ŒîÌ†µÌ±°  ŒîÌ†µÌ±†  ‚àí2  (Ì†µÌºÇ‚àó          ŒîÌ†µÌ±†  + CrŒîÌ†µÌ±°)‚àí1,
+                                                                                                                                                                                                  2
+            Ì†µÌ∞∑u =           Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ    + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ              Ì†µÌ±¢Ì†µÌºô    Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ            Ì†µÌºô                                                                                         Ì†µÌºÉ ,Ì†µÌºô  ‚àì
+            Ì†µÌ∞∑Ì†µÌ±°            Ì†µÌºïÌ†µÌ±°            Ì†µÌºïÌ†µÌºÉ                sin Ì†µÌºÉ   Ì†µÌºïÌ†µÌºô
+                                                          +                       ‚àí     tan Ì†µÌºÉ   eÌ†µÌºÉ                                                     ŒîÌ†µÌ±†
+                                                                                                                                            ‚àí sin Ì†µÌºÉ ‚àí
+                                                                                                                       Ì†µÌ∞¥Ì†µÌ±ñ,up =                                          Ì†µÌ±Ä   ŒîÌ†µÌ±°  ŒîÌ†µÌ±†   ‚àí2     (Ì†µÌºÇ‚àó      ŒîÌ†µÌ±†       +  Cr ŒîÌ†µÌ±° ) ‚àí1,
+                                                                                                                                                          2                                                 2
+                                                                                                                 (47)                                                                               Ì†µÌºÉ  ‚àí       ,Ì†µÌºô
+
+                            Ì†µÌºïÌ†µÌ±¢Ì†µÌºô Ì†µÌºïÌ†µÌ±¢Ì†µÌºô Ì†µÌ±¢Ì†µÌºô Ì†µÌºïÌ†µÌ±¢Ì†µÌºô Ì†µÌ±¢Ì†µÌºÉÌ†µÌ±¢Ì†µÌºô                                                                                   sin‚àí1               ŒîÌ†µÌ±°  ŒîÌ†µÌ±†  ‚àí2  (Ì†µÌºÇ‚àó               + CrŒîÌ†µÌ±°)‚àí1,
+                      +               + Ì†µÌ±¢Ì†µÌºÉ              +                       +              eÌ†µÌºô .                 Ì†µÌ∞¥Ì†µÌ±ñ,down =          ‚àí
+                                                            sin Ì†µÌºÉ                  tan Ì†µÌºÉ                                                                   Ì†µÌºÉ  Ì†µÌ±Ä                   Ì†µÌºÉ ,Ì†µÌºô  +  ŒîÌ†µÌ±†
+                                                                                                                                                                                                  2
+                              Ì†µÌºïÌ†µÌ±°                Ì†µÌºïÌ†µÌºÉ                     Ì†µÌºïÌ†µÌºô
+
+B 2ND-ORDER HALF-STEP UPDATE                                                                                           where Ì†µÌºÉ and Ì†µÌºô denote the cell center of the respective mid cell. The
+
+Based on the single-step scheme detailed in Section 4.2, we construct                                                  right hand side Ì†µÌ±è is given by
+a multi-step scheme inspired by second-order Runge Kutta that can
+deliver higher accuracy (Figure 21). First, the velocity vector sampled                                                                     1                    Ì†µÌºÇ‚àó u‚àó        +  CrŒîÌ†µÌ±° (uair)Ì†µÌ±ñ,Ì†µÌ±ó             +    ŒîÌ†µÌ±°Ì†µÌºÇ‚àó    Ì†µÌ±ó  gÌ†µÌ±ñ,  Ì†µÌ±ó
+at the grid point (red) defines a great circle (also red) which is                                                                          ŒîÌ†µÌ±°
+used to construct a local coordinate frame. Following this direction                                                   Ì†µÌ±èÌ†µÌ±ñ,Ì†µÌ±ó = sin Ì†µÌºÉ          ‚àí‚àá¬∑              Ì†µÌ±ñ,Ì†µÌ±ó Ì†µÌ±ñ,Ì†µÌ±ó                                             Ì†µÌ±ñ,
+backward by a half time step, a second velocity vector (blue) is
+                                                                                                                                                                                    Ì†µÌºÇ‚àó + CrŒîÌ†µÌ±°                                              .
+
+                                                                                                                                                                                    Ì†µÌ±ñ, Ì†µÌ±ó
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1. Publication date: July 2020.
+

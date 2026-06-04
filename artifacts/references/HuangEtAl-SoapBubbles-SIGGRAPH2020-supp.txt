@@ -1,0 +1,419 @@
+Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles:
+Supplemental Document
+
+WEIZHEN HUANG, JULIAN ISERINGHAUSEN, and TOM KNEIPHOF, University of Bonn, Germany
+ZIYIN QU and CHENFANFU JIANG, University of Pennsylvania, USA
+MATTHIAS B. HULLIN, University of Bonn, Germany
+
+ACM Reference Format:                                                                                      The derivation for the inner side with Ì†µÌ±ü = Ì†µÌ±Ö ‚àí Ì†µÌºÇ (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±°) is similar,
+Weizhen Huang, Julian Iseringhausen, Tom Kneiphof, Ziyin Qu, Chenfanfu                                     yielding
+Jiang, and Matthias B. Hullin. 2020. Chemomechanical Simulation of Soap
+Film Flow on Spherical Bubbles: Supplemental Document. ACM Trans. Graph.                                               ‚àí Ì†µÌ±¢Ì†µÌ±ü   =    Ì†µÌºïÌ†µÌºÇ    +    Ì†µÌ±¢Ì†µÌºÉ  Ì†µÌºïÌ†µÌºÇ     +    Ì†µÌ±¢Ì†µÌºô        Ì†µÌºïÌ†µÌºÇ          (51)
+39, 4, Article 1 (Supplemental Document) (July 2020), 4 pages. https://doi.                                                          Ì†µÌºïÌ†µÌ±°         Ì†µÌ±Ö    Ì†µÌºïÌ†µÌºÉ        Ì†µÌ±Ö sin Ì†µÌºÉ        .
+org/10.1145/3386569.3392094
+                                                                                                                                                                                  Ì†µÌºïÌ†µÌºô
+
+ABSTRACT                                                                                                   2 ASYMPTOTIC EXPANSION
+
+This document provides a detailed derivation of the kinematic con-                                         In this section, we derive Equation (10), with neglect of the force
+dition and the lubrication model, i.e., Equation (10) in the main                                          term f.
+paper.                                                                                                     The Cauchy stress tensor Ì†µÌºé in Equation (1) is defined in terms of
+                                                                                                           local fluid pressure and viscosity as Ì†µÌºé = ‚àíÌ†µÌ±ùI + Ì†µÌºá [‚àáu + (‚àáu)‚ä§]; in
+                                                                                                           spherical coordinates it has components
+
+1 THE KINEMATIC CONDITION                                                                                                 2Ì†µÌºá
+                                                                                                           Ì†µÌºéÌ†µÌºÉÌ†µÌºÉ = ‚àíÌ†µÌ±ù +
+In this section we derive the kinematic condition in spherical co-                                                                 Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ + Ì†µÌ±¢Ì†µÌ±ü ,                                              (52a)
+ordinates (Equation (7)), all the quantities preserve their physical                                                                                                                            (52b)
+dimensions. Let Ì†µÌ∞π (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±ü, Ì†µÌ±°) = 0 be an implicit definition of the                                                       Ì†µÌ±ü Ì†µÌºïÌ†µÌºÉ                                                          (52c)
+outer bubble surface, where Ì†µÌºÇ is the half thickness of the film. Then,                                                                                                                         (52d)
+the height field at the outer side of the bubble can be written as                                                          2Ì†µÌºá              Ì†µÌºïÌ†µÌ±¢Ì†µÌºô + Ì†µÌ±¢Ì†µÌºÉ cos Ì†µÌºÉ + Ì†µÌ±¢Ì†µÌ±ü sin Ì†µÌºÉ ,               (52e)
+Ì†µÌ±ü = Ì†µÌ±Ö + Ì†µÌºÇ (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±°) and the free surface is given by                                                 Ì†µÌºéÌ†µÌºôÌ†µÌºô = ‚àíÌ†µÌ±ù + Ì†µÌ±ü sin Ì†µÌºÉ          Ì†µÌºïÌ†µÌºô                                               (52f )
+
+                                                                                                           Ì†µÌºéÌ†µÌ±üÌ†µÌ±ü = ‚àíÌ†µÌ±ù + 2Ì†µÌºá Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü ,
+                                                                                                                             Ì†µÌºïÌ†µÌ±ü
+
+                     Ì†µÌ∞π (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±ü, Ì†µÌ±°) = Ì†µÌºÇ (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±°) ‚àí Ì†µÌ±ü + Ì†µÌ±Ö = 0.                            (48)             Ì†µÌºá        Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ + Ì†µÌºïÌ†µÌ±¢Ì†µÌºô sin Ì†µÌºÉ ‚àí Ì†µÌ±¢Ì†µÌºô cos Ì†µÌºÉ ,
+                                                                                                           Ì†µÌºéÌ†µÌºÉÌ†µÌºô = Ì†µÌ±ü sin Ì†µÌºÉ   Ì†µÌºïÌ†µÌºô Ì†µÌºïÌ†µÌºÉ
+Taking the material derivative of Ì†µÌ∞π we have
+
+                                                                                                                   Ì†µÌºá   Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ     ‚àí Ì†µÌ±¢Ì†µÌºÉ    +    Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü
+                                                                                                           Ì†µÌºéÌ†µÌºÉÌ†µÌ±ü =    Ì†µÌ±ü
+     Ì†µÌ∞∑ Ì†µÌ∞π                                                                                                                                                    ,
+0=
+                                                                                                           Ì†µÌ±ü Ì†µÌºïÌ†µÌ±ü                                Ì†µÌºïÌ†µÌºÉ
+     Ì†µÌ∞∑Ì†µÌ±°
+
+   Ì†µÌºïÌ†µÌ∞π Ì†µÌºïÌ†µÌ∞π Ì†µÌ±ëÌ†µÌºÉ Ì†µÌºïÌ†µÌ∞π Ì†µÌ±ëÌ†µÌºô Ì†µÌºïÌ†µÌ∞π Ì†µÌ±ëÌ†µÌ±ü                                                                                 Ì†µÌºá        Ì†µÌ±ü Ì†µÌºïÌ†µÌ±¢Ì†µÌºô sin Ì†µÌºÉ ‚àí Ì†µÌ±¢Ì†µÌºô sin Ì†µÌºÉ + Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü                   .
+=+                         +                +                                                              Ì†µÌºéÌ†µÌºôÌ†µÌ±ü = Ì†µÌ±ü sin Ì†µÌºÉ
+                                                                                                                                   Ì†µÌºïÌ†µÌ±ü                                           Ì†µÌºïÌ†µÌºô
+   Ì†µÌºïÌ†µÌ±° Ì†µÌºïÌ†µÌºÉ Ì†µÌ±ëÌ†µÌ±° Ì†µÌºïÌ†µÌºô Ì†µÌ±ëÌ†µÌ±° Ì†µÌºïÌ†µÌ±ü Ì†µÌ±ëÌ†µÌ±°
+
+=  Ì†µÌºïÌ†µÌ∞π     + Ì†µÌ±¢Ì†µÌºÉ   Ì†µÌºïÌ†µÌ∞π  +       Ì†µÌ±¢Ì†µÌºô     Ì†µÌºïÌ†µÌ∞π  + Ì†µÌ±¢Ì†µÌ±ü   Ì†µÌºïÌ†µÌ∞π                                            The stress boundary conditions at both surfaces are
+   Ì†µÌºïÌ†µÌ±°        Ì†µÌ±Ö    Ì†µÌºïÌ†µÌºÉ        Ì†µÌ±Ö sin Ì†µÌºÉ  Ì†µÌºïÌ†µÌºô           Ì†µÌºïÌ†µÌ±ü
+
+   Ì†µÌºï(Ì†µÌºÇ ‚àí Ì†µÌ±ü )            Ì†µÌ±¢Ì†µÌºÉ  Ì†µÌºï(Ì†µÌºÇ ‚àí Ì†µÌ±ü )          Ì†µÌ±¢Ì†µÌºô      Ì†µÌºï(Ì†µÌºÇ ‚àí Ì†µÌ±ü )          Ì†µÌºï(Ì†µÌºÇ ‚àí Ì†µÌ±ü )  (49)              Ì†µÌºé ¬∑ nÌ†µÌ±ñ,Ì†µÌ±ú = (2CÌ†µÌ±ñ,Ì†µÌ±úÌ†µÌªæ ‚àí Ì†µÌ±ùÌ†µÌ±ñ,Ì†µÌ±ú )nÌ†µÌ±ñ,Ì†µÌ±ú + ‚àásÌ†µÌªæ,                       (53)
+      Ì†µÌºïÌ†µÌ±°                 Ì†µÌ±Ö       Ì†µÌºïÌ†µÌºÉ             Ì†µÌ±Ö sin Ì†µÌºÉ      Ì†µÌºïÌ†µÌºô                  Ì†µÌºïÌ†µÌ±ü
+=                    +                         +                               + Ì†µÌ±¢Ì†µÌ±ü
+
+=  Ì†µÌºïÌ†µÌºÇ              + Ì†µÌ±¢Ì†µÌºÉ      Ì†µÌºïÌ†µÌºÇ             + Ì†µÌ±¢Ì†µÌºô         Ì†µÌºïÌ†µÌºÇ                                      where Ì†µÌ±ùÌ†µÌ±ñ,Ì†µÌ±ú represent air pressure at the inner and the outer surface,
+      ‚àí0                             ‚àí0             Ì†µÌ±Ö sin Ì†µÌºÉ        ‚àí 0 + Ì†µÌ±¢Ì†µÌ±ü (0 ‚àí 1)                    and 2CÌ†µÌ±ñ,Ì†µÌ±ú = ‚àí‚àá ¬∑ nÌ†µÌ±ñ,Ì†µÌ±ú is twice the mean surface curvature, and the
+   Ì†µÌºïÌ†µÌ±°                    Ì†µÌ±Ö                                                                              outward unit normal vectors to both film surfaces are
+                                 Ì†µÌºïÌ†µÌºÉ                            Ì†µÌºïÌ†µÌºô
+
+=  Ì†µÌºïÌ†µÌºÇ     +  Ì†µÌ±¢Ì†µÌºÉ  Ì†µÌºïÌ†µÌºÇ  +       Ì†µÌ±¢Ì†µÌºô     Ì†µÌºïÌ†µÌºÇ  ‚àí Ì†µÌ±¢Ì†µÌ±ü                                                                       ‚àí1     Ì†µÌºïÌ†µÌºÇ   eÌ†µÌºÉ  ‚àí          1         Ì†µÌºïÌ†µÌºÇ  eÌ†µÌºô  +  eÌ†µÌ±ü
+   Ì†µÌºïÌ†µÌ±°        Ì†µÌ±Ö    Ì†µÌºïÌ†µÌºÉ        Ì†µÌ±Ö sin Ì†µÌºÉ  Ì†µÌºïÌ†µÌºô                                                                                      Ì†µÌºïÌ†µÌºÉ                  sin Ì†µÌºÉ     Ì†µÌºïÌ†µÌºô
+                                                                                                                                 Ì†µÌ±ü                     Ì†µÌ±ü                                      (54)
+
+                                                                                                           nÌ†µÌ±ú =                                                                             ,
+
+and subsequently                                                                                                                1  +   1          Ì†µÌºïÌ†µÌºÇ  2   +           1            Ì†µÌºïÌ†µÌºÇ 2
+                                                                                                                                       Ì†µÌ±ü 2       Ì†µÌºïÌ†µÌºÉ                 sin2 Ì†µÌºÉ       Ì†µÌºïÌ†µÌºô
+                                    Ì†µÌºïÌ†µÌºÇ       Ì†µÌ±¢Ì†µÌºÉ  Ì†µÌºïÌ†µÌºÇ         Ì†µÌ±¢Ì†µÌºô     Ì†µÌºïÌ†µÌºÇ                                                                                  Ì†µÌ±ü 2
+                                    Ì†µÌºïÌ†µÌ±°       Ì†µÌ±Ö    Ì†µÌºïÌ†µÌºÉ       Ì†µÌ±Ö sin Ì†µÌºÉ     .
+                           Ì†µÌ±¢Ì†µÌ±ü  =          +              +                                         (50)                      ‚àí1     Ì†µÌºïÌ†µÌºÇ   eÌ†µÌºÉ  ‚àí          1      Ì†µÌºïÌ†µÌºÇ     eÌ†µÌºô  ‚àí  eÌ†µÌ±ü
+                                                                           Ì†µÌºïÌ†µÌºô                                                       Ì†µÌºïÌ†µÌºÉ                  sin Ì†µÌºÉ  Ì†µÌºïÌ†µÌºô
+                                                                                                                                 Ì†µÌ±ü
+                                                                                                                                                        Ì†µÌ±ü                                      (55)
+                                                                                                           nÌ†µÌ±ñ =
+This work was supported by the European Research Council under ERC starting grant                                                                                                            ,
+‚ÄúECHO‚Äù, the National Science Foundation (CAREER IIS-1943199 and CCF-1813624) and
+the Department of Energy (ORNL 4000171342).                                                                                     1  +   1          Ì†µÌºïÌ†µÌºÇ  2   +           1            Ì†µÌºïÌ†µÌºÇ 2
+                                                                                                                                       Ì†µÌ±ü 2       Ì†µÌºïÌ†µÌºÉ                 sin2 Ì†µÌºÉ       Ì†µÌºïÌ†µÌºô
+Authors‚Äô e-mail addresses:                                                                                                                                       Ì†µÌ±ü 2
+{whuang|iseringhausen|kneiphof}@cs.uni-bonn.de, {ziyinq|cffjiang}@seas.upenn.edu,
+hullin@cs.uni-bonn.de.                                                                                     where as the (not normalized) tangent vectors are
+
+                                                                                                                               1 Ì†µÌºïÌ†µÌºÇ                                             1 Ì†µÌºïÌ†µÌºÇ        (56)
+¬© 2020 Copyright held by the owner/author(s). Publication rights licensed to ACM.                          tÌ†µÌ±ú1 = eÌ†µÌºÉ + eÌ†µÌ±ü ,                     tÌ†µÌ±ú2 = eÌ†µÌºô + Ì†µÌ±ü sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô eÌ†µÌ±ü ,
+This is the author‚Äôs version of the work. It is posted here for your personal use. Not for                              Ì†µÌ±ü Ì†µÌºïÌ†µÌºÉ
+redistribution. The definitive Version of Record was published in ACM Transactions on
+Graphics, https://doi.org/10.1145/3386569.3392094.                                                                             1 Ì†µÌºïÌ†µÌºÇ                                             1 Ì†µÌºïÌ†µÌºÇ        (57)
+                                                                                                           tÌ†µÌ±ñ1 = eÌ†µÌºÉ ‚àí eÌ†µÌ±ü ,                     tÌ†µÌ±ñ2 = eÌ†µÌºô ‚àí Ì†µÌ±ü sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô eÌ†µÌ±ü .
+                                                                                                                        Ì†µÌ±ü Ì†µÌºïÌ†µÌºÉ
+
+                                                                                                     ACM Trans. Graph., Vol. 39, No. 4, Article 1 (Supplemental Document). Publication date: July 2020.
+1 (Supplemental Document):2 ‚Ä¢ Huang, W. et al
+
+With the variables in Equations (1), (5) and (52) non-dimensionalized                                                       and u, Œì, Ì†µÌ±ù, Ì†µÌºÇ as well as the other components of the stress tensor as
+
+by                                                                                                                                                           Ì†µÌ±î = Ì†µÌ±î(0) + Ì†µÌºñÌ†µÌ±î(1) + Ì†µÌ±Ç (Ì†µÌºñ2),                                              (64)
+
+                Ì†µÌºñ  =       Ì†µÌºÇ0         Ì†µÌºÇ  =       ‚Ä≤        Ì†µÌ±¢Ì†µÌºÉ      = Ì†µÌ±à Ì†µÌ±¢‚Ä≤ ,               Ì†µÌ±¢Ì†µÌºô  =       ‚Ä≤
+                               ,
+                                               Ì†µÌºÇ0Ì†µÌºÇ ,                        Ì†µÌºÉ                         Ì†µÌ±àÌ†µÌ±¢ ,
+                            Ì†µÌ±Ö                                                                                                 Substituting the above expansions into Equation (59), grouping
+                                                                                                             Ì†µÌºô             terms with equal powers of Ì†µÌºñ and setting the coefficients to zero,
+                                                                                                                            we obtain a series of solvable linear equations.
+                            =   Ì†µÌºáÌ†µÌ±à      ‚Ä≤               =           ‚Ä≤                   =      +            ‚Ä≤      (58)
+
+                        Ì†µÌºé              Ì†µÌºé ,        Ì†µÌ±¢Ì†µÌ±ü     Ì†µÌºñÌ†µÌ±à   Ì†µÌ±¢Ì†µÌ±ü  ,     Ì†µÌ±ü           Ì†µÌ±Ö       Ì†µÌºñÌ†µÌ±ÖÌ†µÌ±ü  ,
+
+                                  Ì†µÌ±Ö
+
+            Ì†µÌ±°  =       Ì†µÌ±Ö ‚Ä≤          Œì = Œì0Œì‚Ä≤,              Ì†µÌ±ù     =  Ì†µÌºáÌ†µÌ±à ‚Ä≤                   Ì†µÌ∞∑Ì†µÌ±†  =         ‚Ä≤
+                          Ì†µÌ±° ,                                             Ì†µÌ±ù ,
+                                                                                                         Ì†µÌ±à Ì†µÌ±ÖÌ†µÌ∞∑Ì†µÌ±†,
+                    Ì†µÌ±à                                                 Ì†µÌ±ÖÌ†µÌºñ                                                 2.1 Leading-order Equations
+                                                                                                                            The leading-order problem consists of the continuity equation
+and dropping the primes of the non-dimensionalized quantities for
+
+readability, we arrive at
+
+    Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ      + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ            Ì†µÌ±¢Ì†µÌºô       Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ   + Ì†µÌ±¢Ì†µÌ±ü Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ                                Ì†µÌ±¢2                                      Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ        +        (0)                   (0)         = 0,                  (65)
+    Ì†µÌºïÌ†µÌ±°              Ì†µÌºïÌ†µÌºÉ              sin Ì†µÌºÉ      Ì†µÌºïÌ†µÌºô           Ì†µÌºïÌ†µÌ±ü
+                                                                                                            Ì†µÌºô                                        Ì†µÌºÉ                        Ì†µÌºïÌ†µÌ±¢       + sin Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü
+
+                                                                                                         tan Ì†µÌºÉ                                                                    Ì†µÌºô
+
+                                  +                                             + Ì†µÌºñÌ†µÌ±¢Ì†µÌºÉÌ†µÌ±¢Ì†µÌ±ü          ‚àí              (59a)                                   Ì†µÌºïÌ†µÌºÉ               Ì†µÌºïÌ†µÌºô                     Ì†µÌºïÌ†µÌ±ü
+
+            = Re‚àí1               ‚àí1 Ì†µÌºïÌ†µÌºéÌ†µÌºÉÌ†µÌ±ü        + Ì†µÌºïÌ†µÌºéÌ†µÌºÉÌ†µÌºÉ sin Ì†µÌºÉ + 1 Ì†µÌºïÌ†µÌºéÌ†µÌºÉÌ†µÌºô                                          and the momentum equations
+                                Ì†µÌºñ
+                                                             Ì†µÌºïÌ†µÌºÉ                     sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                         (‚àí1)                                (‚àí1)                                  (‚àí1)
+                                      Ì†µÌºïÌ†µÌ±ü
+                                                                                                                                                                         Ì†µÌºïÌ†µÌºé                            Re‚àí1 Ì†µÌºïÌ†µÌºéÌ†µÌ±üÌ†µÌ±ü = 0.
+                                                             Ì†µÌºéÌ†µÌºôÌ†µÌºô                                                         Re‚àí1          Ì†µÌºïÌ†µÌºé        = 0,         Re‚àí1 Ì†µÌºôÌ†µÌ±ü = 0,                                                          (66)
+                                                             tan Ì†µÌºÉ
+                                                                                                                                             Ì†µÌºÉÌ†µÌ±ü
+
+                                            +3Ì†µÌºéÌ†µÌºÉÌ†µÌ±ü      ‚àí                  ,                                                            Ì†µÌºïÌ†µÌ±ü                                  Ì†µÌºïÌ†µÌ±ü                                  Ì†µÌºïÌ†µÌ±ü
+
+    Ì†µÌºïÌ†µÌ±¢Ì†µÌºô      + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌºô     +      Ì†µÌ±¢Ì†µÌºô       Ì†µÌºïÌ†µÌ±¢Ì†µÌºô   + Ì†µÌ±¢Ì†µÌ±ü Ì†µÌºïÌ†µÌ±¢Ì†µÌºô      + Ì†µÌºñÌ†µÌ±¢Ì†µÌºôÌ†µÌ±¢Ì†µÌ±ü          + Ì†µÌ±¢Ì†µÌºÉÌ†µÌ±¢Ì†µÌºô     (59b)  For the boundary conditions, we have the kinematic condition (see
+     Ì†µÌºïÌ†µÌ±°             Ì†µÌºïÌ†µÌºÉ              sin Ì†µÌºÉ      Ì†µÌºïÌ†µÌºô           Ì†µÌºïÌ†µÌ±ü                                 tan Ì†µÌºÉ              Section 1) at the outer boundary
+
+            = Re‚àí1              Ì†µÌºñ‚àí1 Ì†µÌºïÌ†µÌºéÌ†µÌºôÌ†µÌ±ü         Ì†µÌºïÌ†µÌºéÌ†µÌºÉÌ†µÌºô sin Ì†µÌºÉ               1 Ì†µÌºïÌ†µÌºéÌ†µÌºôÌ†µÌºô                                                       (0)  =  Ì†µÌºïÌ†µÌºÇ (0)        + Ì†µÌ±¢ (0) Ì†µÌºïÌ†µÌºÇ (0)     +    (0)       Ì†µÌºïÌ†µÌºÇ (0)                 (67)
+                                      Ì†µÌºïÌ†µÌ±ü          +                           +                                                                             Ì†µÌºïÌ†µÌ±°              Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ                            Ì†µÌºïÌ†µÌºô
+                                                                                                                                                   Ì†µÌ±¢Ì†µÌ±ü                                               Ì†µÌ±¢
+                                                           Ì†µÌºïÌ†µÌºÉ                   sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô
+                                                                                                                                                                                                        Ì†µÌºô
+
+                                                                                                                                                                                                      sin Ì†µÌºÉ
+
+                                            +3Ì†µÌºéÌ†µÌºôÌ†µÌ±ü      +  Ì†µÌºéÌ†µÌºÉÌ†µÌºô          ,                                              and at the inner boundary
+                                                             tan Ì†µÌºÉ
+                                                                                                                                                                                                           (0)
+    Ì†µÌºñ          Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü  + Ì†µÌ±¢Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü       + Ì†µÌ±¢Ì†µÌºô          Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü  + Ì†µÌ±¢Ì†µÌ±ü Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü            + Ì†µÌ±¢2 + Ì†µÌ±¢2             (59c)                ‚àí          (0)     =     Ì†µÌºïÌ†µÌºÇ (0)     + Ì†µÌ±¢ (0) Ì†µÌºïÌ†µÌºÇ (0)     +              Ì†µÌºïÌ†µÌºÇ (0)              (68)
+                Ì†µÌºïÌ†µÌ±°          Ì†µÌºïÌ†µÌºÉ            sin Ì†µÌºÉ        Ì†µÌºïÌ†µÌºô          Ì†µÌºïÌ†µÌ±ü                                                                                      Ì†µÌºïÌ†µÌ±°           Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ               Ì†µÌ±¢                ,
+                                                                                                 Ì†µÌºÉ Ì†µÌºô                                             Ì†µÌ±¢Ì†µÌ±ü
+                                                                                                                                                                                                           Ì†µÌºô         Ì†µÌºïÌ†µÌºô
+
+                                                                                                                                                                                                         sin Ì†µÌºÉ
+
+            = Re‚àí1              Ì†µÌºñ‚àí1 Ì†µÌºïÌ†µÌºéÌ†µÌ±üÌ†µÌ±ü       + Ì†µÌºïÌ†µÌºéÌ†µÌºÉÌ†µÌ±ü sin Ì†µÌºÉ + 1 Ì†µÌºïÌ†µÌºéÌ†µÌºôÌ†µÌ±ü                                          as well as the stress condition at the outer boundary
+                                      Ì†µÌºïÌ†µÌ±ü
+                                                             Ì†µÌºïÌ†µÌºÉ                     sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                           (‚àí1)                     (‚àí1)                       (‚àí1)
+
+                                                                                                                                          Ì†µÌºé              =  0,    Ì†µÌºé           =      0,     Ì†µÌºéÌ†µÌ±ü Ì†µÌ±ü    =     ‚àíÌ†µÌ±ùÌ†µÌ±ú  ‚àí 2Ì†µÌ±Ü,               (69)
+
+                                        +2Ì†µÌºéÌ†µÌ±üÌ†µÌ±ü ‚àí Ì†µÌºéÌ†µÌºÉÌ†µÌºÉ ‚àí Ì†µÌºéÌ†µÌºôÌ†µÌºô ,                                                                      Ì†µÌºÉÌ†µÌ±ü                            Ì†µÌºôÌ†µÌ±ü
+
+                            Ì†µÌºïÌ†µÌ±¢Ì†µÌºÉ sin Ì†µÌºÉ        Ì†µÌºïÌ†µÌ±¢Ì†µÌºô      + sin Ì†µÌºÉ Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü                                                and at the inner boundary
+                                               +
+                                                                                          = 0,                       (59d)                  (‚àí1)          =  0,      (‚àí1)       =      0,       (‚àí1)     =     ‚àíÌ†µÌ±ùÌ†µÌ±ñ  +     2Ì†µÌ±Ü .          (70)
+                                  Ì†µÌºïÌ†µÌºÉ              Ì†µÌºïÌ†µÌºô                        Ì†µÌºïÌ†µÌ±ü                                 (59e)
+                                                                                                                                          Ì†µÌºé                       Ì†µÌºé                         Ì†µÌºéÌ†µÌ±ü Ì†µÌ±ü
+
+                                                                                                                                          Ì†µÌºÉÌ†µÌ±ü                            Ì†µÌºôÌ†µÌ±ü
+
+                Ì†µÌºïŒì               1            Ì†µÌºï                                     Ì†µÌºï
+                Ì†µÌºïÌ†µÌ±°        +   sin Ì†µÌºÉ              ŒìÌ†µÌ±¢Ì†µÌºÉ sin Ì†µÌºÉ + ŒìÌ†µÌ±¢Ì†µÌºô
+                                                                                                                            Combining Equations (52), (66), (69) and (70), we discover that
+                                              Ì†µÌºïÌ†µÌºÉ                              Ì†µÌºïÌ†µÌºô
+
+                = Ì†µÌ∞∑Ì†µÌ±†            Ì†µÌºï        sin Ì†µÌºÉ Ì†µÌºïŒì          Ì†µÌºï                1 Ì†µÌºïŒì                                                                                               (0)
+                   sin Ì†µÌºÉ         Ì†µÌºïÌ†µÌºÉ            Ì†µÌºïÌ†µÌºÉ       +                  sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                                                                     Ì†µÌºïÌ†µÌ±¢
+                                                                                                         .                                                     (‚àí1)       =                = 0,                                            (71)
+                                                               Ì†µÌºïÌ†µÌºô                                                                                                                Ì†µÌºÉ
+                                                                                                                                                             Ì†µÌºé
+
+                                                                                                                                                             Ì†µÌºÉÌ†µÌ±ü               Ì†µÌºïÌ†µÌ±ü
+
+Additionally, we introduce the following dimensionless numbers                                                                                                                  Ì†µÌºïÌ†µÌ±¢  (0)
+
+                                  Ì†µÌªæÌ†µÌ±éÌ†µÌºñ                 Ì†µÌ±à Ì†µÌ±ÖÌ†µÌºå                              Œì0Ì†µÌªæÌ†µÌ±ü                                                           (‚àí1)       =           Ì†µÌºô = 0,                                              (72)
+                                      ,            Re = ,                                    Ì†µÌºåÌ†µÌºÇ0Ì†µÌ±à 2 ,
+                                                                                                                                                             Ì†µÌºé
+                                                           Ì†µÌºá
+                            =                                                             =                          (60)                                    Ì†µÌºôÌ†µÌ±ü               Ì†µÌºïÌ†µÌ±ü
+
+                        Ì†µÌ±Ü                                                      Ì†µÌ±Ä                                                                                                                    + Ì†µÌ±ùÌ†µÌ±ú
+                                                                                                                                                                                                      2
+                                  Ì†µÌºáÌ†µÌ±à                                                                                                                         (‚àí1)       =     ‚àíÌ†µÌ±ù (0)    =  ‚àí Ì†µÌ±ùÌ†µÌ±ñ                                       (73)
+
+                                                                                                                                                             Ì†µÌºéÌ†µÌ±üÌ†µÌ±ü                                            .
+
+where Ì†µÌ±Ü is a measure of the equilibrium surface tension, Re is the                                                         Thus, Ì†µÌ±¢ (0) and Ì†µÌ±¢ (0) are independent of Ì†µÌ±ü and are only functions of
+Reynolds number and Ì†µÌ±Ä is the Marangoni number. The surface                                                                           Ì†µÌºÉ              Ì†µÌºô
+tension is now given by
+                                                                                                                            Ì†µÌºÉ, Ì†µÌºô and Ì†µÌ±°. As a result, we may integrate the continuity equation (65)
+
+                                        Ì†µÌªæ = Ì†µÌºáÌ†µÌ±à          ‚àí1       ‚àí     Ì†µÌ±Ä Re Œì            ,                       (61)   in Ì†µÌ±ü and obtain
+
+                                                          Ì†µÌºñ Ì†µÌ±Ü
+
+and the expression for 2CÌ†µÌ±ú is                                                                                                              (0)    =      Ì†µÌ±ü       Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ            +     (0)        + Ì†µÌ∞∂ (Ì†µÌºÉ, Ì†µÌºô, Ì†µÌ±°),          (74)
+                                                                                                                                                      ‚àí
+                                                                                                                                          Ì†µÌ±¢Ì†µÌ±ü                        Ì†µÌºÉ                         Ì†µÌºïÌ†µÌ±¢
+                                                                                                                                                        sin Ì†µÌºÉ
+                                                                                                                                                                                                    Ì†µÌºô
+
+                    Ì†µÌºï2                 1 Ì†µÌºï                 1 Ì†µÌºï2                    Ì†µÌºÇ ‚àí 2 + 2Ì†µÌºñÌ†µÌºÇ +Ì†µÌ±Ç (Ì†µÌºñ2), (62)                                                            Ì†µÌºïÌ†µÌºÉ               Ì†µÌºïÌ†µÌºô
+                                                                                          Ì†µÌ±Ö Ì†µÌ±Ö
+        Ì†µÌºñ          Ì†µÌºïÌ†µÌºÉ 2 + tan Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ + sin2 Ì†µÌºÉ Ì†µÌºïÌ†µÌºô2                                                                    combining with the kinematic conditions (67) and (68) yields
+2CÌ†µÌ±ú =
+
+        Ì†µÌ±Ö
+
+whereas that for 2CÌ†µÌ±ñ is similar and not to be explicitly listed.                                                           Ì†µÌºïÌ†µÌºÇ (0)  + Ì†µÌ±¢ (0) Ì†µÌºïÌ†µÌºÇ (0)   +          (0)  Ì†µÌºïÌ†µÌºÇ (0)     +   Ì†µÌºÇ (0)     Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ       +         (0)  = 0.
+   We perform an asymptotic analysis by expanding the variables
+                                                                                                                                                                   Ì†µÌ±¢                                    Ì†µÌºÉ                        Ì†µÌºïÌ†µÌ±¢
+in Ì†µÌºñ series; that is, we expand Ì†µÌºéÌ†µÌºÉÌ†µÌ±ü , Ì†µÌºéÌ†µÌºôÌ†µÌ±ü , Ì†µÌºéÌ†µÌ±üÌ†µÌ±ü as
+                                                                                                                                                                    Ì†µÌºô                                                                Ì†µÌºô
+
+                                                                                                                            Ì†µÌºïÌ†µÌ±° Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô sin Ì†µÌºÉ                                                    Ì†µÌºïÌ†µÌºÉ                Ì†µÌºïÌ†µÌºô
+
+                            Ì†µÌ±ì = Ì†µÌºñ‚àí1 Ì†µÌ±ì (‚àí1) + Ì†µÌ±ì (0) + Ì†µÌºñ Ì†µÌ±ì (1) + Ì†µÌ±Ç (Ì†µÌºñ2),                                       (63)                                                                                                                  (75)
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1 (Supplemental Document). Publication date: July 2020.
+                                                                                                                                   Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles:
+                                                                                                                                               Supplemental Document ‚Ä¢ 1 (Supplemental Document):3
+
+The leading-order equation for the surfactant concentration is                                                   The   only    unknowns              remaining            are      (1)    and     Ì†µÌºé (1) .  To    obtain     them,
+
+                                                                                                                                                                                 Ì†µÌºé
+
+                                                                                                                                                                                   Ì†µÌºÉ Ì†µÌ±ü          Ì†µÌºôÌ†µÌ±ü
+
+Ì†µÌºïŒì (0) 1                    Ì†µÌºï                 (0)                 Ì†µÌºï                   (0)                     we write the two tangential stress conditions in Ì†µÌ±Ç (Ì†µÌºñ) at the outer
+       +                                                         +
+                                     Œì  (0)          sin     Ì†µÌºÉ                Œì  (0)                      (76)  boundary as
+  Ì†µÌºïÌ†µÌ±° sin Ì†µÌºÉ                                                                                           .
+                                           Ì†µÌ±¢                                        Ì†µÌ±¢
+
+                             Ì†µÌºïÌ†µÌºÉ               Ì†µÌºÉ                     Ì†µÌºïÌ†µÌºô              Ì†µÌºô
+
+       =     Ì†µÌ∞∑Ì†µÌ±†            Ì†µÌºï      sin Ì†µÌºÉ Ì†µÌºïŒì (0)                 Ì†µÌºï           1 Ì†µÌºïŒì (0)                            Ì†µÌºïÌ†µÌºÇ    (0)            (0)              1       Ì†µÌºïÌ†µÌºÇ (0)   + Ì†µÌºé (1)                 Ì†µÌºïŒì (0)
+            sin Ì†µÌºÉ           Ì†µÌºïÌ†µÌºÉ           Ì†µÌºïÌ†µÌºÉ                 +             sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                            Ì†µÌºïÌ†µÌºÉ                                  sin Ì†µÌºÉ       Ì†µÌºé                       ‚àíÌ†µÌ±ÄRe ,
+                                                                                                                            Ì†µÌºéÌ†µÌ±üÌ†µÌ±ü    ‚àí    Ì†µÌºé        ‚àí                               Ì†µÌºÉÌ†µÌ±ü   =                                   (82)
+                                                                   Ì†µÌºïÌ†µÌºô                                                                                               Ì†µÌºïÌ†µÌºô Ì†µÌºÉÌ†µÌºô                            Ì†µÌºïÌ†µÌºÉ
+                                                                                                                                            Ì†µÌºÉÌ†µÌºÉ
+
+From the leading-order problem, we obtain two evolution equa-                                                           1 Ì†µÌºïÌ†µÌºÇ            (0)     ‚àí Ì†µÌºé (0)      ‚àí     Ì†µÌºïÌ†µÌºÇ (0)   + Ì†µÌºé (1)   =     ‚àí Ì†µÌ±ÄRe         Ì†µÌºïŒì (0)  .     (83)
+tions (75) and (76) for the film thickness Ì†µÌºÇ (0) and the surfactant                                                  sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                        Ì†µÌºé                         sin Ì†µÌºÉ        Ì†µÌºïÌ†µÌºô
+concentration Œì (0) .                                                                                                                   Ì†µÌºéÌ†µÌ±ü Ì†µÌ±ü        Ì†µÌºôÌ†µÌºô                          Ì†µÌºôÌ†µÌ±ü
+                                                                                                                                                                      Ì†µÌºïÌ†µÌºÉ Ì†µÌºÉÌ†µÌºô
+
+2.2 Remaining Orders                                                                                             All the zero-order terms in Equation (81) do not vary with Ì†µÌ±ü . Inte-
+
+From the momentum equations and the stress boundary conditions                                                   grating Equation (81) in Ì†µÌ±ü and applying Equations (82) and (83), then
+we similarly obtain
+                                                                                                                 combining with Equations (52) and (65), we obtain the evolution
+
+                                                                                                                 equations for Ì†µÌ±¢ (0) and Ì†µÌ±¢ (0) to close our system
+                                                                                                                                           Ì†µÌºÉ               Ì†µÌºô
+
+  (0)       =    (0)       =     0,                                                                     (77)
+
+Ì†µÌºé             Ì†µÌºé
+
+Ì†µÌºÉÌ†µÌ±ü Ì†µÌºôÌ†µÌ±ü                                                                                                           (0)                        (0)            (0)      (0)       (Ì†µÌ±¢ (0) )2
+
+  (0)                    Ì†µÌºï2            1 Ì†µÌºï                   1         Ì†µÌºï2              Ì†µÌºÇ (0)                 Ì†µÌºïÌ†µÌ±¢       +      (0)     Ì†µÌºïÌ†µÌ±¢      +      Ì†µÌ±¢      Ì†µÌºïÌ†µÌ±¢    ‚àí       Ì†µÌºô                                          (84a)
+                         Ì†µÌºïÌ†µÌºÉ 2    +                         sin2 Ì†µÌºÉ     Ì†µÌºïÌ†µÌºô 2
+Ì†µÌºéÌ†µÌ±ü Ì†µÌ±ü                                                                                                             Ì†µÌºÉ                        Ì†µÌºÉ             Ì†µÌºô        Ì†µÌºÉ
+                                     tan Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ
+            =  Ì†µÌ±Ü                                    +                            +2                    (78)                   Ì†µÌ±¢
+                                                                                                                 Ì†µÌºïÌ†µÌ±° Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ
+
+                                 (0)                                                                                   Ì†µÌ±Ä Ì†µÌºïŒì (0)
+                                                                                                                 = ‚àí Ì†µÌºÇ (0) Ì†µÌºïÌ†µÌºÉ
+            = ‚àíÌ†µÌ±ù (1) + 2 Ì†µÌºïÌ†µÌ±¢Ì†µÌ±ü .
+                            Ì†µÌºïÌ†µÌ±ü
+
+Making use of Equations (52) and (78), we further obtain                                                         + Re‚àí1                    1 Ì†µÌºïÌ†µÌºÇ (0) (0)
+                                                                                                                                                            Ì†µÌºé
+                                                                                                                                   Ì†µÌºÇ (0) sin Ì†µÌºÉ       Ì†µÌºïÌ†µÌºô Ì†µÌºÉÌ†µÌºô
+
+                                        (0)
+                                 Ì†µÌºïÌ†µÌ±¢
+  (0)  =    ‚àí Ì†µÌ±ù (1)         + 2 Ì†µÌºÉ                                                                     (79)                           2          Ì†µÌºïÌ†µÌºÇ (0)  Ô£Æ Ì†µÌºïÌ†µÌ±¢ (0)        1           Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ            (0)     Ô£π
+                                                                                                                                   + Ì†µÌºÇ (0)        Ì†µÌºïÌ†µÌºÉ     Ô£Ø Ì†µÌºÉ          +                                                  Ô£∫
+Ì†µÌºé                                                                                                                                                          Ô£Ø                                Ì†µÌºÉ                   Ì†µÌºïÌ†µÌ±¢       Ô£∫
+                                                                                                                                                                            sin Ì†µÌºÉ
+Ì†µÌºÉÌ†µÌºÉ                                 Ì†µÌºïÌ†µÌºÉ                                                                                                                   Ô£Ø Ì†µÌºïÌ†µÌºÉ                                             +     Ì†µÌºô
+
+                   Ì†µÌºï2       + 1 Ì†µÌºï                       1            Ì†µÌºï2          Ì†µÌºÇ (0)                                                                                                        Ì†µÌºïÌ†µÌºÉ            Ì†µÌºïÌ†µÌºô Ô£∫
+                   Ì†µÌºïÌ†µÌºÉ 2      tan Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ           + sin2 Ì†µÌºÉ         Ì†µÌºïÌ†µÌºô 2
+       = Ì†µÌ±Ü                                                                    +2                                                                           Ô£Ø                                                                Ô£∫
+
+                                                                                                                                                            Ô£∞                                                                Ô£ª
+
+                                                                                                                                      Ì†µÌºïÌ†µÌºé (0) sin Ì†µÌºÉ                       (0)             (0)
+                                                                                                                                                                    1     Ì†µÌºïÌ†µÌºé Ì†µÌºé
+                                                                (0)
+            +2                     Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ                                (0)                                              + Ì†µÌºÉÌ†µÌºÉ                   +               Ì†µÌºÉÌ†µÌºô ‚àí Ì†µÌºôÌ†µÌºô                 ,
+              sin Ì†µÌºÉ                                         Ì†µÌºïÌ†µÌ±¢                                                                                               sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ
+                                      Ì†µÌºÉ             +                       Ì†µÌºïÌ†µÌ±¢                                                              Ì†µÌºïÌ†µÌºÉ
+                                                                Ì†µÌºô       + 2 Ì†µÌºÉ ,
+
+                                          Ì†µÌºïÌ†µÌºÉ                   Ì†µÌºïÌ†µÌºô          Ì†µÌºïÌ†µÌºÉ                                    (0)                     (0)          (0) (0)                (0) (0)
+
+                                                                                                                 Ì†µÌºïÌ†µÌ±¢                      Ì†µÌºïÌ†µÌ±¢ Ì†µÌ±¢ Ì†µÌºïÌ†µÌ±¢ Ì†µÌ±¢ Ì†µÌ±¢
+                                                                                                                       Ì†µÌºô + Ì†µÌ±¢ (0) Ì†µÌºô + Ì†µÌºô
+                                          1             (0)        (0)                                                                                                  Ì†µÌºô + Ì†µÌºÉ Ì†µÌºô                                              (84b)
+  (0)                                                                                                            Ì†µÌºïÌ†µÌ±° Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                           tan Ì†µÌºÉ
+                                                     Ì†µÌºïÌ†µÌ±¢        Ì†µÌ±¢
+Ì†µÌºé
+       =    ‚àí Ì†µÌ±ù (1)         +2                      Ì†µÌºô + Ì†µÌºÉ                                            (80)
+Ì†µÌºôÌ†µÌºô                                 sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ                                                                   Ì†µÌ±Ä Ì†µÌºïŒì (0)
+                                                                                                                 = ‚àí Ì†µÌºÇ (0) sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô
+       = Ì†µÌ±Ü        Ì†µÌºï2       +       1         Ì†µÌºï         1            Ì†µÌºï2     +2   Ì†µÌºÇ (0)
+                   Ì†µÌºïÌ†µÌºÉ 2          tan Ì†µÌºÉ      Ì†µÌºïÌ†µÌºÉ  + sin2 Ì†µÌºÉ         Ì†µÌºïÌ†µÌºô 2                                                      1 Ì†µÌºïÌ†µÌºÇ (0) (0)
+                                                                                                                 + Re‚àí1
+                                   Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ            (0)                                                                  Ì†µÌºÇ (0)          Ì†µÌºé
+                   2                                                                                                                           Ì†µÌºïÌ†µÌºÉ Ì†µÌºÉÌ†µÌºô
+                 sin Ì†µÌºÉ               Ì†µÌºÉ                 Ì†µÌºïÌ†µÌ±¢
+            +                                        + 2 Ì†µÌºô              + Ì†µÌ±¢ (0) cos Ì†µÌºÉ
+                                                                                                  .                                                                         (0)                                Ì†µÌºïÌ†µÌ±¢ (0) sin Ì†µÌºÉ        (0)
+
+                                          Ì†µÌºïÌ†µÌºÉ                   Ì†µÌºïÌ†µÌºô Ì†µÌºÉ                                                                   2                Ì†µÌºïÌ†µÌºÇ (0)   Ô£Æ Ì†µÌºïÌ†µÌ±¢      + Ì†µÌ±¢ (0) cos Ì†µÌºÉ                Ì†µÌºÉ               Ì†µÌºïÌ†µÌ±¢ Ô£π
+                                                                                                                                      Ì†µÌºÇ (0) sin2 Ì†µÌºÉ         Ì†µÌºïÌ†µÌºô      Ô£Ø Ì†µÌºô                                                          Ì†µÌºô Ô£∫
+                                                                                                                                   +                                                   Ì†µÌºÉ                   +      Ì†µÌºïÌ†µÌºÉ         +
+                                                                                                                                                                       Ô£Ø                                                                 Ô£∫
+Now the leading-order momentum equations in Equation (59) can                                                                                                          Ô£Ø Ì†µÌºïÌ†µÌºô                                                       Ì†µÌºïÌ†µÌºô Ô£∫
+be rewritten as
+                                                                                                                                                                       Ô£Ø                                                               Ô£∫
+
+                                                                                                                                                                       Ô£∞                                                               Ô£ª
+
+                                                                                                                                      Ì†µÌºïÌ†µÌºé (0) sin Ì†µÌºÉ                       (0)           (0)
+                                                                                                                                                                    1     Ì†µÌºïÌ†µÌºé            Ì†µÌºé
+                                                       (0)                     (Ì†µÌ±¢ (0) )2                                          +     Ì†µÌºÉ Ì†µÌºô              +                       +
+                                                                                                                                                                             Ì†µÌºôÌ†µÌºô          Ì†µÌºÉ Ì†µÌºô
+                                                     Ì†µÌ±¢                           Ì†µÌºô
+          (0)                           (0)                     (0)                                                                                             sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ                      ,
+                                                      Ì†µÌºô
+       Ì†µÌºïÌ†µÌ±¢                  (0)   Ì†µÌºïÌ†µÌ±¢                      Ì†µÌºïÌ†µÌ±¢                                                                              Ì†µÌºïÌ†µÌºÉ
+
+          Ì†µÌºÉ       +                  Ì†µÌºÉ        +               Ì†µÌºÉ       ‚àí                              (81a)
+
+                         Ì†µÌ±¢
+         Ì†µÌºïÌ†µÌ±° Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ
+
+                   (1)             Ì†µÌºïÌ†µÌºé (0) sin Ì†µÌºÉ                             (0)           (0)                 where        (0)  and       (0)     are    given       by  Equation        (79),           and
+                                                                 1     Ì†µÌºïÌ†µÌºé Ì†µÌºé
+               Ì†µÌºïÌ†µÌºé                                                                                                         Ì†µÌºé             Ì†µÌºé
+
+= Re‚àí1                                                                         Ì†µÌºÉÌ†µÌºô Ì†µÌºôÌ†µÌºô                                    Ì†µÌºÉ Ì†µÌºÉ              Ì†µÌºôÌ†µÌºô
+
+                   Ì†µÌºÉÌ†µÌ±ü + Ì†µÌºÉÌ†µÌºÉ                       +                              ‚àí                ,
+                                                             sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ
+                   Ì†µÌºïÌ†µÌ±ü                   Ì†µÌºïÌ†µÌºÉ
+
+            (0)                         (0) (0) (0) (0) (0)                                                                      (0)       =     1             (0)     +     (0)    sin Ì†µÌºÉ  ‚àí Ì†µÌ±¢ (0) cos Ì†µÌºÉ                     (85)
+                                                                                                                                               sin Ì†µÌºÉ
+                                                                                                                               Ì†µÌºé                           Ì†µÌºïÌ†µÌ±¢          Ì†µÌºïÌ†µÌ±¢
+
+                                                                                                                                Ì†µÌºÉ Ì†µÌºô                          Ì†µÌºÉ            Ì†µÌºô
+
+      Ì†µÌºïÌ†µÌ±¢                         Ì†µÌºïÌ†µÌ±¢ Ì†µÌ±¢ Ì†µÌºïÌ†µÌ±¢ Ì†µÌ±¢ Ì†µÌ±¢                                                                                                                                                             .
+            Ì†µÌºô + Ì†µÌ±¢ (0) Ì†µÌºô + Ì†µÌºô
+                                                                 Ì†µÌºô + Ì†µÌºÉ Ì†µÌºô                             (81b)                                                  Ì†µÌºïÌ†µÌºô Ì†µÌºïÌ†µÌºÉ                                Ì†µÌºô
+
+         Ì†µÌºïÌ†µÌ±° Ì†µÌºÉ Ì†µÌºïÌ†µÌºÉ sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô                                                 tan Ì†µÌºÉ
+
+                   (1)             Ì†µÌºïÌ†µÌºé (0) sin Ì†µÌºÉ                             (0)           (0)                 The full evolution equations are thus Equations (75), (76) and (84).
+                                                                 1     Ì†µÌºïÌ†µÌºé              Ì†µÌºé                      If we denote terms in Equation (84) associated with Re‚àí1 as V, and
+               Ì†µÌºïÌ†µÌºé
+                                                                          Ì†µÌºôÌ†µÌºô            Ì†µÌºÉ Ì†µÌºô                  drop the superscript (0) , the governing equations can be simplified
+= Re‚àí1             Ì†µÌºôÌ†µÌ±ü      +          Ì†µÌºÉ Ì†µÌºô        +                              +
+
+                                                             sin Ì†µÌºÉ Ì†µÌºïÌ†µÌºô tan Ì†µÌºÉ                      .
+
+                   Ì†µÌºïÌ†µÌ±ü                   Ì†µÌºïÌ†µÌºÉ
+
+                                                                                                        ACM Trans. Graph., Vol. 39, No. 4, Article 1 (Supplemental Document). Publication date: July 2020.
+1 (Supplemental Document):4 ‚Ä¢ Huang, W. et al
+
+to  Ô£Æ Ì†µÌ∞∑u                                             with u = (Ì†µÌ±¢Ì†µÌºÉ , Ì†µÌ±¢Ì†µÌºô )‚ä§. This corresponds to Equation (10).
+    Ô£Ø
+            =  ‚àí Ì†µÌ±Ä ‚àáŒì  + Re‚àí1V,               (86a)
+                                               (86b)
+    Ô£Ø Ì†µÌ∞∑Ì†µÌ±° Ì†µÌºÇ                                  (86c)
+
+    Ô£Ø
+    Ô£Ø Ì†µÌ∞∑Œì
+    Ô£Ø       = ‚àíŒì‚àá ¬∑ u + Ì†µÌ∞∑Ì†µÌ±† ‚àá2Œì,
+
+    Ô£Ø Ì†µÌ∞∑Ì†µÌ±°
+
+    Ô£Ø
+
+    Ô£Ø Ì†µÌ∞∑Ì†µÌºÇ
+    Ô£Ø = ‚àíÌ†µÌºÇ‚àá ¬∑ u,
+    Ô£Ø Ì†µÌ∞∑Ì†µÌ±°
+    Ô£∞
+
+ACM Trans. Graph., Vol. 39, No. 4, Article 1 (Supplemental Document). Publication date: July 2020.
+
