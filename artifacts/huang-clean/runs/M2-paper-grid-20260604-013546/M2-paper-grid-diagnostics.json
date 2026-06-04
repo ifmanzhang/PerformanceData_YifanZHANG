@@ -1,0 +1,76 @@
+{
+  "solver": "standalone-huang-clean",
+  "paperModel": [
+    "eta half-thickness on fixed sphere",
+    "Gamma surfactant concentration",
+    "tangent velocity u(theta,phi)",
+    "1024x2048 paper-scale staggered spherical grid by default",
+    "sphere metric grad/div/laplace",
+    "velocity-aligned great-circle advection",
+    "BFECC thickness transport as a detail-preserving substitute for BiMocq2 maps",
+    "matrix-free CG implicit Gamma/projection-like update",
+    "eta_t = -eta div(u)",
+    "thin-film spectral interference from 2*eta, view angle and Fresnel coefficients"
+  ],
+  "scenario": "referenceFlow",
+  "nTheta": 1024,
+  "nPhi": 2048,
+  "paperParams": true,
+  "gridDiagnostics": {
+    "grid": "1024x2048",
+    "expectedPaperGrid": true,
+    "aspectPhiOverTheta": 2,
+    "area": 12.5663755426642,
+    "areaRelativeError": 3.9218205314127053e-7,
+    "maxZeroDivergence": 0,
+    "maxConstantLaplacian": 0,
+    "poleVectorSignError": 0,
+    "staggeredVelocityPrimary": true
+  },
+  "etaMass": 7.669800960816809,
+  "gammaMass": 7.544387311020954,
+  "massError": 2.9262856987916405e-10,
+  "gammaMassError": 3.805447833550517e-10,
+  "meanAbsDivergence": 0,
+  "maxGradEta": 3585.5617862173813,
+  "maxGradGamma": 2599.0793571252875,
+  "maxSpeed": 0.014999888837337494,
+  "elapsedMs": 274,
+  "steps": 0,
+  "dt": 0.002,
+  "cgIterations": 22,
+  "debugRanges": {
+    "eta": {
+      "min": 0.3740566074848175,
+      "max": 0.8539004325866699
+    },
+    "gamma": {
+      "min": 0.5149755477905273,
+      "max": 1.0758610963821411
+    },
+    "speed": {
+      "min": 4.020908050961225e-8,
+      "max": 0.014999888837337494
+    },
+    "divVelocity": {
+      "min": 0,
+      "max": 0
+    },
+    "foam": {
+      "min": 0,
+      "max": 0.8999999761581421
+    }
+  },
+  "outputs": {
+    "beauty": "artifacts\\huang-clean\\runs\\M2-paper-grid-20260604-013546\\M2-paper-grid-beauty.png",
+    "thickness": "artifacts\\huang-clean\\runs\\M2-paper-grid-20260604-013546\\M2-paper-grid-thickness.png",
+    "surfactant": "artifacts\\huang-clean\\runs\\M2-paper-grid-20260604-013546\\M2-paper-grid-surfactant.png",
+    "velocity": "artifacts\\huang-clean\\runs\\M2-paper-grid-20260604-013546\\M2-paper-grid-velocity.png",
+    "divergence": "artifacts\\huang-clean\\runs\\M2-paper-grid-20260604-013546\\M2-paper-grid-divergence.png",
+    "foam": "artifacts\\huang-clean\\runs\\M2-paper-grid-20260604-013546\\M2-paper-grid-foam.png"
+  },
+  "beautyByteStats": {
+    "max": 252,
+    "mean": 158.25888194444445
+  }
+}

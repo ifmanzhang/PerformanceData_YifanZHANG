@@ -56,16 +56,21 @@ function valueNoise(phi, theta, seed) {
 
 function parseArgs(argv) {
   const args = {
-    sim: 512,
+    sim: 0,
+    simTheta: 1024,
+    simPhi: 2048,
     steps: 96,
     dt: 0.002,
     cg: 22,
     outDir: "artifacts/huang-clean/output",
-    tag: "huang-clean-512",
+    tag: "huang-clean-paper-grid",
     render: 1200,
     seed: 7,
     scenario: "referenceFlow",
+    paperParams: 1,
+    gridDiagnostics: 1,
   };
+  const seen = new Set();
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     const [key, raw] = arg.startsWith("--") ? arg.slice(2).split("=") : ["", ""];
@@ -73,14 +78,22 @@ function parseArgs(argv) {
     if (!key) continue;
     if (raw === undefined) i += 1;
     if (key in args) {
+      seen.add(key);
       if (typeof args[key] === "number") args[key] = Number(next);
       else args[key] = String(next);
     }
   }
-  args.sim = Math.max(64, Math.min(1024, Math.floor(args.sim)));
-  args.steps = Math.max(1, Math.floor(args.steps));
+  if (seen.has("sim") && args.sim > 0) {
+    if (!seen.has("simTheta")) args.simTheta = args.sim;
+    if (!seen.has("simPhi")) args.simPhi = args.sim * 2;
+  }
+  args.simTheta = Math.max(64, Math.min(1024, Math.floor(args.simTheta)));
+  args.simPhi = Math.max(128, Math.min(2048, Math.floor(args.simPhi)));
+  args.steps = Math.max(0, Math.floor(args.steps));
   args.cg = Math.max(4, Math.floor(args.cg));
   args.render = Math.max(320, Math.min(2400, Math.floor(args.render)));
+  args.paperParams = args.paperParams ? 1 : 0;
+  args.gridDiagnostics = args.gridDiagnostics ? 1 : 0;
   return args;
 }
 
@@ -127,13 +140,14 @@ function xyzToAngles(w) {
 
 class HuangCleanSimulator {
   constructor(options = {}) {
-    this.nTheta = options.sim ?? 512;
-    this.nPhi = options.phi ?? this.nTheta;
+    this.nTheta = options.simTheta ?? options.sim ?? 1024;
+    this.nPhi = options.simPhi ?? this.nTheta * 2;
     this.length = this.nTheta * this.nPhi;
     this.dTheta = PI / this.nTheta;
     this.dPhi = TAU / this.nPhi;
     this.seed = options.seed ?? 7;
     this.scenario = options.scenario ?? "referenceFlow";
+    this.paperParams = options.paperParams !== 0;
     this.allocate();
     this.initialize();
   }
@@ -169,6 +183,8 @@ class HuangCleanSimulator {
     this.betaPhi = new Float32Array(this.length);
     this.baseTheta = new Float32Array((this.nTheta + 1) * this.nPhi);
     this.basePhi = new Float32Array(this.length);
+    // Huang 2020 stores velocity on staggered spherical cell faces. Center
+    // arrays are derived only for interpolation and rendering diagnostics.
     this.uThetaFace = new Float32Array((this.nTheta + 1) * this.nPhi);
     this.uPhiFace = new Float32Array(this.length);
     this.weights = new Float32Array(n);
@@ -292,7 +308,7 @@ class HuangCleanSimulator {
         this.eta[id] = eta;
         this.gamma[id] = gamma;
         this.uTheta[id] = 0.0;
-        this.uPhi[id] = 0.015 * Math.sin(theta) * Math.sin(phi * 2 + 0.6);
+        this.uPhi[id] = 0.0;
         const w = st * this.dTheta * this.dPhi;
         this.weights[id] = w;
         etaMass += eta * w;
@@ -300,6 +316,19 @@ class HuangCleanSimulator {
         areaMass += w;
       }
     }
+    for (let i = 0; i <= this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        this.uThetaFace[this.fTheta(i, j)] = 0;
+      }
+    }
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const phiFace = j * this.dPhi;
+        this.uPhiFace[this.idx(i, j)] = 0.015 * Math.sin(theta) * Math.sin(phiFace * 2 + 0.6);
+      }
+    }
+    this.syncCentersFromFaces();
     this.eta0.set(this.eta);
     this.gamma0.set(this.gamma);
     this.initialEtaMass = etaMass;
@@ -329,10 +358,10 @@ class HuangCleanSimulator {
   }
 
   buildBaseAndBeta(dt, gammaField = this.gammaAdv, etaField = this.etaAdv, uThetaField = this.uThetaAdv, uPhiField = this.uPhiAdv) {
-    const M = this.scenario === "marangoniPatch" ? 0.92 : 0.72;
-    const Cr = this.scenario === "gravityDrainage" ? 0.22 : 0.58;
-    const gravityScale = this.scenario === "gravityDrainage" ? 0.46 : 0.24;
-    const viscosity = 0.008;
+    const M = this.paperParams ? 0.83 : (this.scenario === "marangoniPatch" ? 0.92 : 0.72);
+    const Cr = this.paperParams ? 2.1 : (this.scenario === "gravityDrainage" ? 0.22 : 0.58);
+    const gravityScale = this.paperParams ? 0.49 : (this.scenario === "gravityDrainage" ? 0.46 : 0.24);
+    const viscosity = this.paperParams ? 1 / 5.6e4 : 0.008;
 
     for (let i = 0; i <= this.nTheta; i += 1) {
       const thetaFace = clamp(i * this.dTheta, 0.5 * this.dTheta, PI - 0.5 * this.dTheta);
@@ -496,48 +525,23 @@ class HuangCleanSimulator {
         this.uPhiFace[idf] = this.basePhi[idf] - this.betaPhi[idf] * grad;
       }
     }
+    this.lastStats.maxSpeed = this.syncCentersFromFaces();
+    this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
+  }
+
+  syncCentersFromFaces() {
     let maxSpeed = 0;
     for (let i = 0; i < this.nTheta; i += 1) {
-      const polarDamp = smoothstep(0.025, 0.12, Math.sin(this.theta(i)));
       for (let j = 0; j < this.nPhi; j += 1) {
         const id = this.idx(i, j);
-        let ut = 0.5 * (this.uThetaFace[this.fTheta(i, j)] + this.uThetaFace[this.fTheta(i + 1, j)]);
-        let up = 0.5 * (this.uPhiFace[this.idx(i, j)] + this.uPhiFace[this.idx(i, j + 1)]);
-        ut *= polarDamp;
-        up *= polarDamp;
-        const speed = Math.hypot(ut, up);
-        const maxAllowed = 0.42;
-        if (speed > maxAllowed) {
-          const s = maxAllowed / speed;
-          ut *= s;
-          up *= s;
-        }
+        const ut = 0.5 * (this.uThetaFace[this.fTheta(i, j)] + this.uThetaFace[this.fTheta(i + 1, j)]);
+        const up = 0.5 * (this.uPhiFace[this.idx(i, j)] + this.uPhiFace[this.idx(i, j + 1)]);
         this.uTheta[id] = ut;
         this.uPhi[id] = up;
         maxSpeed = Math.max(maxSpeed, Math.hypot(ut, up));
       }
     }
-    this.lastStats.maxSpeed = maxSpeed;
-    this.rebuildFacesFromCenters();
-    this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
-  }
-
-  rebuildFacesFromCenters() {
-    for (let i = 0; i <= this.nTheta; i += 1) {
-      for (let j = 0; j < this.nPhi; j += 1) {
-        const idf = this.fTheta(i, j);
-        if (i === 0 || i === this.nTheta) {
-          this.uThetaFace[idf] = 0;
-        } else {
-          this.uThetaFace[idf] = 0.5 * (this.uTheta[this.idx(i - 1, j)] + this.uTheta[this.idx(i, j)]);
-        }
-      }
-    }
-    for (let i = 0; i < this.nTheta; i += 1) {
-      for (let j = 0; j < this.nPhi; j += 1) {
-        this.uPhiFace[this.idx(i, j)] = 0.5 * (this.uPhi[this.idx(i, j - 1)] + this.uPhi[this.idx(i, j)]);
-      }
-    }
+    return maxSpeed;
   }
 
   advectPoint(theta, phi, dt, forward = false) {
@@ -707,6 +711,7 @@ class HuangCleanSimulator {
         "eta half-thickness on fixed sphere",
         "Gamma surfactant concentration",
         "tangent velocity u(theta,phi)",
+        "1024x2048 paper-scale staggered spherical grid by default",
         "sphere metric grad/div/laplace",
         "velocity-aligned great-circle advection",
         "BFECC thickness transport as a detail-preserving substitute for BiMocq2 maps",
@@ -717,7 +722,43 @@ class HuangCleanSimulator {
       scenario: this.scenario,
       nTheta: this.nTheta,
       nPhi: this.nPhi,
+      paperParams: this.paperParams,
+      gridDiagnostics: this.computeGridDiagnostics(),
       ...this.lastStats,
+    };
+  }
+
+  computeGridDiagnostics() {
+    const zeroTheta = new Float32Array((this.nTheta + 1) * this.nPhi);
+    const zeroPhi = new Float32Array(this.length);
+    this.divergenceFromFaces(zeroTheta, zeroPhi, this.tmpA);
+    let maxZeroDivergence = 0;
+    let maxConstantLaplacian = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      const sinC = Math.max(1e-4, Math.sin(theta));
+      const sinInv2 = 1 / (sinC * sinC);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        maxZeroDivergence = Math.max(maxZeroDivergence, Math.abs(this.tmpA[id]));
+        const constant = 1;
+        const lapTheta = (constant - 2 * constant + constant) / (this.dTheta * this.dTheta);
+        const cotTerm = (Math.cos(theta) / sinC) * (constant - constant) / (2 * this.dTheta);
+        const lapPhi = (constant - 2 * constant + constant) / (this.dPhi * this.dPhi) * sinInv2;
+        maxConstantLaplacian = Math.max(maxConstantLaplacian, Math.abs(lapTheta + cotTerm + lapPhi));
+      }
+    }
+    const [poleUt, poleUp] = this.sampleVector(-0.25 * this.dTheta, 0, this.uTheta.map(() => 1), this.uPhi.map(() => 1));
+    return {
+      grid: `${this.nTheta}x${this.nPhi}`,
+      expectedPaperGrid: this.nTheta === 1024 && this.nPhi === 2048,
+      aspectPhiOverTheta: this.nPhi / this.nTheta,
+      area: this.area,
+      areaRelativeError: (this.area - 4 * PI) / (4 * PI),
+      maxZeroDivergence,
+      maxConstantLaplacian,
+      poleVectorSignError: Math.abs(poleUt + 1) + Math.abs(poleUp + 1),
+      staggeredVelocityPrimary: true,
     };
   }
 }
@@ -931,7 +972,7 @@ function main() {
   const args = parseArgs(process.argv);
   fs.mkdirSync(args.outDir, { recursive: true });
   const sim = new HuangCleanSimulator(args);
-  console.log(`[huang-clean] sim=${args.sim}x${args.sim}, steps=${args.steps}, dt=${args.dt}, cg=${args.cg}, scenario=${args.scenario}`);
+  console.log(`[huang-clean] sim=${args.simTheta}x${args.simPhi}, steps=${args.steps}, dt=${args.dt}, cg=${args.cg}, scenario=${args.scenario}`);
   sim.run(args);
   const centerNormal = rotateNormal([0, 0, 1], -0.45, 0.15);
   const [centerTheta, centerPhi] = xyzToAngles(centerNormal);

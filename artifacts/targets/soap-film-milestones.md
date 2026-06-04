@@ -40,6 +40,8 @@
 
 ## M2 论文级 staggered spherical grid
 
+状态：已完成。独立程序默认全尺寸锁定为 `1024 x 2048`，`eta/Gamma` 仍为 cell center，`uThetaFace/uPhiFace` 为 staggered face 主速度存储；M2 全尺寸诊断保存到 `artifacts/huang-clean/runs/M2-paper-grid-20260604-013546`。
+
 目标：
 
 - 将独立模拟器主状态改为论文网格。
@@ -57,7 +59,18 @@
 - 输出 grid diagnostics。
 - commit 并 push。
 
+结果：
+
+- `expectedPaperGrid=true`。
+- `areaRelativeError=3.9218205314127053e-7`。
+- `maxZeroDivergence=0`。
+- `maxConstantLaplacian=0`。
+- `poleVectorSignError=0`。
+- full-size diagnostic runtime about `6.2s`。
+
 ## M3 velocity-aligned spherical advection
+
+状态：待开始。
 
 目标：
 
@@ -73,6 +86,8 @@
 - commit 并 push。
 
 ## M4 Huang BiMocq2 球面材料映射
+
+状态：待开始。
 
 目标：
 
@@ -90,6 +105,8 @@
 
 ## M5 Gamma projection-like implicit SPD solve
 
+状态：待开始。
+
 目标：
 
 - 按论文 Section 4.3 和 Eq. 24-26 实现 Gamma projection-like solve。
@@ -106,6 +123,8 @@
 - commit 并 push。
 
 ## M6 eta/Gamma/u 全耦合论文场景
+
+状态：待开始。
 
 目标：
 
@@ -126,6 +145,8 @@
 
 ## M7 论文 Section 5 渲染
 
+状态：待开始。
+
 目标：
 
 - 实现论文 thin film rendering。
@@ -145,6 +166,8 @@
 
 ## M8 论文结果图对照
 
+状态：待开始。
+
 目标：
 
 - 将当前实现输出与论文 Fig. 1、Fig. 12、Fig. 13、Fig. 14、Fig. 15、Fig. 16、Fig. 17、Fig. 19 对照。
@@ -157,6 +180,8 @@
 - commit 并 push。
 
 ## M9 美学参考靠近
+
+状态：待开始。
 
 目标：
 
@@ -171,6 +196,8 @@
 - commit 并 push。
 
 ## M10 阶段封版
+
+状态：待开始。
 
 目标：
 
