@@ -27,10 +27,18 @@ node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x51
 High-quality still render with 4x supersampling anti-aliasing:
 
 ```bash
-node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --fpsTarget=24 --seconds=5 --cache=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --outDir=artifacts/realtime-soap/runs/RT-aa-2048-s4 --cacheBlend=0.90 --renderCacheBlend=0.86 --disturbanceStrength=0.08
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSharpen=0.16 --fpsTarget=24 --seconds=5 --cache=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --outDir=artifacts/realtime-soap/runs/RT-aa-2048-s4 --cacheBlend=0.90 --renderCacheBlend=0.86 --disturbanceStrength=0.08
 ```
 
 For inspection stills, `--render=4096 --renderSamples=4` gives a cleaner image at the cost of PNG render time. Physics fps is measured separately from final PNG rendering.
+
+Maximum-current-clarity CPU inspection render:
+
+```bash
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=384x768 --render=4096 --renderSamples=4 --renderReconstruction=bicubic --renderSharpen=0.22 --renderDetailBoost=0.14 --fpsTarget=24 --seconds=5 --cache=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --outDir=artifacts/realtime-soap/runs/RT-recon-bicubic-384x768-4096-s4-detail-v1 --cacheBlend=0.82 --renderCacheBlend=0.68 --disturbanceStrength=0.08 --diffusion=0.008 --pressureIterations=4
+```
+
+This high-clarity CPU mode is not realtime; it is a quality ceiling test. The same physics resolution should move to GPU/WebGL/WebGPU to meet the `>=24fps` target.
 
 ## Outputs
 
@@ -101,3 +109,5 @@ Anti-aliased render update:
 
 - `realtime-soap.mjs` supports `--renderSamples=N`, default `4`.
 - The final sphere renderer uses subpixel supersampling before writing PNG, reducing the hard sphere rim and high-contrast internal stair-stepping.
+- `--renderReconstruction=bicubic` uses clamped Catmull-Rom reconstruction for final field sampling.
+- `--renderSharpen` and `--renderDetailBoost` improve clarity from the rendered physical fields and front/compression fields; they do not sample any reference image.

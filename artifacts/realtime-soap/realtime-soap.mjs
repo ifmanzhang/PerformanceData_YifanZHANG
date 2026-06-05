@@ -30,8 +30,11 @@ function parseArgs(argv) {
     substeps: 1,
     pressureIterations: 6,
     renderCacheBlend: 0.74,
+    renderDetailBoost: 0.10,
     renderFlipV: 1,
+    renderReconstruction: "bicubic",
     renderSamples: 4,
+    renderSharpen: 0.16,
     recordFrames: 0,
   };
   for (let i = 2; i < argv.length; i += 1) {
@@ -160,6 +163,47 @@ function bilinear(field, width, height, u, v) {
   return a * (1 - fy) + b * fy;
 }
 
+function cubicCatmullRom(p0, p1, p2, p3, t) {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return 0.5 * (
+    (2 * p1) +
+    (-p0 + p2) * t +
+    (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+    (-p0 + 3 * p1 - 3 * p2 + p3) * t3
+  );
+}
+
+function bicubic(field, width, height, u, v) {
+  const uv = normalizeUv(u, v);
+  const x = uv[0] * width - 0.5;
+  const y = uv[1] * height - 0.5;
+  const xBase = Math.floor(x);
+  const yBase = Math.floor(y);
+  const fx = x - xBase;
+  const fy = y - yBase;
+  const rows = new Array(4);
+  let nMin = Infinity;
+  let nMax = -Infinity;
+  for (let yy = -1; yy <= 2; yy += 1) {
+    const cy = clamp(yBase + yy, 0, height - 1);
+    const p = new Array(4);
+    for (let xx = -1; xx <= 2; xx += 1) {
+      const cx = ((xBase + xx) % width + width) % width;
+      const value = field[cy * width + cx];
+      p[xx + 1] = value;
+      if (value < nMin) nMin = value;
+      if (value > nMax) nMax = value;
+    }
+    rows[yy + 1] = cubicCatmullRom(p[0], p[1], p[2], p[3], fx);
+  }
+  return clamp(cubicCatmullRom(rows[0], rows[1], rows[2], rows[3], fy), nMin, nMax);
+}
+
+function sampleField(field, width, height, u, v, reconstruction = "bilinear") {
+  return reconstruction === "bicubic" ? bicubic(field, width, height, u, v) : bilinear(field, width, height, u, v);
+}
+
 function loadCache(cacheDir) {
   const manifest = JSON.parse(fs.readFileSync(path.join(cacheDir, "manifest.json"), "utf8"));
   const cache = {
@@ -286,6 +330,26 @@ function phaseColor(thicknessNm, cosI, front, foam) {
   ];
 }
 
+function sharpenRgbaInPlace(rgba, width, height, amount) {
+  const strength = clamp(Number(amount) || 0, 0, 1);
+  if (strength <= 0) return;
+  const src = new Uint8Array(rgba);
+  for (let y = 1; y < height - 1; y += 1) {
+    for (let x = 1; x < width - 1; x += 1) {
+      const p = (y * width + x) * 4;
+      const l = p - 4;
+      const r = p + 4;
+      const u = p - width * 4;
+      const d = p + width * 4;
+      for (let c = 0; c < 3; c += 1) {
+        const center = src[p + c];
+        const blur = (src[l + c] + src[r + c] + src[u + c] + src[d + c]) * 0.25;
+        rgba[p + c] = encodeByte((center + (center - blur) * strength) / 255);
+      }
+    }
+  }
+}
+
 class RealtimeSoap {
   constructor(args, cache) {
     const { nTheta, nPhi } = parsePhysics(args.physics);
@@ -391,16 +455,16 @@ class RealtimeSoap {
     return this.cacheFrameA[name][k] * (1 - this.cacheFrameT) + this.cacheFrameB[name][k] * this.cacheFrameT;
   }
 
-  cacheRenderSample(name, u, v) {
+  cacheRenderSample(name, u, v, reconstruction = "bilinear") {
     if (this.cache.frames.length <= 1) {
-      return bilinear(this.cache[name], this.cache.width, this.cache.height, u, v);
+      return sampleField(this.cache[name], this.cache.width, this.cache.height, u, v, reconstruction);
     }
     const cursor = (this.lastFrameIndex * 0.35) % this.cache.frames.length;
     const a = Math.floor(cursor);
     const t = cursor - a;
     const frameA = this.cache.frames[a];
     const frameB = this.cache.frames[(a + 1) % this.cache.frames.length];
-    return bilinear(frameA[name], this.cache.width, this.cache.height, u, v) * (1 - t) + bilinear(frameB[name], this.cache.width, this.cache.height, u, v) * t;
+    return sampleField(frameA[name], this.cache.width, this.cache.height, u, v, reconstruction) * (1 - t) + sampleField(frameB[name], this.cache.width, this.cache.height, u, v, reconstruction) * t;
   }
 
   initialize() {
@@ -563,17 +627,24 @@ function shadeSphereSample(sim, sx, z) {
   const u = (phi + PI) / TAU;
   const vRaw = theta / PI;
   const v = Number(sim.args.renderFlipV) ? 1 - vRaw : vRaw;
-  const eta = bilinear(sim.eta, sim.nPhi, sim.nTheta, u, v);
-  const etaCache = sim.cacheRenderSample("eta", u, v);
-  const frontLive = bilinear(sim.front, sim.nPhi, sim.nTheta, u, v);
-  const foamLive = bilinear(sim.foam, sim.nPhi, sim.nTheta, u, v);
-  const frontCache = sim.cacheRenderSample("front", u, v);
+  const reconstruction = sim.args.renderReconstruction === "bicubic" ? "bicubic" : "bilinear";
+  const eta = sampleField(sim.eta, sim.nPhi, sim.nTheta, u, v, reconstruction);
+  const etaCache = sim.cacheRenderSample("eta", u, v, reconstruction);
+  const frontLive = sampleField(sim.front, sim.nPhi, sim.nTheta, u, v, reconstruction);
+  const foamLive = sampleField(sim.foam, sim.nPhi, sim.nTheta, u, v, reconstruction);
+  const frontCache = sim.cacheRenderSample("front", u, v, reconstruction);
   const renderCacheBlend = clamp(sim.args.renderCacheBlend, 0, 1);
   const etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
   const front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
   const foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
   const thicknessNm = etaRender * 2100;
-  return phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam);
+  const color = phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam);
+  const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(Number(sim.args.renderDetailBoost) || 0, 0, 0.5);
+  return [
+    clamp(color[0] + detail * 0.36, 0, 1),
+    clamp(color[1] + detail * 0.50, 0, 1),
+    clamp(color[2] + detail * 0.58, 0, 1),
+  ];
 }
 
 function renderSphere(sim, size, file) {
@@ -603,6 +674,7 @@ function renderSphere(sim, size, file) {
       rgba[p + 3] = 255;
     }
   }
+  sharpenRgbaInPlace(rgba, size, size, sim.args.renderSharpen);
   writePng(file, size, size, rgba);
 }
 
@@ -643,7 +715,10 @@ function main() {
     solver: "realtime-hybrid-approximation",
     physicsResolution: [sim.nTheta, sim.nPhi],
     renderResolution: args.render,
+    renderDetailBoost: args.renderDetailBoost,
+    renderReconstruction: args.renderReconstruction,
     renderSamples: args.renderSamples,
+    renderSharpen: args.renderSharpen,
     targetFps: args.fpsTarget,
     simulatedSeconds: args.seconds,
     frames,

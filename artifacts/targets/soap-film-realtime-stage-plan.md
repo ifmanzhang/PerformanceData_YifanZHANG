@@ -180,3 +180,46 @@ RT-M4:
   - SSAA reduces raster stair-stepping and hard sphere-edge aliasing.
   - It does not invent missing physical detail beyond the realtime field/cache resolution.
   - Further improvement requires either higher physics/cache resolution, bicubic/edge-aware field reconstruction, or a GPU renderer with temporal antialiasing for interactive display.
+
+## RT-M4 Second Clarity Patch / Bicubic Reconstruction
+
+- Problem observed after SSAA:
+  - Sphere edge aliasing improved, but internal bands still looked both blurry and stair-stepped.
+  - Root cause: final render still linearly upsampled `256 x 512` live physics and `512 x 1024` cache fields into a `2048/4096` image.
+- Fix:
+  - Added `--renderReconstruction=bicubic`, implemented as clamped Catmull-Rom bicubic reconstruction for final render sampling.
+  - Added `--renderSharpen`, a light post-render unsharp pass for PNG stills.
+  - Added `--renderDetailBoost`, a physical front/compression-derived detail lift. It uses `front` computed from `eta/Gamma/u/div`, not a texture or reference image.
+- Validation runs:
+  - `artifacts/realtime-soap/runs/RT-recon-bicubic-2048-s4-v1`
+    - Physics: `256 x 512`
+    - Render: `2048 x 2048`
+    - Reconstruction: `bicubic`
+    - Render samples: `4`
+    - Render sharpen: `0.16`
+    - Average physics fps: `32.82`
+    - Final PNG render time: `16159.9 ms`
+    - Result: still realtime at physics level, cleaner sampling, but source-field blur remains visible.
+  - `artifacts/realtime-soap/runs/RT-recon-bicubic-384x768-2048-s4-v1`
+    - Physics: `384 x 768`
+    - Render: `2048 x 2048`
+    - Reconstruction: `bicubic`
+    - Render samples: `4`
+    - Render sharpen: `0.22`
+    - Average physics fps: `13.64`
+    - Final PNG render time: `16751.7 ms`
+    - Result: noticeably more internal structure, but CPU physics no longer realtime.
+  - `artifacts/realtime-soap/runs/RT-recon-bicubic-384x768-4096-s4-detail-v1`
+    - Physics: `384 x 768`
+    - Render: `4096 x 4096`
+    - Reconstruction: `bicubic`
+    - Render samples: `4`
+    - Render sharpen: `0.22`
+    - Render detail boost: `0.14`
+    - Average physics fps: `13.55`
+    - Final PNG render time: `69715.1 ms`
+    - Copied to `artifacts/targets/latest-realtime-soap-beauty.png`.
+- Current conclusion:
+  - The remaining blur is not primarily output resolution; it is source physical-field resolution and cache detail.
+  - CPU can keep `256 x 512` realtime, but `384 x 768` is the first visibly better clarity tier and only reaches about `13.5fps`.
+  - To get both clarity and realtime, next implementation step should be GPU/WebGL/WebGPU for `384 x 768` or higher physics, plus temporal antialiasing in the viewer.
