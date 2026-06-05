@@ -1,0 +1,67 @@
+{
+  "kind": "soap-film-physical-cache",
+  "version": 1,
+  "source": "artifacts\\realtime-soap\\baseline\\huang-official-highres512\\frame0499.exr",
+  "sourceReadMode": "OpenEXR R channel via Python OpenEXR",
+  "width": 1024,
+  "height": 512,
+  "layout": "row-major theta-major equirectangular sphere",
+  "fields": {
+    "eta": "eta.f32.gz",
+    "gamma": "gamma.f32.gz",
+    "uTheta": "uTheta.f32.gz",
+    "uPhi": "uPhi.f32.gz",
+    "div": "div.f32.gz",
+    "curl": "curl.f32.gz",
+    "front": "front.f32.gz"
+  },
+  "sourceStats": {
+    "width": 1024,
+    "height": 512,
+    "etaMin": 0.05718231201171875,
+    "etaMax": 0.3955078125,
+    "etaMean": 0.21766163408756256
+  },
+  "fieldStats": {
+    "eta": {
+      "min": 0.05718231201171875,
+      "max": 0.3955078125,
+      "mean": 0.21766163939901162
+    },
+    "gamma": {
+      "min": 0.33406978845596313,
+      "max": 0.6333516240119934,
+      "mean": 0.5420326905872344
+    },
+    "uTheta": {
+      "min": -0.30266058444976807,
+      "max": 0.3499999940395355,
+      "mean": 0.031921193644805036
+    },
+    "uPhi": {
+      "min": -0.3499999940395355,
+      "max": 0.3499999940395355,
+      "mean": -0.000021718769569578633
+    },
+    "div": {
+      "min": -8,
+      "max": 8,
+      "mean": 0.051298597792175826
+    },
+    "curl": {
+      "min": -8,
+      "max": 8,
+      "mean": 0.021779347388623194
+    },
+    "front": {
+      "min": 0,
+      "max": 1,
+      "mean": 0.056355464962962454
+    }
+  },
+  "constraints": {
+    "notTexture": true,
+    "physicalCacheFieldsOnly": true,
+    "generatedFromHuangOutput": true
+  }
+}
