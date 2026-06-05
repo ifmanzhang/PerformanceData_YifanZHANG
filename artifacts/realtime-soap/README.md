@@ -40,6 +40,14 @@ node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=384x76
 
 This high-clarity CPU mode is not realtime; it is a quality ceiling test. The same physics resolution should move to GPU/WebGL/WebGPU to meet the `>=24fps` target.
 
+Highest-trust cache-only spectral still render:
+
+```bash
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=4096 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=spectral --renderEtaScale=3600 --renderExposure=1.08 --renderSaturation=1.55 --renderSharpen=0.10 --renderDetailBoost=0.06 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-spectral-4096-s4-v2-eta3600 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
+```
+
+This path bypasses the low-resolution realtime residual layer for final stills and renders directly from the highest available physical cache. It is more trustworthy than the hybrid visual path, but it is limited by the source EXR/cache resolution: `1024 x 512`, with only `eta` truly sourced and `Gamma/u/front` derived.
+
 ## Outputs
 
 - `beauty.png`
@@ -111,3 +119,4 @@ Anti-aliased render update:
 - The final sphere renderer uses subpixel supersampling before writing PNG, reducing the hard sphere rim and high-contrast internal stair-stepping.
 - `--renderReconstruction=bicubic` uses clamped Catmull-Rom reconstruction for final field sampling.
 - `--renderSharpen` and `--renderDetailBoost` improve clarity from the rendered physical fields and front/compression fields; they do not sample any reference image.
+- `--renderSource=cache --renderOptics=spectral` is the preferred still-image path when avoiding the fake low-resolution hybrid look is more important than live perturbation.

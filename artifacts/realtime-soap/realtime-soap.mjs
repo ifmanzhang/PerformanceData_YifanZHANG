@@ -31,10 +31,15 @@ function parseArgs(argv) {
     pressureIterations: 6,
     renderCacheBlend: 0.74,
     renderDetailBoost: 0.10,
+    renderEtaScale: 2100,
+    renderExposure: 0.92,
     renderFlipV: 1,
+    renderOptics: "spectral",
     renderReconstruction: "bicubic",
     renderSamples: 4,
     renderSharpen: 0.16,
+    renderSource: "hybrid",
+    renderSaturation: 1.12,
     recordFrames: 0,
   };
   for (let i = 2; i < argv.length; i += 1) {
@@ -323,6 +328,56 @@ function phaseColor(thicknessNm, cosI, front, foam) {
   gg = gray + (gg - gray) * saturation;
   bb = gray + (bb - gray) * saturation;
   const exposure = 0.86;
+  return [
+    clamp(1 - Math.exp(-Math.max(0, rr) * exposure), 0, 1),
+    clamp(1 - Math.exp(-Math.max(0, gg) * exposure), 0, 1),
+    clamp(1 - Math.exp(-Math.max(0, bb) * exposure), 0, 1),
+  ];
+}
+
+function wavelengthToRgbWeight(lambdaNm) {
+  const r = Math.exp(-0.5 * ((lambdaNm - 610) / 48) ** 2) + 0.22 * Math.exp(-0.5 * ((lambdaNm - 700) / 42) ** 2);
+  const g = Math.exp(-0.5 * ((lambdaNm - 545) / 42) ** 2);
+  const b = Math.exp(-0.5 * ((lambdaNm - 455) / 34) ** 2);
+  return [r, g, b];
+}
+
+function spectralThinFilmColor(thicknessNm, cosI, front, foam, args) {
+  const nFilm = 1.335;
+  const incidence = clamp(cosI, 0.04, 1);
+  const opticalThickness = 2 * nFilm * thicknessNm * incidence;
+  let rr = 0;
+  let gg = 0;
+  let bb = 0;
+  let wr = 0;
+  let wg = 0;
+  let wb = 0;
+  for (let lambda = 400; lambda <= 700; lambda += 5) {
+    const phase = TAU * opticalThickness / lambda + PI;
+    const reflectance = 0.18 + 0.82 * (0.5 + 0.5 * Math.cos(phase));
+    const [rW, gW, bW] = wavelengthToRgbWeight(lambda);
+    rr += reflectance * rW;
+    gg += reflectance * gW;
+    bb += reflectance * bW;
+    wr += rW;
+    wg += gW;
+    wb += bW;
+  }
+  rr /= Math.max(EPS, wr);
+  gg /= Math.max(EPS, wg);
+  bb /= Math.max(EPS, wb);
+  const edge = Math.pow(clamp(1 - incidence, 0, 1), 1.2);
+  const ridge = Math.pow(clamp(front, 0, 1), 0.8);
+  const mist = Math.pow(clamp(foam, 0, 1), 1.6);
+  rr += edge * 0.08 + ridge * 0.11 + mist * 0.14;
+  gg += edge * 0.12 + ridge * 0.13 + mist * 0.14;
+  bb += edge * 0.22 + ridge * 0.18 + mist * 0.14;
+  const gray = (rr + gg + bb) / 3;
+  const sat = clamp(Number(args.renderSaturation) || 1, 0.2, 3);
+  rr = gray + (rr - gray) * sat;
+  gg = gray + (gg - gray) * sat;
+  bb = gray + (bb - gray) * sat;
+  const exposure = clamp(Number(args.renderExposure) || 1, 0.05, 4);
   return [
     clamp(1 - Math.exp(-Math.max(0, rr) * exposure), 0, 1),
     clamp(1 - Math.exp(-Math.max(0, gg) * exposure), 0, 1),
@@ -634,11 +689,23 @@ function shadeSphereSample(sim, sx, z) {
   const foamLive = sampleField(sim.foam, sim.nPhi, sim.nTheta, u, v, reconstruction);
   const frontCache = sim.cacheRenderSample("front", u, v, reconstruction);
   const renderCacheBlend = clamp(sim.args.renderCacheBlend, 0, 1);
-  const etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
-  const front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
-  const foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
-  const thicknessNm = etaRender * 2100;
-  const color = phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam);
+  const source = String(sim.args.renderSource || "hybrid");
+  let etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
+  let front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
+  let foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
+  if (source === "cache") {
+    etaRender = etaCache;
+    front = clamp(frontCache * 3.8, 0, 1);
+    foam = clamp(frontCache * 0.22, 0, 1);
+  } else if (source === "live") {
+    etaRender = eta;
+    front = clamp(frontLive, 0, 1);
+    foam = clamp(foamLive, 0, 1);
+  }
+  const thicknessNm = etaRender * clamp(Number(sim.args.renderEtaScale) || 2100, 100, 8000);
+  const color = sim.args.renderOptics === "palette"
+    ? phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam)
+    : spectralThinFilmColor(thicknessNm, clamp(sy, 0.03, 1), front, foam, sim.args);
   const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(Number(sim.args.renderDetailBoost) || 0, 0, 0.5);
   return [
     clamp(color[0] + detail * 0.36, 0, 1),
@@ -716,9 +783,14 @@ function main() {
     physicsResolution: [sim.nTheta, sim.nPhi],
     renderResolution: args.render,
     renderDetailBoost: args.renderDetailBoost,
+    renderEtaScale: args.renderEtaScale,
+    renderExposure: args.renderExposure,
+    renderOptics: args.renderOptics,
     renderReconstruction: args.renderReconstruction,
     renderSamples: args.renderSamples,
     renderSharpen: args.renderSharpen,
+    renderSource: args.renderSource,
+    renderSaturation: args.renderSaturation,
     targetFps: args.fpsTarget,
     simulatedSeconds: args.seconds,
     frames,

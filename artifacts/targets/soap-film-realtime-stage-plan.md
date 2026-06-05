@@ -223,3 +223,37 @@ RT-M4:
   - The remaining blur is not primarily output resolution; it is source physical-field resolution and cache detail.
   - CPU can keep `256 x 512` realtime, but `384 x 768` is the first visibly better clarity tier and only reaches about `13.5fps`.
   - To get both clarity and realtime, next implementation step should be GPU/WebGL/WebGPU for `384 x 768` or higher physics, plus temporal antialiasing in the viewer.
+
+## RT-M4 Source-Resolution Reality Check / Cache-Only Spectral Still
+
+- User feedback:
+  - Even the bicubic/4096 render still looks fake because the source field is too low resolution.
+- Audit result:
+  - Highest available physical source in `artifacts/realtime-soap/baseline/huang-official-highres512/frame0499.exr` is `1024 x 512`.
+  - The realtime physical layer is lower (`256 x 512` or `384 x 768`) and therefore cannot generate true `4096` physical detail.
+  - The cache contains truly sourced `eta`; `Gamma`, velocity, `front`, and foam are derived from that single source field, so dense Fig.14-like flow/microstructure cannot appear honestly from this cache alone.
+- Fix implemented:
+  - Added `--renderSource=cache` so highest-quality stills can bypass the low-resolution realtime residual layer.
+  - Added `--renderOptics=spectral`, a thin-film spectral renderer based on optical thickness instead of the earlier visual palette.
+  - Added physical optics controls:
+    - `--renderEtaScale`
+    - `--renderExposure`
+    - `--renderSaturation`
+- Validation:
+  - `artifacts/realtime-soap/runs/RT-cache-spectral-4096-s4-v1`
+    - Render: `4096 x 4096`
+    - Source: cache-only
+    - Optics: spectral
+    - Result: more physically plausible, less plastic/fake, but too pale.
+  - `artifacts/realtime-soap/runs/RT-cache-spectral-2048-s4-v2-eta3600`
+    - Render: `2048 x 2048`
+    - `renderEtaScale=3600`, `renderExposure=1.08`, `renderSaturation=1.55`
+    - Result: stronger interference color and better edge credibility.
+  - `artifacts/realtime-soap/runs/RT-cache-spectral-4096-s4-v2-eta3600`
+    - Render: `4096 x 4096`
+    - Average physics fps: `29.60`
+    - Final PNG render time: `153874.3 ms`
+    - Copied to `artifacts/targets/latest-realtime-soap-beauty.png`.
+- Current hard conclusion:
+  - This is the most honest still path from current data, but it cannot reach reference/Fig.14 richness because the available physical cache is only `1024 x 512` and incomplete.
+  - Further visual improvement must come from a new higher-resolution physical cache with at least `eta/Gamma/u/front` at native high resolution, or by running a proper high-resolution offline solver. More upsampling/sharpening would only make a sharper fake.

@@ -1,0 +1,28 @@
+{
+  "solver": "realtime-hybrid-approximation",
+  "physicsResolution": [
+    256,
+    512
+  ],
+  "renderResolution": 4096,
+  "renderDetailBoost": 0.05,
+  "renderEtaScale": 2100,
+  "renderExposure": 0.92,
+  "renderOptics": "spectral",
+  "renderReconstruction": "bicubic",
+  "renderSamples": 4,
+  "renderSharpen": 0.08,
+  "renderSource": "cache",
+  "renderSaturation": 1.18,
+  "targetFps": 24,
+  "simulatedSeconds": 1,
+  "frames": 24,
+  "physicsElapsedMs": 823.0425,
+  "avgPhysicsFrameMs": 34.28968333333333,
+  "p95PhysicsFrameMs": 49.96520000000001,
+  "p99PhysicsFrameMs": 67.1677,
+  "avgPhysicsFps": 29.163290610732776,
+  "renderMs": 153398.6191,
+  "reached24Fps": true,
+  "cacheFrameCount": 1
+}
