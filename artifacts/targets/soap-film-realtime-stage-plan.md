@@ -69,6 +69,36 @@ node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x51
   - This is a realtime hybrid approximation, not strict Huang 2020.
   - Cache fields are physical field caches generated from Huang-style output; no reference image sampling or color texture is used.
   - Rendering color is derived from `eta`, view angle, front/foam fields, and thin-film phase approximation.
+- Visual fidelity repair after first review:
+  - Problem observed:
+    - `RT-initial-256x512-2048` was too pale and structurally weaker than the previous high-resolution offline sphere.
+    - Root causes: single-channel cache derivation, live-field-only render upsampling, high diffusion/low cache preservation, overly gray RGB phase mapping, and flipped render V orientation relative to the cached sphere reference.
+  - Fixes:
+    - Pre-sample physical cache fields onto the realtime grid for faster and more stable coupling.
+    - Preserve high-resolution physical cache detail at render time through `renderCacheBlend`.
+    - Reduce default disturbance, air forcing, and diffusion for the default beauty render while preserving CLI control.
+    - Add cache `curl` influence and cache `front` preservation.
+    - Replace pale additive phase color with a thickness-derived continuous thin-film color band.
+    - Add `renderFlipV=1` for the current cache/view mapping.
+  - Verified output:
+    - `artifacts/realtime-soap/runs/RT-visual-fidelity-v6-256x512-2048`
+    - `artifacts/targets/latest-realtime-soap-beauty.png`
+  - Performance:
+    - Frames: `480`
+    - Average physics frame time: `21.342 ms`
+    - Average physics fps: `46.86`
+    - p95 physics frame time: `24.190 ms`
+    - p99 physics frame time: `29.320 ms`
+    - 2048 PNG render/write time: `2248.4 ms`
+    - Reached 24fps: `true`
+  - Parameter response after visual repair:
+    - `artifacts/realtime-soap/runs/RT-visual-v6-disturbance-strong-256x512-2048`
+      - Average physics fps: `45.29`
+    - `artifacts/realtime-soap/runs/RT-visual-v6-air-strong-256x512-2048`
+      - Average physics fps: `46.58`
+  - Remaining visual gap:
+    - This is closer in saturation and structure, but still uses a fast thickness-band approximation rather than the previous offline optical renderer.
+    - Next quality step is multi-frame physical cache plus a stricter spectral/Fresnel thin-film renderer in the high-resolution render layer.
 
 ## Next Stage
 

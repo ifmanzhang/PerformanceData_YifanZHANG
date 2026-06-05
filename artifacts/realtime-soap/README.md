@@ -53,3 +53,17 @@ Parameter response smoke checks:
 - `artifacts/realtime-soap/runs/RT-air-strong-256x512-2048`
 
 Both completed above 31fps and produced different `eta/Gamma/u/front/foam` diagnostics under changed inputs.
+
+Visual fidelity repair run:
+
+- Output: `artifacts/realtime-soap/runs/RT-visual-fidelity-v6-256x512-2048`
+- Latest preview copy: `artifacts/targets/latest-realtime-soap-beauty.png`
+- Physics resolution: `256 x 512`
+- Render output: `2048 x 2048`
+- Simulated time: `20s`
+- Frames: `480`
+- Average physics frame time: `21.342ms`
+- Average physics fps: `46.86`
+- p95 physics frame time: `24.190ms`
+- 2048 PNG render/write time: `2248.4ms`
+- Result: reached the `>=24fps` physics target with improved cache-preserved visual structure.

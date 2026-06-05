@@ -15,20 +15,22 @@ function parseArgs(argv) {
     seconds: 20,
     cache: "artifacts/realtime-soap/cache/gravity_fig14_like",
     outDir: "artifacts/realtime-soap/runs/RT-latest",
-    cacheBlend: 0.55,
-    disturbanceStrength: 0.55,
+    cacheBlend: 0.82,
+    disturbanceStrength: 0.18,
     disturbanceRadius: 0.12,
     disturbanceU: 0.42,
     disturbanceV: 0.38,
     gravityAngle: 0,
-    airSpeed: 0.65,
+    airSpeed: 0.38,
     airDirection: 24,
-    marangoni: 0.82,
+    marangoni: 0.65,
     viscosity: 0.22,
-    diffusion: 0.08,
+    diffusion: 0.018,
     evaporation: 0.00002,
     substeps: 1,
     pressureIterations: 6,
+    renderCacheBlend: 0.74,
+    renderFlipV: 1,
     recordFrames: 0,
   };
   for (let i = 2; i < argv.length; i += 1) {
@@ -57,6 +59,39 @@ function clamp(v, a, b) {
 
 function fract(v) {
   return v - Math.floor(v);
+}
+
+function bell(x, c, w) {
+  const d = (x - c) / Math.max(EPS, w);
+  return Math.exp(-d * d);
+}
+
+function mix(a, b, t) {
+  return a * (1 - t) + b * t;
+}
+
+function filmPalette(thicknessNm) {
+  const stops = [
+    [120, [0.28, 0.48, 0.96]],
+    [230, [0.62, 0.32, 0.92]],
+    [350, [0.06, 0.74, 0.88]],
+    [500, [0.82, 0.34, 0.72]],
+    [670, [0.98, 0.48, 0.08]],
+    [900, [0.98, 0.70, 0.10]],
+    [1260, [0.92, 0.42, 0.10]],
+    [1700, [0.60, 0.24, 0.82]],
+  ];
+  if (thicknessNm <= stops[0][0]) return stops[0][1];
+  for (let i = 0; i < stops.length - 1; i += 1) {
+    const [x0, c0] = stops[i];
+    const [x1, c1] = stops[i + 1];
+    if (thicknessNm <= x1) {
+      const t = clamp((thicknessNm - x0) / Math.max(EPS, x1 - x0), 0, 1);
+      const s = t * t * (3 - 2 * t);
+      return [mix(c0[0], c1[0], s), mix(c0[1], c1[1], s), mix(c0[2], c1[2], s)];
+    }
+  }
+  return stops[stops.length - 1][1];
 }
 
 function idx(width, i, j) {
@@ -128,6 +163,7 @@ function loadCache(cacheDir) {
     gamma: readField(cacheDir, manifest, "gamma"),
     uTheta: readField(cacheDir, manifest, "uTheta"),
     uPhi: readField(cacheDir, manifest, "uPhi"),
+    curl: manifest.fields.curl ? readField(cacheDir, manifest, "curl") : null,
     front: readField(cacheDir, manifest, "front"),
   };
 }
@@ -202,21 +238,26 @@ function fieldPng(field, width, height, file, lo = null, hi = null) {
 }
 
 function phaseColor(thicknessNm, cosI, front, foam) {
-  const t = thicknessNm * (0.018 + 0.008 * cosI);
-  const r = 0.52 + 0.42 * Math.sin(t + 0.7) + 0.26 * Math.sin(t * 0.41 + 2.0);
-  const g = 0.48 + 0.39 * Math.sin(t + 2.15) + 0.24 * Math.sin(t * 0.37 + 0.2);
-  const b = 0.50 + 0.40 * Math.sin(t + 4.05) + 0.22 * Math.sin(t * 0.43 + 1.2);
-  const warm = clamp((thicknessNm - 430) / 360, 0, 1);
-  const cyan = clamp(1 - Math.abs(thicknessNm - 310) / 220, 0, 1);
-  const violet = clamp(1 - Math.abs(thicknessNm - 170) / 130, 0, 1) * (1 - cosI * 0.25);
-  let rr = r * 0.32 + warm * 0.72 + violet * 0.25;
-  let gg = g * 0.34 + warm * 0.45 + cyan * 0.62 + foam * 0.55;
-  let bb = b * 0.35 + cyan * 0.55 + violet * 0.68 + foam * 0.45;
-  const edge = Math.pow(clamp(1 - cosI, 0, 1), 2.0);
-  rr += edge * 0.18 + front * 0.20 + foam * 0.38;
-  gg += edge * 0.28 + front * 0.16 + foam * 0.34;
-  bb += edge * 0.44 + front * 0.22 + foam * 0.30;
-  const exposure = 0.78;
+  const edge = Math.pow(clamp(1 - cosI, 0, 1), 1.45);
+  const optical = thicknessNm * (0.016 + 0.010 * edge);
+  const fringe = 0.84 + 0.16 * Math.sin(optical);
+  const palette = filmPalette(thicknessNm * (0.92 + edge * 0.18));
+  const ridge = Math.pow(clamp(front, 0, 1), 0.75);
+  const mist = Math.pow(clamp(foam, 0, 1), 1.8);
+  const violetEdge = bell(thicknessNm, 190, 150) * edge;
+  const cyanRidge = bell(thicknessNm, 360, 210) * ridge;
+  let rr = palette[0] * fringe + violetEdge * 0.15 + mist * 0.10;
+  let gg = palette[1] * fringe + cyanRidge * 0.14 + mist * 0.10;
+  let bb = palette[2] * fringe + violetEdge * 0.34 + cyanRidge * 0.10 + mist * 0.10;
+  rr += edge * 0.035 + ridge * 0.035;
+  gg += edge * 0.060 + ridge * 0.030;
+  bb += edge * 0.140 + ridge * 0.045;
+  const gray = (rr + gg + bb) / 3;
+  const saturation = 1.88 - mist * 0.25;
+  rr = gray + (rr - gray) * saturation;
+  gg = gray + (gg - gray) * saturation;
+  bb = gray + (bb - gray) * saturation;
+  const exposure = 0.86;
   return [
     clamp(1 - Math.exp(-Math.max(0, rr) * exposure), 0, 1),
     clamp(1 - Math.exp(-Math.max(0, gg) * exposure), 0, 1),
@@ -243,6 +284,13 @@ class RealtimeSoap {
     this.front = new Float32Array(this.count);
     this.foam = new Float32Array(this.count);
     this.div = new Float32Array(this.count);
+    this.cacheEtaGrid = new Float32Array(this.count);
+    this.cacheGammaGrid = new Float32Array(this.count);
+    this.cacheThetaGrid = new Float32Array(this.count);
+    this.cachePhiGrid = new Float32Array(this.count);
+    this.cacheFrontGrid = new Float32Array(this.count);
+    this.cacheCurlGrid = new Float32Array(this.count);
+    this.precomputeCacheGrid();
     this.initialize();
   }
 
@@ -250,16 +298,30 @@ class RealtimeSoap {
     return bilinear(this.cache[name], this.cache.width, this.cache.height, u, v);
   }
 
-  initialize() {
+  precomputeCacheGrid() {
     for (let i = 0; i < this.nTheta; i += 1) {
       const v = (i + 0.5) / this.nTheta;
       for (let j = 0; j < this.nPhi; j += 1) {
         const u = (j + 0.5) / this.nPhi;
         const k = idx(this.nPhi, i, j);
-        this.eta[k] = this.cacheSample("eta", u, v);
-        this.gamma[k] = this.cacheSample("gamma", u, v);
-        this.uTheta[k] = this.cacheSample("uTheta", u, v);
-        this.uPhi[k] = this.cacheSample("uPhi", u, v);
+        this.cacheEtaGrid[k] = this.cacheSample("eta", u, v);
+        this.cacheGammaGrid[k] = this.cacheSample("gamma", u, v);
+        this.cacheThetaGrid[k] = this.cacheSample("uTheta", u, v);
+        this.cachePhiGrid[k] = this.cacheSample("uPhi", u, v);
+        this.cacheFrontGrid[k] = this.cacheSample("front", u, v);
+        this.cacheCurlGrid[k] = this.cache.curl ? bilinear(this.cache.curl, this.cache.width, this.cache.height, u, v) : 0;
+      }
+    }
+  }
+
+  initialize() {
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const k = idx(this.nPhi, i, j);
+        this.eta[k] = this.cacheEtaGrid[k];
+        this.gamma[k] = this.cacheGammaGrid[k];
+        this.uTheta[k] = this.cacheThetaGrid[k];
+        this.uPhi[k] = this.cachePhiGrid[k];
       }
     }
     this.deriveFields();
@@ -291,20 +353,21 @@ class RealtimeSoap {
         const gammaU = this.gamma[idx(this.nPhi, Math.min(this.nTheta - 1, i + 1), j)];
         const gradPhi = (gammaR - gammaL) * this.nPhi / (2 * TAU * sinTheta);
         const gradTheta = (gammaU - gammaD) * this.nTheta / (2 * PI);
-        const cacheTheta = this.cacheSample("uTheta", u, v);
-        const cachePhi = this.cacheSample("uPhi", u, v);
         const dU = Math.min(Math.abs(u - disturbU), 1 - Math.abs(u - disturbU));
         const dV = v - disturbV;
         const influence = Math.exp(-(dU * dU + dV * dV) / r2) * a.disturbanceStrength;
-        const localBlend = clamp(a.cacheBlend * (1 - influence * 0.82), 0.05, 0.92);
+        const localBlend = clamp(a.cacheBlend * (1 - influence * 0.78), 0.08, 0.96);
         const damp = Math.exp(-a.viscosity * dt * 1.8);
+        const cacheCurl = this.cacheCurlGrid[k];
 
         let ut = this.uTheta[k] * damp;
         let up = this.uPhi[k] * damp;
         ut += dt * (gravTheta - a.marangoni * gradTheta / Math.max(0.08, eta) * 0.025 + dv);
         up += dt * (-a.marangoni * gradPhi / Math.max(0.08, eta) * 0.025 + du);
-        ut += (cacheTheta - ut) * localBlend * 0.035;
-        up += (cachePhi - up) * localBlend * 0.035;
+        ut += (this.cacheThetaGrid[k] - ut) * localBlend * 0.055;
+        up += (this.cachePhiGrid[k] - up) * localBlend * 0.055;
+        ut += cacheCurl * 0.00045;
+        up -= cacheCurl * 0.00030;
         ut += influence * Math.sin(frameIndex * 0.07 + u * TAU) * 0.018;
         up += influence * Math.cos(frameIndex * 0.06 + v * PI) * 0.018;
         this.tmpTheta[k] = clamp(ut, -0.45, 0.45);
@@ -332,23 +395,21 @@ class RealtimeSoap {
         const backV = v - this.uTheta[k] * dt;
         let eta = bilinear(this.eta, this.nPhi, this.nTheta, backU, backV);
         let gamma = bilinear(this.gamma, this.nPhi, this.nTheta, backU, backV);
-        const cacheEta = this.cacheSample("eta", u + phase * 0.012, v);
-        const cacheGamma = this.cacheSample("gamma", u + phase * 0.012, v);
         const dU = Math.min(Math.abs(u - disturbU), 1 - Math.abs(u - disturbU));
         const dV = v - disturbV;
         const influence = Math.exp(-(dU * dU + dV * dV) / r2) * a.disturbanceStrength;
-        const localBlend = clamp(a.cacheBlend * (1 - influence * 0.82), 0.04, 0.90);
+        const localBlend = clamp(a.cacheBlend * (1 - influence * 0.78), 0.06, 0.96);
         eta += influence * 0.11 * Math.sin(phase * TAU + u * TAU * 2.0);
         gamma += influence * 0.09;
-        eta = eta * (1 - localBlend * 0.05) + cacheEta * localBlend * 0.05;
-        gamma = gamma * (1 - localBlend * 0.035) + cacheGamma * localBlend * 0.035;
+        eta = eta * (1 - localBlend * 0.16) + this.cacheEtaGrid[k] * localBlend * 0.16;
+        gamma = gamma * (1 - localBlend * 0.11) + this.cacheGammaGrid[k] * localBlend * 0.11;
         eta -= a.evaporation * dt;
         this.tmpEta[k] = clamp(eta, 0.035, 1.45);
         this.tmpGamma[k] = clamp(gamma, 0.035, 1.55);
       }
     }
     if (this.args.diffusion > 0) {
-      const d = this.args.diffusion * dt * 0.18;
+      const d = this.args.diffusion * dt * 0.08;
       for (let i = 0; i < this.nTheta; i += 1) {
         for (let j = 0; j < this.nPhi; j += 1) {
           const k = idx(this.nPhi, i, j);
@@ -393,8 +454,10 @@ class RealtimeSoap {
         const div = (this.uPhi[idx(this.nPhi, i, j + 1)] - this.uPhi[idx(this.nPhi, i, j - 1)]) * this.nPhi * 0.5 + (this.uTheta[idx(this.nPhi, Math.min(this.nTheta - 1, i + 1), j)] - this.uTheta[idx(this.nPhi, Math.max(0, i - 1), j)]) * this.nTheta * 0.5;
         const speed = Math.hypot(this.uTheta[k], this.uPhi[k]);
         this.div[k] = div;
-        this.front[k] = clamp(gradEta * 0.18 + gradGamma * 0.08 + Math.max(0, -div) * 0.025, 0, 1);
-        this.foam[k] = clamp(this.front[k] * 0.20 + speed * 0.55 + Math.max(0, -div) * 0.02, 0, 1);
+        const liveFront = clamp(gradEta * 0.15 + gradGamma * 0.055 + Math.max(0, -div) * 0.018, 0, 1);
+        const cacheFront = clamp(this.cacheFrontGrid[k] * 3.2, 0, 1);
+        this.front[k] = clamp(Math.max(liveFront, cacheFront * 0.82) + Math.max(0, -div) * 0.006, 0, 1);
+        this.foam[k] = clamp(this.front[k] * 0.10 + speed * 0.38 + Math.max(0, -div) * 0.012, 0, 1);
       }
     }
   }
@@ -419,11 +482,18 @@ function renderSphere(sim, size, file) {
       const theta = Math.acos(clamp(z, -1, 1));
       const phi = Math.atan2(sy, sx);
       const u = (phi + PI) / TAU;
-      const v = theta / PI;
+      const vRaw = theta / PI;
+      const v = Number(sim.args.renderFlipV) ? 1 - vRaw : vRaw;
       const eta = bilinear(sim.eta, sim.nPhi, sim.nTheta, u, v);
-      const front = bilinear(sim.front, sim.nPhi, sim.nTheta, u, v);
-      const foam = bilinear(sim.foam, sim.nPhi, sim.nTheta, u, v);
-      const thicknessNm = eta * 2000;
+      const etaCache = bilinear(sim.cache.eta, sim.cache.width, sim.cache.height, u, v);
+      const frontLive = bilinear(sim.front, sim.nPhi, sim.nTheta, u, v);
+      const foamLive = bilinear(sim.foam, sim.nPhi, sim.nTheta, u, v);
+      const frontCache = bilinear(sim.cache.front, sim.cache.width, sim.cache.height, u, v);
+      const renderCacheBlend = clamp(sim.args.renderCacheBlend, 0, 1);
+      const etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
+      const front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
+      const foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
+      const thicknessNm = etaRender * 2100;
       const color = phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam);
       rgba[p + 0] = encodeByte(Math.pow(color[0], 1 / 2.2));
       rgba[p + 1] = encodeByte(Math.pow(color[1], 1 / 2.2));
