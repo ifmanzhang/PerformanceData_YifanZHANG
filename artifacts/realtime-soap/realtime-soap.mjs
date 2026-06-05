@@ -29,17 +29,21 @@ function parseArgs(argv) {
     evaporation: 0.00002,
     substeps: 1,
     pressureIterations: 6,
+    renderBaseAlpha: 0.34,
     renderCacheBlend: 0.74,
     renderDetailBoost: 0.10,
     renderEtaScale: 2100,
     renderExposure: 0.92,
     renderFlipV: 1,
+    renderFrontAlpha: 0.22,
     renderOptics: "spectral",
     renderReconstruction: "bicubic",
+    renderRimAlpha: 0.52,
     renderSamples: 4,
     renderSharpen: 0.16,
     renderSource: "hybrid",
     renderSaturation: 1.12,
+    renderTransparent: 1,
     recordFrames: 0,
   };
   for (let i = 2; i < argv.length; i += 1) {
@@ -675,7 +679,7 @@ class RealtimeSoap {
 
 function shadeSphereSample(sim, sx, z) {
   const r2 = sx * sx + z * z;
-  if (r2 > 1) return [0.0018, 0.0024, 0.0032];
+  if (r2 > 1) return [0.0018, 0.0024, 0.0032, Number(sim.args.renderTransparent) ? 0 : 1];
   const sy = Math.sqrt(Math.max(0, 1 - r2));
   const theta = Math.acos(clamp(z, -1, 1));
   const phi = Math.atan2(sy, sx);
@@ -707,10 +711,18 @@ function shadeSphereSample(sim, sx, z) {
     ? phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam)
     : spectralThinFilmColor(thicknessNm, clamp(sy, 0.03, 1), front, foam, sim.args);
   const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(Number(sim.args.renderDetailBoost) || 0, 0, 0.5);
+  const edge = Math.pow(clamp(1 - sy, 0, 1), 1.18);
+  const baseAlpha = clamp(Number(sim.args.renderBaseAlpha) || 0.34, 0, 1);
+  const rimAlpha = clamp(Number(sim.args.renderRimAlpha) || 0.52, 0, 1);
+  const frontAlpha = clamp(Number(sim.args.renderFrontAlpha) || 0.22, 0, 1);
+  const alpha = Number(sim.args.renderTransparent)
+    ? clamp(baseAlpha + rimAlpha * edge + frontAlpha * Math.max(front, foam), 0, 1)
+    : 1;
   return [
     clamp(color[0] + detail * 0.36, 0, 1),
     clamp(color[1] + detail * 0.50, 0, 1),
     clamp(color[2] + detail * 0.58, 0, 1),
+    alpha,
   ];
 }
 
@@ -725,6 +737,7 @@ function renderSphere(sim, size, file) {
       let rr = 0;
       let gg = 0;
       let bb = 0;
+      let aa = 0;
       for (let gy = 0; gy < sampleGrid; gy += 1) {
         for (let gx = 0; gx < sampleGrid; gx += 1) {
           const sx = ((x + (gx + 0.5) / sampleGrid) / size) * 2 - 1;
@@ -733,12 +746,13 @@ function renderSphere(sim, size, file) {
           rr += color[0];
           gg += color[1];
           bb += color[2];
+          aa += color[3];
         }
       }
       rgba[p + 0] = encodeByte(Math.pow(rr / sampleCount, 1 / 2.2));
       rgba[p + 1] = encodeByte(Math.pow(gg / sampleCount, 1 / 2.2));
       rgba[p + 2] = encodeByte(Math.pow(bb / sampleCount, 1 / 2.2));
-      rgba[p + 3] = 255;
+      rgba[p + 3] = encodeByte(aa / sampleCount);
     }
   }
   sharpenRgbaInPlace(rgba, size, size, sim.args.renderSharpen);
@@ -781,16 +795,20 @@ function main() {
   const performanceReport = {
     solver: "realtime-hybrid-approximation",
     physicsResolution: [sim.nTheta, sim.nPhi],
+    renderBaseAlpha: args.renderBaseAlpha,
     renderResolution: args.render,
     renderDetailBoost: args.renderDetailBoost,
     renderEtaScale: args.renderEtaScale,
     renderExposure: args.renderExposure,
     renderOptics: args.renderOptics,
     renderReconstruction: args.renderReconstruction,
+    renderFrontAlpha: args.renderFrontAlpha,
+    renderRimAlpha: args.renderRimAlpha,
     renderSamples: args.renderSamples,
     renderSharpen: args.renderSharpen,
     renderSource: args.renderSource,
     renderSaturation: args.renderSaturation,
+    renderTransparent: args.renderTransparent,
     targetFps: args.fpsTarget,
     simulatedSeconds: args.seconds,
     frames,

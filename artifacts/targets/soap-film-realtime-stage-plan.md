@@ -257,3 +257,34 @@ RT-M4:
 - Current hard conclusion:
   - This is the most honest still path from current data, but it cannot reach reference/Fig.14 richness because the available physical cache is only `1024 x 512` and incomplete.
   - Further visual improvement must come from a new higher-resolution physical cache with at least `eta/Gamma/u/front` at native high resolution, or by running a proper high-resolution offline solver. More upsampling/sharpening would only make a sharper fake.
+
+## RT-M4 Transparency / Alpha Channel Patch
+
+- Problem observed:
+  - Previous beauty PNGs had `alpha=255` everywhere, so the bubble was technically opaque even when the colors looked film-like.
+- Fix:
+  - Added true PNG alpha output.
+  - New parameters:
+    - `renderTransparent`: enables alpha output when `1`.
+    - `renderBaseAlpha`: base film opacity.
+    - `renderRimAlpha`: view-angle/rim opacity contribution.
+    - `renderFrontAlpha`: opacity contribution from front/foam physical fields.
+  - Outside the sphere now writes `alpha=0`.
+  - Sphere interior is semi-transparent; rim/front/foam can become more opaque.
+- Validation:
+  - Run: `artifacts/realtime-soap/runs/RT-cache-spectral-alpha-2048-s4-v1`
+  - Render: `2048 x 2048`
+  - Source: cache-only spectral
+  - Alpha settings:
+    - `renderTransparent=1`
+    - `renderBaseAlpha=0.30`
+    - `renderRimAlpha=0.58`
+    - `renderFrontAlpha=0.24`
+  - PNG alpha audit:
+    - `alpha_min=0`
+    - `alpha_max=255`
+    - `alpha_mean=101.30`
+    - transparent pixels: `898152`
+    - semi-transparent pixels: `3293710`
+    - opaque pixels: `2442`
+  - Copied to `artifacts/targets/latest-realtime-soap-alpha.png`.
