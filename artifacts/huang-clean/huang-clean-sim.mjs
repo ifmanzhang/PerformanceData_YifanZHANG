@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const PI = Math.PI;
 const TAU = Math.PI * 2;
 const EPS = 1e-6;
+const PAPER_COUPLED_SCENARIOS = new Set(["paperGravityBuoyancy", "paperAirFriction", "paperEvaporationLife"]);
 
 function clamp(v, a, b) {
   return Math.min(b, Math.max(a, v));
@@ -54,6 +55,11 @@ function valueNoise(phi, theta, seed) {
   return sum / Math.max(EPS, norm);
 }
 
+function ridgedNoise(phi, theta, seed) {
+  const n = valueNoise(phi, theta, seed);
+  return 1 - Math.min(1, Math.abs(2 * n - 1));
+}
+
 function parseArgs(argv) {
   const args = {
     sim: 0,
@@ -69,6 +75,15 @@ function parseArgs(argv) {
     scenario: "referenceFlow",
     paperParams: 1,
     gridDiagnostics: 1,
+    operatorAudit: 0,
+    progressEvery: 0,
+    deriveEvery: 12,
+    quantileDebug: 1,
+    rawFields: 0,
+    gravityFrontScale: 1,
+    gravityVerticalGradient: 0.055,
+    gravityGammaRatio: 1,
+    biMocqEc: 1,
   };
   const seen = new Set();
   for (let i = 2; i < argv.length; i += 1) {
@@ -87,6 +102,7 @@ function parseArgs(argv) {
     if (!seen.has("simTheta")) args.simTheta = args.sim;
     if (!seen.has("simPhi")) args.simPhi = args.sim * 2;
   }
+  if (!seen.has("cg") && PAPER_COUPLED_SCENARIOS.has(args.scenario)) args.cg = 64;
   args.simTheta = Math.max(64, Math.min(1024, Math.floor(args.simTheta)));
   args.simPhi = Math.max(128, Math.min(2048, Math.floor(args.simPhi)));
   args.steps = Math.max(0, Math.floor(args.steps));
@@ -94,6 +110,15 @@ function parseArgs(argv) {
   args.render = Math.max(320, Math.min(2400, Math.floor(args.render)));
   args.paperParams = args.paperParams ? 1 : 0;
   args.gridDiagnostics = args.gridDiagnostics ? 1 : 0;
+  args.operatorAudit = args.operatorAudit ? 1 : 0;
+  args.progressEvery = Math.max(0, Math.floor(args.progressEvery));
+  args.deriveEvery = Math.max(0, Math.floor(args.deriveEvery));
+  args.quantileDebug = args.quantileDebug ? 1 : 0;
+  args.rawFields = args.rawFields ? 1 : 0;
+  args.gravityFrontScale = clamp(Number(args.gravityFrontScale), 0.25, 1.5);
+  args.gravityVerticalGradient = clamp(Math.abs(Number(args.gravityVerticalGradient)), 0.02, 0.12);
+  args.gravityGammaRatio = args.gravityGammaRatio ? 1 : 0;
+  args.biMocqEc = args.biMocqEc ? 1 : 0;
   return args;
 }
 
@@ -180,8 +205,22 @@ class HuangCleanSimulator {
     this.seed = options.seed ?? 7;
     this.scenario = options.scenario ?? "referenceFlow";
     this.paperParams = options.paperParams !== 0;
+    this.operatorAudit = options.operatorAudit !== 0 || this.scenario === "gammaProjection";
+    this.progressEvery = Math.max(0, Math.floor(options.progressEvery ?? 0));
+    this.deriveEvery = Math.max(0, Math.floor(options.deriveEvery ?? 12));
+    this.gravityFrontScale = clamp(Number(options.gravityFrontScale ?? 1), 0.25, 1.5);
+    this.gravityVerticalGradient = clamp(Math.abs(Number(options.gravityVerticalGradient ?? 0.055)), 0.02, 0.12);
+    this.gravityGammaRatio = options.gravityGammaRatio !== 0;
+    this.biMocqEc = options.biMocqEc !== 0;
+    this.simTime = 0;
+    this.simStep = 0;
+    this.initialConditionReport = {};
     this.allocate();
     this.initialize();
+  }
+
+  isPaperCoupledScenario() {
+    return PAPER_COUPLED_SCENARIOS.has(this.scenario);
   }
 
   allocate() {
@@ -222,6 +261,8 @@ class HuangCleanSimulator {
     // arrays are derived only for interpolation and rendering diagnostics.
     this.uThetaFace = new Float32Array((this.nTheta + 1) * this.nPhi);
     this.uPhiFace = new Float32Array(this.length);
+    this.uThetaFaceAdv = new Float32Array((this.nTheta + 1) * this.nPhi);
+    this.uPhiFaceAdv = new Float32Array(this.length);
     this.weights = new Float32Array(n);
     this.backMapX = new Float32Array(n);
     this.backMapY = new Float32Array(n);
@@ -238,11 +279,27 @@ class HuangCleanSimulator {
     this.mapError = new Float32Array(n);
     this.resetMask = new Float32Array(n);
     this.semiEta = new Float32Array(n);
+    this.etaSource0 = new Float32Array(n);
+    this.etaSourceStep = new Float32Array(n);
+    this.etaError0 = new Float32Array(n);
+    this.etaEcScratch = new Float32Array(n);
   }
 
   idx(i, j) {
-    const ii = clamp(i, 0, this.nTheta - 1);
-    let jj = j % this.nPhi;
+    let ii = i;
+    let jj = j;
+    const halfPhi = Math.floor(this.nPhi / 2);
+    while (ii < 0 || ii >= this.nTheta) {
+      if (ii < 0) {
+        ii = -ii - 1;
+        jj += halfPhi;
+      } else {
+        ii = 2 * this.nTheta - ii - 1;
+        jj += halfPhi;
+      }
+    }
+    ii = clamp(ii, 0, this.nTheta - 1);
+    jj %= this.nPhi;
     if (jj < 0) jj += this.nPhi;
     return ii * this.nPhi + jj;
   }
@@ -259,6 +316,10 @@ class HuangCleanSimulator {
 
   phi(j) {
     return (j + 0.5) * this.dPhi;
+  }
+
+  paperPhiPoleTaper(theta) {
+    return this.isPaperCoupledScenario() ? smoothstep(0, Math.sin(0.035), Math.sin(theta)) : 1;
   }
 
   normalizeAngles(theta, phi) {
@@ -346,6 +407,10 @@ class HuangCleanSimulator {
     }
     this.semiEta.set(this.eta);
     this.eta0.set(this.eta);
+    this.etaSource0.fill(0);
+    this.etaSourceStep.fill(0);
+    this.etaError0.fill(0);
+    this.etaEcScratch.set(this.eta);
     this.lastStats.biMocqMapsInitialized = true;
   }
 
@@ -440,6 +505,11 @@ class HuangCleanSimulator {
       etaMass = masses.etaMass;
       gammaMass = masses.gammaMass;
     }
+    if (this.isPaperCoupledScenario()) {
+      const masses = this.applyPaperCoupledInitialCondition();
+      etaMass = masses.etaMass;
+      gammaMass = masses.gammaMass;
+    }
     this.eta0.set(this.eta);
     this.gamma0.set(this.gamma);
     this.initialEtaMass = etaMass;
@@ -447,6 +517,123 @@ class HuangCleanSimulator {
     this.area = areaMass;
     this.lastStats = {};
     this.deriveFields();
+  }
+
+  applyPaperCoupledInitialCondition() {
+    let etaMass = 0;
+    let gammaMass = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      const vertical = Math.cos(theta);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const phi = this.phi(j);
+        const id = this.idx(i, j);
+        const n1 = valueNoise(phi, theta, this.seed + 101);
+        const n2 = valueNoise(phi * 1.7 + 0.33, theta * 1.3 + 0.21, this.seed + 137);
+        const n3 = valueNoise(phi * 3.1 + 0.17, theta * 2.2 + 0.47, this.seed + 173);
+        const n4 = valueNoise(phi * 6.4 + 1.73, theta * 5.1 + 0.91, this.seed + 229);
+        const n5 = valueNoise(phi * 10.8 + 0.83, theta * 8.7 + 0.37, this.seed + 311);
+        const r1 = ridgedNoise(phi * 4.9 + 0.22, theta * 5.7 + 1.11, this.seed + 353);
+        const r2 = ridgedNoise(phi * 12.5 + 2.61, theta * 10.3 + 0.74, this.seed + 389);
+        let eta;
+        let gamma;
+        if (this.scenario === "paperGravityBuoyancy") {
+          const frontScale = this.gravityFrontScale;
+          const baseEta = 0.56;
+          const gravityScale = this.paperParams ? 0.49 : 0.46;
+          const marangoniNumber = this.paperParams ? 0.83 : 0.72;
+          const gammaEquilibriumSlope = (baseEta * gravityScale) / Math.max(EPS, marangoniNumber);
+          const gammaEquilibriumBlend = 0.28;
+          const coherentFront = Math.tanh(5.2 * (n1 - 0.5));
+          const islandFront = Math.tanh(7.0 * (n3 - 0.5));
+          const fineFront = Math.tanh(6.0 * (n4 - 0.5));
+          const filamentFront = Math.tanh(13.0 * (r1 - 0.58));
+          const microFront = Math.tanh(18.0 * (r2 - 0.62));
+          eta = clamp(
+            baseEta -
+              this.gravityVerticalGradient * vertical +
+              frontScale *
+                (0.085 * coherentFront +
+                  0.065 * islandFront +
+                  0.04 * fineFront +
+                  0.05 * filamentFront +
+                  0.025 * microFront +
+                  0.025 * (n5 - 0.5)),
+            0.08,
+            1.45,
+          );
+          if (this.gravityGammaRatio) {
+            const ratio = 0.62 / baseEta;
+            gamma = clamp(ratio * eta, 0.12, 1.75);
+          } else {
+            gamma = clamp(
+              0.62 +
+                gammaEquilibriumBlend * gammaEquilibriumSlope * (1 - vertical) +
+                frontScale * (0.085 * (n2 - 0.5) + 0.05 * fineFront + 0.035 * filamentFront),
+              0.12,
+              1.75,
+            );
+          }
+        } else if (this.scenario === "paperAirFriction") {
+          const stripeSeed = 0.035 * Math.sin(10 * phi + 2.4 * Math.sin(theta * 3.0));
+          eta = clamp(0.50 - 0.04 * vertical + 0.085 * (n1 - 0.5) + stripeSeed, 0.10, 1.28);
+          gamma = clamp(0.68 + 0.10 * (n2 - 0.5) + 0.035 * Math.sin(4 * phi + theta), 0.16, 1.7);
+        } else {
+          const lifeBands = 0.075 * Math.sin(5.0 * theta + 1.6 * Math.sin(2.0 * phi));
+          eta = clamp(0.62 - 0.06 * vertical + 0.11 * (n1 - 0.5) + 0.045 * (n3 - 0.5) + lifeBands, 0.14, 1.42);
+          gamma = clamp(0.64 + 0.10 * (n2 - 0.5), 0.15, 1.6);
+        }
+        this.eta[id] = eta;
+        this.gamma[id] = gamma;
+        this.uTheta[id] = 0;
+        this.uPhi[id] = 0;
+        etaMass += eta * this.weights[id];
+        gammaMass += gamma * this.weights[id];
+      }
+    }
+    this.initialConditionReport = {
+      scenario: this.scenario,
+      source: this.scenario === "paperGravityBuoyancy"
+        ? "procedural multi-scale noise front for Huang Fig.14 gravity/buoyancy; no bitmap texture, no reference sampling"
+        : this.scenario === "paperAirFriction"
+          ? "procedural stripe/noise perturbation for Huang Fig.15/Fig.16 air-friction setup"
+          : "procedural Perlin-like band/noise perturbation for Huang Fig.17 evaporation setup",
+      seed: this.seed,
+      gravityFrontInit:
+        this.scenario === "paperGravityBuoyancy"
+          ? {
+              baseEta: 0.56,
+              verticalEtaDrop: this.gravityVerticalGradient,
+              verticalEtaFormula: "eta = baseEta - verticalEtaDrop * cos(theta) + proceduralFront",
+              gammaEquilibriumFormula:
+                this.gravityGammaRatio
+                  ? "Gamma = (gammaBase/baseEta) * eta. This follows Huang Eq.34's material invariant Gamma/eta for the gravity/buoyancy initial state."
+                  : "Gamma = gammaBase + gammaEquilibriumBlend * (baseEta * g / M) * (1 - cos(theta)) + procedural perturbation. The blend keeps the Huang Eq.33 gravity/surface-tension direction without initializing Fig.14 at static equilibrium.",
+              gammaBase: 0.62,
+              gammaEtaRatioMode: this.gravityGammaRatio,
+              gammaEquilibriumBlend: 0.28,
+              gammaEquilibriumSlope: (0.56 * (this.paperParams ? 0.49 : 0.46)) / (this.paperParams ? 0.83 : 0.72),
+              frontScale: this.gravityFrontScale,
+              coherentFrontAmplitude: 0.09,
+              islandFrontAmplitude: 0.065,
+              fineFrontAmplitude: 0.04,
+              filamentFrontAmplitude: 0.05,
+              microFrontAmplitude: 0.025,
+              etaClamp: [0.08, 1.45],
+              gammaEtaCorrelation: 0,
+              gammaNoiseAmplitude: 0.085,
+              gammaFineFrontAmplitude: 0.05,
+              gammaFilamentFrontAmplitude: 0.035,
+              highFrequencyInitialCondition:
+                "procedural multi-octave ridged value-noise written into eta/Gamma initial physical fields for Huang Fig.14 material-front detail; no bitmap texture or reference sampling",
+            }
+          : null,
+    };
+    this.uThetaFace.fill(0);
+    this.uPhiFace.fill(0);
+    this.syncCentersFromFaces();
+    this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
+    return { etaMass, gammaMass };
   }
 
   applyPoleAdvectionInitialCondition() {
@@ -508,13 +695,45 @@ class HuangCleanSimulator {
 
   gravityVector(theta, phi) {
     const { w, eTheta, ePhi } = sphereBasis(theta, phi);
-    const gWorld = [0.22, -1.0, -0.08];
+    const gWorld = this.isPaperCoupledScenario() ? [0.0, -1.0, 0.0] : [0.22, -1.0, -0.08];
     const radial = dot3(gWorld, w);
     const tangential = add3(gWorld, w, 1, -radial);
     return [dot3(tangential, eTheta), dot3(tangential, ePhi)];
   }
 
+  paperAirVelocity(theta, phi) {
+    if (this.scenario === "paperGravityBuoyancy") return [0, 0];
+    const time = this.simTime;
+    const basis = sphereBasis(theta, phi);
+    if (this.scenario === "paperAirFriction") {
+      const axisA = normalize3([0.25, 0.82, 0.52]);
+      const axisB = normalize3([-0.42, 0.25, 0.87]);
+      const swirlA = cross3(axisA, basis.w);
+      const swirlB = cross3(axisB, basis.w);
+      const corridorPhi = Math.atan2(Math.sin(phi - (1.15 + 1.8 * time)), Math.cos(phi - (1.15 + 1.8 * time)));
+      const corridor = Math.exp(-(corridorPhi * corridorPhi) / 0.22) * (0.45 + 0.55 * Math.sin(theta));
+      const envelope = smoothstep(0.018, 0.07, time) * (1 - smoothstep(0.155, 0.2, time));
+      const residualSpin = smoothstep(0.12, 0.2, time) * 0.22;
+      const world = add3(swirlA, swirlB, (1.55 * envelope * corridor + residualSpin), 0.42 * envelope * Math.sin(2.0 * theta + phi));
+      return [dot3(world, basis.eTheta), dot3(world, basis.ePhi)];
+    }
+
+    const phase = 2.2 * time;
+    const axisA = normalize3([Math.sin(phase + 0.3), 0.55, Math.cos(0.7 * phase)]);
+    const axisB = normalize3([-0.35, Math.cos(phase * 0.8), Math.sin(phase + 1.1)]);
+    const axisC = normalize3([0.48, -0.18, 0.86]);
+    const swirlA = cross3(axisA, basis.w);
+    const swirlB = cross3(axisB, basis.w);
+    const swirlC = cross3(axisC, basis.w);
+    const bandA = 0.62 + 0.38 * Math.sin(2.0 * theta + 3.0 * phi + phase) * Math.sin(theta);
+    const bandB = 0.66 + 0.34 * Math.cos(3.0 * theta - 2.0 * phi + 0.5 * phase) * Math.sin(theta);
+    const pulse = 0.58 + 0.24 * Math.sin(0.9 + 2.4 * time);
+    const world = add3(add3(swirlA, swirlB, 0.34 * pulse * bandA, 0.24 * pulse * bandB), swirlC, 1, 0.16 * pulse);
+    return [dot3(world, basis.eTheta), dot3(world, basis.ePhi)];
+  }
+
   airVelocity(theta, phi) {
+    if (this.isPaperCoupledScenario()) return this.paperAirVelocity(theta, phi);
     const { w, eTheta, ePhi } = sphereBasis(theta, phi);
     let air = [0.62, -0.16, 0.38];
     if (this.scenario === "gravityDrainage") air = [0.05, 0.0, 0.0];
@@ -530,6 +749,8 @@ class HuangCleanSimulator {
     const M = this.paperParams ? 0.83 : (this.scenario === "marangoniPatch" ? 0.92 : 0.72);
     const Cr = this.paperParams ? 2.1 : (this.scenario === "gravityDrainage" ? 0.22 : 0.58);
     const gravityScale = this.scenario === "gammaProjection" ? 0 : (this.paperParams ? 0.49 : (this.scenario === "gravityDrainage" ? 0.46 : 0.24));
+    const useStaggeredAdvectedVelocity =
+      this.isPaperCoupledScenario() && uThetaField === this.uThetaAdv && uPhiField === this.uPhiAdv;
 
     for (let i = 0; i <= this.nTheta; i += 1) {
       const thetaFace = clamp(i * this.dTheta, 0.5 * this.dTheta, PI - 0.5 * this.dTheta);
@@ -541,7 +762,9 @@ class HuangCleanSimulator {
         const denom = eta + Cr * dt;
         const [gT] = this.gravityVector(thetaFace, this.phi(j));
         const [aT] = this.airVelocity(thetaFace, this.phi(j));
-        const uStar = 0.5 * (uThetaField[idA] + uThetaField[idB]);
+        const uStar = useStaggeredAdvectedVelocity
+          ? this.uThetaFaceAdv[idf]
+          : 0.5 * (uThetaField[idA] + uThetaField[idB]);
         this.baseTheta[idf] = (eta * uStar + Cr * dt * aT + dt * eta * gravityScale * gT) / denom;
         this.betaTheta[idf] = (M * dt) / denom;
       }
@@ -557,9 +780,12 @@ class HuangCleanSimulator {
         const denom = eta + Cr * dt;
         const [, gP] = this.gravityVector(theta, j * this.dPhi);
         const [, aP] = this.airVelocity(theta, j * this.dPhi);
-        const uStar = 0.5 * (uPhiField[idA] + uPhiField[idB]);
-        this.basePhi[idf] = (eta * uStar + Cr * dt * aP + dt * eta * gravityScale * gP) / denom;
-        this.betaPhi[idf] = (M * dt) / denom;
+        const uStar = useStaggeredAdvectedVelocity
+          ? this.uPhiFaceAdv[idf]
+          : 0.5 * (uPhiField[idA] + uPhiField[idB]);
+        const poleTaper = this.paperPhiPoleTaper(theta);
+        this.basePhi[idf] = poleTaper * ((eta * uStar + Cr * dt * aP + dt * eta * gravityScale * gP) / denom);
+        this.betaPhi[idf] = poleTaper * ((M * dt) / denom);
       }
     }
 
@@ -590,8 +816,7 @@ class HuangCleanSimulator {
         const idA = this.idx(i - 1, j);
         const idB = this.idx(i, j);
         const grad = (input[idB] - input[idA]) / this.dTheta;
-        const gammaFace = 0.5 * (gammaStar[idA] + gammaStar[idB]);
-        this.opThetaFace[idf] = i === 0 || i === this.nTheta ? 0 : gammaFace * this.betaTheta[idf] * grad;
+        this.opThetaFace[idf] = i === 0 || i === this.nTheta ? 0 : this.betaTheta[idf] * grad;
       }
     }
     for (let i = 0; i < this.nTheta; i += 1) {
@@ -601,15 +826,14 @@ class HuangCleanSimulator {
         const idA = this.idx(i, j - 1);
         const idB = this.idx(i, j);
         const grad = (input[idB] - input[idA]) / (this.dPhi * sinC);
-        const gammaFace = 0.5 * (gammaStar[idA] + gammaStar[idB]);
-        this.opPhiFace[idf] = gammaFace * this.betaPhi[idf] * grad;
+        this.opPhiFace[idf] = this.betaPhi[idf] * grad;
       }
     }
     this.divergenceFromFaces(this.opThetaFace, this.opPhiFace, this.tmpC);
     for (let i = 0; i < this.nTheta; i += 1) {
       for (let j = 0; j < this.nPhi; j += 1) {
         const id = this.idx(i, j);
-        out[id] = input[id] - dt * this.tmpC[id];
+        out[id] = input[id] / (Math.max(0.015, gammaStar[id]) * dt) - this.tmpC[id];
       }
     }
   }
@@ -626,18 +850,14 @@ class HuangCleanSimulator {
         const idS = this.idx(i - 1, j);
         const idE = this.idx(i, j + 1);
         const idW = this.idx(i, j - 1);
-        const gammaN = 0.5 * (gammaStar[id] + gammaStar[idN]);
-        const gammaS = 0.5 * (gammaStar[id] + gammaStar[idS]);
-        const gammaE = 0.5 * (gammaStar[id] + gammaStar[idE]);
-        const gammaW = 0.5 * (gammaStar[id] + gammaStar[idW]);
         const thetaDiag =
-          (gammaN * this.betaTheta[this.fTheta(i + 1, j)] * sinNorth +
-            gammaS * this.betaTheta[this.fTheta(i, j)] * sinSouth) /
+          (this.betaTheta[this.fTheta(i + 1, j)] * sinNorth +
+            this.betaTheta[this.fTheta(i, j)] * sinSouth) /
           (this.dTheta * this.dTheta * sinC);
         const phiDiag =
-          (gammaE * this.betaPhi[this.idx(i, j + 1)] + gammaW * this.betaPhi[this.idx(i, j)]) /
+          (this.betaPhi[this.idx(i, j + 1)] + this.betaPhi[this.idx(i, j)]) /
           (this.dPhi * this.dPhi * sinC * sinC);
-        this.diag[id] = 1 / Math.max(1e-8, 1 + dt * (thetaDiag + phiDiag));
+        this.diag[id] = 1 / Math.max(1e-8, 1 / (Math.max(0.015, gammaStar[id]) * dt) + thetaDiag + phiDiag);
       }
     }
   }
@@ -646,7 +866,7 @@ class HuangCleanSimulator {
     const forceRequestedIterations = this.scenario === "gammaProjection";
     this.buildBaseAndBeta(dt);
     for (let id = 0; id < this.length; id += 1) {
-      this.gammaRhs[id] = this.gammaAdv[id] - dt * this.gammaAdv[id] * this.divBase[id];
+      this.gammaRhs[id] = 1 / dt - this.divBase[id];
       this.tmpB[id] = this.gammaAdv[id];
     }
     this.buildGammaPreconditioner(dt);
@@ -709,8 +929,14 @@ class HuangCleanSimulator {
       : "Stop when absolute residual < 2e-5 or relative residual < 1e-4.";
     this.lastStats.gammaResidualHistory = residualHistory;
     this.lastStats.gammaEquationForm =
-      "A(Gamma)=Gamma-dt*div_s(GammaStar*beta*grad_s(Gamma)); rhs=GammaStar-dt*GammaStar*div_s(base), equivalent to Huang Eq.26 multiplied by GammaStar*dt.";
-    this.lastStats.gammaOperatorSymmetry = this.computeGammaOperatorSymmetry(dt);
+      "Huang Eq.26 form: A(Gamma)=Gamma/(GammaStar*dt)-div_s((M*dt)/(etaStar+Cr*dt)*grad_s(Gamma)); rhs=1/dt-div_s(base). GammaStar is not placed inside the flux.";
+    this.lastStats.gammaOperatorSymmetry = this.operatorAudit
+      ? this.computeGammaOperatorSymmetry(dt)
+      : {
+          skipped: true,
+          reason:
+            "Skipped during M6 paper-coupled production runs; M5 gammaProjection keeps the full SPD symmetry audit enabled.",
+        };
     this.lastStats.gammaClampCount = gammaClampCount;
     this.lastStats.gammaClampFraction = gammaClampCount / this.length;
   }
@@ -751,6 +977,10 @@ class HuangCleanSimulator {
     for (let i = 0; i <= this.nTheta; i += 1) {
       for (let j = 0; j < this.nPhi; j += 1) {
         const idf = this.fTheta(i, j);
+        if (i === 0 || i === this.nTheta) {
+          this.uThetaFace[idf] = 0;
+          continue;
+        }
         const idA = this.idx(i - 1, j);
         const idB = this.idx(i, j);
         const grad = (this.gamma[idB] - this.gamma[idA]) / this.dTheta;
@@ -758,7 +988,8 @@ class HuangCleanSimulator {
       }
     }
     for (let i = 0; i < this.nTheta; i += 1) {
-      const sinC = Math.max(1e-4, Math.sin(this.theta(i)));
+      const sinRaw = Math.sin(this.theta(i));
+      const sinC = Math.max(1e-4, sinRaw);
       for (let j = 0; j < this.nPhi; j += 1) {
         const idf = this.idx(i, j);
         const idA = this.idx(i, j - 1);
@@ -767,6 +998,9 @@ class HuangCleanSimulator {
         this.uPhiFace[idf] = this.basePhi[idf] - this.betaPhi[idf] * grad;
       }
     }
+    this.lastStats.poleVelocityTreatment = this.isPaperCoupledScenario()
+      ? "theta pole flux fixed to zero; u_phi/basePhi/betaPhi use a fixed 0.035 rad physical pole taper so full-size and diagnostic grids share the same latitude-longitude pole treatment"
+      : "legacy";
     this.lastStats.maxSpeed = this.syncCentersFromFaces();
     this.divergenceFromFaces(this.uThetaFace, this.uPhiFace, this.divVelocity);
     this.lastStats.marangoniDirection = this.computeMarangoniDirectionScore();
@@ -777,6 +1011,9 @@ class HuangCleanSimulator {
     let u2 = 0;
     let g2 = 0;
     let positiveWeight = 0;
+    let totalDot = 0;
+    let totalU2 = 0;
+    let totalPositiveWeight = 0;
     for (let i = 0; i < this.nTheta; i += 1) {
       const theta = this.theta(i);
       const sinC = Math.max(1e-4, Math.sin(theta));
@@ -786,18 +1023,34 @@ class HuangCleanSimulator {
         const gp = (this.gamma[this.idx(i, j + 1)] - this.gamma[this.idx(i, j - 1)]) / (2 * this.dPhi * sinC);
         const mt = -gt;
         const mp = -gp;
-        const localDot = this.uTheta[id] * mt + this.uPhi[id] * mp;
+        const baseT = 0.5 * (this.baseTheta[this.fTheta(i, j)] + this.baseTheta[this.fTheta(i + 1, j)]);
+        const baseP = 0.5 * (this.basePhi[this.idx(i, j)] + this.basePhi[this.idx(i, j + 1)]);
+        const corrT = this.uTheta[id] - baseT;
+        const corrP = this.uPhi[id] - baseP;
+        const localDot = corrT * mt + corrP * mp;
+        const totalLocalDot = this.uTheta[id] * mt + this.uPhi[id] * mp;
         const w = this.weights[id];
         dot += localDot * w;
-        u2 += (this.uTheta[id] * this.uTheta[id] + this.uPhi[id] * this.uPhi[id]) * w;
+        u2 += (corrT * corrT + corrP * corrP) * w;
         g2 += (mt * mt + mp * mp) * w;
         if (localDot > 0) positiveWeight += w;
+        totalDot += totalLocalDot * w;
+        totalU2 += (this.uTheta[id] * this.uTheta[id] + this.uPhi[id] * this.uPhi[id]) * w;
+        if (totalLocalDot > 0) totalPositiveWeight += w;
       }
     }
     return {
       cosine: dot / Math.max(EPS, Math.sqrt(u2 * g2)),
       positiveAreaFraction: positiveWeight / Math.max(EPS, this.area),
       weightedDot: dot,
+      correctionCosine: dot / Math.max(EPS, Math.sqrt(u2 * g2)),
+      correctionPositiveAreaFraction: positiveWeight / Math.max(EPS, this.area),
+      correctionWeightedDot: dot,
+      totalVelocityCosine: totalDot / Math.max(EPS, Math.sqrt(totalU2 * g2)),
+      totalVelocityPositiveAreaFraction: totalPositiveWeight / Math.max(EPS, this.area),
+      totalVelocityWeightedDot: totalDot,
+      scoreMeaning:
+        "correction fields compare (u - baseVelocity) to -grad_s(Gamma); totalVelocity fields include gravity/air/advection and can be negative in gravity-dominated scenes.",
     };
   }
 
@@ -938,6 +1191,72 @@ class HuangCleanSimulator {
     }
   }
 
+  syncCentersFromFaceFields(thetaFace, phiFace, outTheta, outPhi) {
+    let maxSpeed = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const ut = 0.5 * (thetaFace[this.fTheta(i, j)] + thetaFace[this.fTheta(i + 1, j)]);
+        const up = 0.5 * (phiFace[this.idx(i, j)] + phiFace[this.idx(i, j + 1)]);
+        outTheta[id] = ut;
+        outPhi[id] = up;
+        maxSpeed = Math.max(maxSpeed, Math.hypot(ut, up));
+      }
+    }
+    return maxSpeed;
+  }
+
+  advectVelocityFacesAligned(dt) {
+    for (let i = 0; i <= this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const idf = this.fTheta(i, j);
+        if (i === 0 || i === this.nTheta) {
+          this.uThetaFaceAdv[idf] = 0;
+          continue;
+        }
+        const theta = i * this.dTheta;
+        const phi = this.phi(j);
+        const [ut, up] = this.sampleVector(theta, phi);
+        if (Math.hypot(ut, up) < 1e-10) {
+          this.uThetaFaceAdv[idf] = this.uThetaFace[idf];
+          continue;
+        }
+        const [bt, bp] = this.advectPoint(theta, phi, dt, false);
+        const [utb, upb] = this.sampleVector(bt, bp);
+        const [utt] = this.transportVector(bt, bp, utb, upb, theta, phi);
+        this.uThetaFaceAdv[idf] = utt;
+      }
+    }
+
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      const poleTaper = this.paperPhiPoleTaper(theta);
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const idf = this.idx(i, j);
+        const phi = j * this.dPhi;
+        const [ut, up] = this.sampleVector(theta, phi);
+        if (Math.hypot(ut, up) < 1e-10) {
+          this.uPhiFaceAdv[idf] = poleTaper * this.uPhiFace[idf];
+          continue;
+        }
+        const [bt, bp] = this.advectPoint(theta, phi, dt, false);
+        const [utb, upb] = this.sampleVector(bt, bp);
+        const [, upt] = this.transportVector(bt, bp, utb, upb, theta, phi);
+        this.uPhiFaceAdv[idf] = poleTaper * upt;
+      }
+    }
+
+    const maxAdvectedSpeed = this.syncCentersFromFaceFields(
+      this.uThetaFaceAdv,
+      this.uPhiFaceAdv,
+      this.uThetaAdv,
+      this.uPhiAdv,
+    );
+    this.lastStats.velocityAdvectionScheme =
+      "Huang Section 4.2 velocity-aligned spherical vector transport evaluated on staggered theta/phi faces for M6 paper-coupled scenes; cell-center velocity is derived only after face advection.";
+    this.lastStats.maxAdvectedFaceSpeed = maxAdvectedSpeed;
+  }
+
   updateBiMocqMaps(dt, threshold = PI / 128) {
     let finiteMaps = true;
     for (let i = 0; i < this.nTheta; i += 1) {
@@ -1024,6 +1343,163 @@ class HuangCleanSimulator {
     }
   }
 
+  applyBiMocqThicknessWithSource(out, minV, maxV) {
+    for (let id = 0; id < this.length; id += 1) {
+      const initial = normalize3([this.backMapX[id], this.backMapY[id], this.backMapZ[id]]);
+      const [theta, phi] = xyzToAngles(initial);
+      const base = this.sampleScalar(this.eta0, theta, phi);
+      const source = this.sampleScalar(this.etaSource0, theta, phi);
+      out[id] = clamp(base + source, minV, maxV);
+    }
+  }
+
+  neighborScalarExtrema(field, i, j) {
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let di = -1; di <= 1; di += 1) {
+      for (let dj = -1; dj <= 1; dj += 1) {
+        const v = field[this.idx(i + di, j + dj)];
+        lo = Math.min(lo, v);
+        hi = Math.max(hi, v);
+      }
+    }
+    return [lo, hi];
+  }
+
+  applyBiMocqEtaErrorCorrection(field, minV, maxV) {
+    if (!this.biMocqEc) {
+      this.etaError0.fill(0);
+      return {
+        enabled: false,
+        mode:
+          "disabled by --biMocqEc=0; eta reconstruction uses Huang spherical back/forward maps without Qu 2019 error correction",
+        maxAbsError: 0,
+        meanAbsError: 0,
+        maxAbsCorrection: 0,
+        meanAbsCorrection: 0,
+        extremaClampCount: 0,
+        extremaClampFraction: 0,
+      };
+    }
+
+    let maxAbsError = 0;
+    let meanAbsError = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      const current = normalize3([this.forwardMapX[id], this.forwardMapY[id], this.forwardMapZ[id]]);
+      const [theta, phi] = xyzToAngles(current);
+      const predictedAtMaterialMonitor = this.sampleScalar(field, theta, phi);
+      const expectedAtMaterialMonitor = clamp(this.eta0[id] + this.etaSource0[id], minV, maxV);
+      const error = 0.5 * (predictedAtMaterialMonitor - expectedAtMaterialMonitor);
+      this.etaError0[id] = error;
+      const absError = Math.abs(error);
+      maxAbsError = Math.max(maxAbsError, absError);
+      meanAbsError += absError * this.weights[id];
+    }
+
+    let maxAbsCorrection = 0;
+    let meanAbsCorrection = 0;
+    let extremaClampCount = 0;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const initial = normalize3([this.backMapX[id], this.backMapY[id], this.backMapZ[id]]);
+        const [theta, phi] = xyzToAngles(initial);
+        const correction = this.sampleScalar(this.etaError0, theta, phi);
+        const unbounded = field[id] - correction;
+        const [lo, hi] = this.neighborScalarExtrema(field, i, j);
+        const bounded = clamp(unbounded, Math.max(minV, lo), Math.min(maxV, hi));
+        if (bounded !== unbounded) extremaClampCount += 1;
+        this.etaEcScratch[id] = bounded;
+        const absCorrection = Math.abs(correction);
+        maxAbsCorrection = Math.max(maxAbsCorrection, absCorrection);
+        meanAbsCorrection += absCorrection * this.weights[id];
+      }
+    }
+
+    field.set(this.etaEcScratch);
+    return {
+      enabled: true,
+      mode:
+        "Qu et al. 2019 Eq.27-style regular BiMocq2 error correction for eta: estimate material error with forward map Y, map correction back with X, then clamp to neighboring post-advection extrema.",
+      maxAbsError,
+      meanAbsError: meanAbsError / Math.max(EPS, this.area),
+      maxAbsCorrection,
+      meanAbsCorrection: meanAbsCorrection / Math.max(EPS, this.area),
+      extremaClampCount,
+      extremaClampFraction: extremaClampCount / this.length,
+    };
+  }
+
+  rebaseResetMaterialCells() {
+    let rebased = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      if (this.resetMask[id] <= 0.5) continue;
+      this.eta0[id] = this.eta[id];
+      this.etaSource0[id] = 0;
+      rebased += 1;
+    }
+    return rebased;
+  }
+
+  accumulateEtaSourceInMaterial(dt) {
+    const evaporationPerStep = this.scenario === "paperEvaporationLife" ? 0.00018 : 0;
+    let sourceMass = 0;
+    let evaporationLoss = 0;
+    let rawMinSource = Infinity;
+    let rawMaxSource = -Infinity;
+    let minSource = Infinity;
+    let maxSource = -Infinity;
+    let sourceLimiterCount = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      const gammaStar = Math.max(0.015, this.gammaAdv[id]);
+      const rawSource = (this.etaAdv[id] * (this.gamma[id] - this.gammaAdv[id])) / gammaStar - evaporationPerStep;
+      const low = 0.02 - this.etaAdv[id];
+      const high = 2.4 - this.etaAdv[id];
+      const source = clamp(rawSource, low, high);
+      if (source !== rawSource) sourceLimiterCount += 1;
+      this.etaSourceStep[id] = source;
+      sourceMass += source * this.weights[id];
+      evaporationLoss += evaporationPerStep * this.weights[id];
+      rawMinSource = Math.min(rawMinSource, rawSource);
+      rawMaxSource = Math.max(rawMaxSource, rawSource);
+      minSource = Math.min(minSource, source);
+      maxSource = Math.max(maxSource, source);
+    }
+
+    let materialClampCount = 0;
+    for (let id = 0; id < this.length; id += 1) {
+      const current = normalize3([this.forwardMapX[id], this.forwardMapY[id], this.forwardMapZ[id]]);
+      const [theta, phi] = xyzToAngles(current);
+      this.etaSource0[id] += this.sampleScalar(this.etaSourceStep, theta, phi);
+      const clamped = clamp(this.etaSource0[id], 0.02 - this.eta0[id], 2.4 - this.eta0[id]);
+      if (clamped !== this.etaSource0[id]) materialClampCount += 1;
+      this.etaSource0[id] = clamped;
+    }
+
+    let accumulatedSourceMass = 0;
+    for (let id = 0; id < this.length; id += 1) accumulatedSourceMass += this.etaSource0[id] * this.weights[id];
+    return {
+      sourceMass,
+      evaporationLoss,
+      accumulatedSourceMass,
+      evaporationPerStep,
+      rawMinSource,
+      rawMaxSource,
+      minSource,
+      maxSource,
+      sourceLimiterCount,
+      sourceLimiterFraction: sourceLimiterCount / this.length,
+      materialClampCount,
+      materialClampFraction: materialClampCount / this.length,
+      sourceMode:
+        "Huang Eq.24b/24c consistency: eta source uses etaStar/GammaStar * (Gamma-GammaStar), with evaporation subtracted only in paperEvaporationLife.",
+      accumulation:
+        "Huang Section 4.2.1: eta pure advection is reconstructed from the backward map; -eta div(u) and evaporation are accumulated in material coordinates through the forward map.",
+      limiter:
+        "Physical positivity/range guard only: eta source is clamped only if it would move eta outside [0.02, 2.4]; the trigger fraction is recorded and must be near zero.",
+    };
+  }
+
   updateEtaContinuity(dt, correctMass = true) {
     for (let id = 0; id < this.length; id += 1) {
       this.eta[id] = clamp(this.etaAdv[id] - dt * this.etaAdv[id] * this.divVelocity[id], 0.035, 2.2);
@@ -1051,6 +1527,31 @@ class HuangCleanSimulator {
     this.updateEtaContinuity(dt);
   }
 
+  stepCoupledPaper(dt, cgIterations) {
+    this.advectScalarAligned(this.gamma, this.gammaAdv, dt, 0.015, 2.7);
+    this.advectVelocityFacesAligned(dt);
+    const mapStats = this.updateBiMocqMaps(dt, PI / 128);
+    const rebasedResetCells = this.rebaseResetMaterialCells();
+    this.applyBiMocqThicknessWithSource(this.etaAdv, 0.02, 2.4);
+    const etaAdvEcStats = this.applyBiMocqEtaErrorCorrection(this.etaAdv, 0.02, 2.4);
+    this.solveGammaImplicit(dt, cgIterations);
+    this.updateVelocityFromGamma(dt);
+    const sourceStats = this.accumulateEtaSourceInMaterial(dt);
+    this.applyBiMocqThicknessWithSource(this.eta, 0.02, 2.4);
+    const etaFinalEcStats = this.applyBiMocqEtaErrorCorrection(this.eta, 0.02, 2.4);
+    this.lastStats.lastCoupledMapStats = { ...mapStats, rebasedResetCells };
+    this.lastStats.lastEtaSourceStats = sourceStats;
+    this.lastStats.lastBiMocqEtaEcStats = {
+      etaAdv: etaAdvEcStats,
+      etaFinal: etaFinalEcStats,
+    };
+    this.lastStats.gammaAdvectionScheme =
+      "Huang Section 4.2 velocity-aligned semi-Lagrangian scalar advection; BFECC is not used in M6 paper-coupled Gamma transport.";
+    this.lastStats.paperVelocityPrimaryState =
+      "M6 paper-coupled velocity advection is performed on staggered uThetaFace/uPhiFace; uTheta/uPhi centers are derived for interpolation, diagnostics, and raw outputs.";
+    this.lastStats.massCorrectionApplied = false;
+  }
+
   run({ steps = 96, dt = 0.002, cg = 22 } = {}) {
     if (this.scenario === "poleAdvection") {
       this.runPoleAdvection(steps, dt);
@@ -1064,16 +1565,81 @@ class HuangCleanSimulator {
       this.runGammaProjection(steps, dt, cg);
       return;
     }
+    if (this.isPaperCoupledScenario()) {
+      this.runPaperCoupled(steps, dt, cg);
+      return;
+    }
     const start = Date.now();
     for (let s = 0; s < steps; s += 1) {
       this.step(dt, cg);
-      if ((s + 1) % 12 === 0) this.deriveFields();
+      if (this.deriveEvery > 0 && (s + 1) % this.deriveEvery === 0) this.deriveFields();
     }
     this.deriveFields();
     this.lastStats.elapsedMs = Date.now() - start;
     this.lastStats.steps = steps;
     this.lastStats.dt = dt;
     this.lastStats.cgIterations = cg;
+  }
+
+  runPaperCoupled(steps = 96, dt = 0.002, cg = 22) {
+    const start = Date.now();
+    this.initializeMaterialMaps();
+    this.etaSource0.fill(0);
+    this.etaSourceStep.fill(0);
+    const initialSceneStats = this.computeM6SceneDiagnostics();
+    let lastMapStats = null;
+    let lastSourceStats = null;
+    for (let s = 0; s < steps; s += 1) {
+      this.simStep = s;
+      this.simTime = s * dt;
+      this.stepCoupledPaper(dt, cg);
+      lastMapStats = this.lastStats.lastCoupledMapStats;
+      lastSourceStats = this.lastStats.lastEtaSourceStats;
+      if (this.deriveEvery > 0 && (s + 1) % this.deriveEvery === 0) this.deriveFields();
+      if (this.progressEvery > 0 && (s + 1) % this.progressEvery === 0) {
+        const elapsed = Date.now() - start;
+        const perStep = elapsed / Math.max(1, s + 1);
+        const remaining = perStep * Math.max(0, steps - s - 1);
+        const etaMassError = (this.massOf(this.eta) - this.initialEtaMass) / Math.max(EPS, this.initialEtaMass);
+        console.log(
+          `[huang-clean] ${this.scenario} step ${s + 1}/${steps}, elapsed=${Math.round(elapsed / 1000)}s, etaMassError=${etaMassError}, gammaResidual=${this.lastStats.gammaResidualFinal}, etaLimiter=${lastSourceStats?.sourceLimiterFraction}`,
+        );
+        if (remaining > 0) {
+          console.log(`[huang-clean] estimated remaining=${Math.round(remaining / 1000)}s`);
+        }
+      }
+    }
+    this.simStep = steps;
+    this.simTime = steps * dt;
+    this.deriveFields();
+    const finalSceneStats = this.computeM6SceneDiagnostics();
+    this.lastStats.elapsedMs = Date.now() - start;
+    this.lastStats.steps = steps;
+    this.lastStats.dt = dt;
+    this.lastStats.cgIterations = cg;
+    this.lastStats.operatorAuditEnabled = this.operatorAudit;
+    this.lastStats.deriveEvery = this.deriveEvery;
+    this.lastStats.m6Scene = {
+      scenario: this.scenario,
+      figureTarget:
+        this.scenario === "paperGravityBuoyancy"
+          ? "Huang Fig.14 gravity/buoyancy"
+          : this.scenario === "paperAirFriction"
+            ? "Huang Fig.15/Fig.16 air friction"
+            : "Huang Fig.17 evaporation/life of bubble",
+      paperSections:
+        this.scenario === "paperEvaporationLife"
+          ? ["Section 4.2", "Section 4.2.1", "Section 4.3", "Section 6.4"]
+          : this.scenario === "paperAirFriction"
+            ? ["Section 3.3", "Section 4.2", "Section 4.2.1", "Section 4.3", "Section 6.3"]
+            : ["Section 3.3", "Section 4.2", "Section 4.2.1", "Section 4.3", "Section 6.2"],
+      initial: initialSceneStats,
+      final: finalSceneStats,
+      lastMapStats,
+      lastSourceStats,
+      note:
+        "M6 couples eta/Gamma/u using Huang advection, BiMocq2 material maps, Eq.24-26 Gamma solve, gravity/air-friction/evaporation scene forces. Beauty remains diagnostic until M7 Section 5 rendering.",
+    };
   }
 
   totalVariation(field) {
@@ -1264,6 +1830,76 @@ class HuangCleanSimulator {
     this.lastStats.maxSpeed = maxSpeed;
   }
 
+  computeM6SceneDiagnostics() {
+    let topMass = 0;
+    let topArea = 0;
+    let bottomMass = 0;
+    let bottomArea = 0;
+    let totalEta = 0;
+    let totalEta2 = 0;
+    let speedMass = 0;
+    let etaGradTheta = 0;
+    let etaGradPhi = 0;
+    let thinArea = 0;
+    let thickArea = 0;
+    let finite = true;
+    for (let i = 0; i < this.nTheta; i += 1) {
+      const theta = this.theta(i);
+      const sinC = Math.max(1e-4, Math.sin(theta));
+      for (let j = 0; j < this.nPhi; j += 1) {
+        const id = this.idx(i, j);
+        const w = this.weights[id];
+        const eta = this.eta[id];
+        const speed = Math.hypot(this.uTheta[id], this.uPhi[id]);
+        finite = finite && Number.isFinite(eta) && Number.isFinite(this.gamma[id]) && Number.isFinite(speed);
+        totalEta += eta * w;
+        totalEta2 += eta * eta * w;
+        speedMass += speed * w;
+        if (theta < PI / 3) {
+          topMass += eta * w;
+          topArea += w;
+        }
+        if (theta > (2 * PI) / 3) {
+          bottomMass += eta * w;
+          bottomArea += w;
+        }
+        const dEtaT = Math.abs((this.eta[this.idx(i + 1, j)] - this.eta[this.idx(i - 1, j)]) / (2 * this.dTheta));
+        const dEtaP = Math.abs((this.eta[this.idx(i, j + 1)] - this.eta[this.idx(i, j - 1)]) / (2 * this.dPhi * sinC));
+        etaGradTheta += dEtaT * w;
+        etaGradPhi += dEtaP * w;
+      }
+    }
+    const meanEta = totalEta / Math.max(EPS, this.area);
+    const varianceEta = Math.max(0, totalEta2 / Math.max(EPS, this.area) - meanEta * meanEta);
+    const stdEta = Math.sqrt(varianceEta);
+    const thinThreshold = meanEta - 0.7 * stdEta;
+    const thickThreshold = meanEta + 0.7 * stdEta;
+    for (let id = 0; id < this.length; id += 1) {
+      if (this.eta[id] < thinThreshold) thinArea += this.weights[id];
+      if (this.eta[id] > thickThreshold) thickArea += this.weights[id];
+    }
+    const topMeanEta = topMass / Math.max(EPS, topArea);
+    const bottomMeanEta = bottomMass / Math.max(EPS, bottomArea);
+    return {
+      finite,
+      meanEta,
+      stdEta,
+      topMeanEta,
+      bottomMeanEta,
+      bottomMinusTopEta: bottomMeanEta - topMeanEta,
+      thinAreaFraction: thinArea / Math.max(EPS, this.area),
+      thickAreaFraction: thickArea / Math.max(EPS, this.area),
+      meanSpeed: speedMass / Math.max(EPS, this.area),
+      etaStripeAnisotropyPhiOverTheta: etaGradPhi / Math.max(EPS, etaGradTheta),
+      morphologyProxy:
+        this.scenario === "paperGravityBuoyancy"
+          ? "positive bottomMinusTopEta plus finite thin/thick area supports Fig.14 gravity/buoyancy trend"
+          : this.scenario === "paperAirFriction"
+            ? "stripe anisotropy and mean speed support Fig.15/Fig.16 air-friction trend"
+            : "topMeanEta and evaporation source support Fig.17 top-fading/lifetime trend",
+    };
+  }
+
   diagnostics() {
     return {
       solver: "standalone-huang-clean",
@@ -1284,6 +1920,7 @@ class HuangCleanSimulator {
       nTheta: this.nTheta,
       nPhi: this.nPhi,
       paperParams: this.paperParams,
+      initialCondition: this.initialConditionReport,
       gridDiagnostics: this.computeGridDiagnostics(),
       ...this.lastStats,
     };
@@ -1309,6 +1946,9 @@ class HuangCleanSimulator {
         maxConstantLaplacian = Math.max(maxConstantLaplacian, Math.abs(lapTheta + cotTerm + lapPhi));
       }
     }
+    const halfPhi = Math.floor(this.nPhi / 2);
+    const northScalarPoleIndexError = this.idx(-1, 0) === this.idx(0, halfPhi) ? 0 : 1;
+    const southScalarPoleIndexError = this.idx(this.nTheta, 0) === this.idx(this.nTheta - 1, halfPhi) ? 0 : 1;
     const [poleUt, poleUp] = this.sampleVector(-0.25 * this.dTheta, 0, this.uTheta.map(() => 1), this.uPhi.map(() => 1));
     return {
       grid: `${this.nTheta}x${this.nPhi}`,
@@ -1318,7 +1958,10 @@ class HuangCleanSimulator {
       areaRelativeError: (this.area - 4 * PI) / (4 * PI),
       maxZeroDivergence,
       maxConstantLaplacian,
+      northScalarPoleIndexError,
+      southScalarPoleIndexError,
       poleVectorSignError: Math.abs(poleUt + 1) + Math.abs(poleUp + 1),
+      paperPhiPoleTaperAngleRad: this.isPaperCoupledScenario() ? 0.035 : 0,
       staggeredVelocityPrimary: true,
     };
   }
@@ -1441,7 +2084,7 @@ function renderBeauty(sim, size) {
   return rgba;
 }
 
-function renderLatLong(sim, fieldName, width = sim.nPhi, height = sim.nTheta) {
+function renderLatLong(sim, fieldName, width = sim.nPhi, height = sim.nTheta, forcedRange = null) {
   const rgba = Buffer.alloc(width * height * 4);
   const field = sim[fieldName];
   let min = Infinity;
@@ -1449,6 +2092,10 @@ function renderLatLong(sim, fieldName, width = sim.nPhi, height = sim.nTheta) {
   for (const v of field) {
     min = Math.min(min, v);
     max = Math.max(max, v);
+  }
+  if (forcedRange) {
+    min = forcedRange.min;
+    max = forcedRange.max;
   }
   if (fieldName === "divVelocity") {
     min = -Math.max(Math.abs(min), Math.abs(max));
@@ -1480,6 +2127,31 @@ function renderLatLong(sim, fieldName, width = sim.nPhi, height = sim.nTheta) {
     }
   }
   return { rgba, min, max };
+}
+
+function sampledQuantileRange(field, low = 0.01, high = 0.99, maxSamples = 262144) {
+  const step = Math.max(1, Math.ceil(field.length / maxSamples));
+  const sample = [];
+  let min = Infinity;
+  let max = -Infinity;
+  for (let i = 0; i < field.length; i += step) {
+    const v = field[i];
+    if (!Number.isFinite(v)) continue;
+    sample.push(v);
+    min = Math.min(min, v);
+    max = Math.max(max, v);
+  }
+  sample.sort((a, b) => a - b);
+  if (sample.length === 0) return { min: 0, max: 1, absoluteMin: 0, absoluteMax: 1, sampleCount: 0 };
+  const lo = sample[Math.floor(clamp(low, 0, 1) * (sample.length - 1))];
+  const hi = sample[Math.floor(clamp(high, 0, 1) * (sample.length - 1))];
+  if (Math.abs(hi - lo) < EPS) return { min, max, absoluteMin: min, absoluteMax: max, sampleCount: sample.length };
+  return { min: lo, max: hi, absoluteMin: min, absoluteMax: max, sampleCount: sample.length };
+}
+
+function writeFloat32Gzip(filePath, field) {
+  const bytes = Buffer.from(field.buffer, field.byteOffset, field.byteLength);
+  fs.writeFileSync(filePath, zlib.gzipSync(bytes, { level: 6 }));
 }
 
 const crcTable = (() => {
@@ -1572,6 +2244,12 @@ function main() {
     debugFields.push(["gammaRhs", "gamma-rhs"]);
     debugFields.push(["mapError", "map-error"]);
     debugFields.push(["resetMask", "reset-mask"]);
+  } else if (PAPER_COUPLED_SCENARIOS.has(args.scenario)) {
+    debugFields.push(["mapError", "map-error"]);
+    debugFields.push(["resetMask", "reset-mask"]);
+    debugFields.push(["etaSource0", "eta-source-material"]);
+    debugFields.push(["etaSourceStep", "eta-source-step"]);
+    debugFields.push(["etaError0", "eta-bimocq-error"]);
   } else if (args.scenario === "biMocqPole") {
     debugFields.push(["semiEta", "semi-lagrangian-thickness"]);
     debugFields.push(["mapError", "map-error"]);
@@ -1588,6 +2266,46 @@ function main() {
   }
   const diagnostics = sim.diagnostics();
   diagnostics.debugRanges = ranges;
+  diagnostics.quantileDebugRanges = {};
+  if (args.quantileDebug && PAPER_COUPLED_SCENARIOS.has(args.scenario)) {
+    const quantileFields = [
+      ["eta", "thickness"],
+      ["gamma", "surfactant"],
+      ["divVelocity", "divergence"],
+      ["etaSource0", "eta-source-material"],
+      ["etaSourceStep", "eta-source-step"],
+      ["etaError0", "eta-bimocq-error"],
+      ["mapError", "map-error"],
+    ];
+    for (const [field, name] of quantileFields) {
+      const qRange = sampledQuantileRange(sim[field], 0.01, 0.99);
+      const { rgba, min, max } = renderLatLong(sim, field, sim.nPhi, sim.nTheta, qRange);
+      diagnostics.quantileDebugRanges[field] = { ...qRange, renderedMin: min, renderedMax: max };
+      const debugPath = path.join(args.outDir, `${args.tag}-${name}-q01-q99.png`);
+      writePng(debugPath, sim.nPhi, sim.nTheta, rgba);
+      debugOutputs[`${name}-q01-q99`] = debugPath;
+    }
+  }
+  if (args.rawFields && PAPER_COUPLED_SCENARIOS.has(args.scenario)) {
+    const rawOutputs = {};
+    for (const field of [
+      "eta",
+      "gamma",
+      "uTheta",
+      "uPhi",
+      "divVelocity",
+      "etaSource0",
+      "etaSourceStep",
+      "etaError0",
+      "mapError",
+    ]) {
+      const rawPath = path.join(args.outDir, `${args.tag}-${field}.f32.gz`);
+      writeFloat32Gzip(rawPath, sim[field]);
+      rawOutputs[field] = rawPath;
+    }
+    diagnostics.rawFieldOutputs = rawOutputs;
+    diagnostics.rawFieldFormat = "gzip-compressed little-endian Float32Array, row-major theta-major layout, length=nTheta*nPhi";
+  }
   diagnostics.outputs = {
     initialThickness: initialThicknessPath || undefined,
     beauty: beautyPath,
@@ -1630,6 +2348,59 @@ function main() {
       "utf8",
     );
     diagnostics.outputs.solverReport = reportPath;
+    fs.writeFileSync(jsonPath, `${JSON.stringify(diagnostics, null, 2)}\n`, "utf8");
+  }
+  if (PAPER_COUPLED_SCENARIOS.has(args.scenario)) {
+    const reportPath = path.join(args.outDir, `${args.tag}-paper-scene-report.md`);
+    const scene = diagnostics.m6Scene ?? {};
+    const final = scene.final ?? {};
+    const initial = scene.initial ?? {};
+    const etaEc = diagnostics.lastBiMocqEtaEcStats?.etaFinal ?? {};
+    fs.writeFileSync(
+      reportPath,
+      [
+        `# ${args.tag} Paper Scene Report`,
+        "",
+        `- Scenario: ${args.scenario}`,
+        `- Figure target: ${scene.figureTarget}`,
+        `- Grid: ${diagnostics.nTheta} x ${diagnostics.nPhi}`,
+        `- Steps: ${diagnostics.steps}`,
+        `- dt: ${diagnostics.dt}`,
+        `- Runtime ms: ${diagnostics.elapsedMs}`,
+        `- Initial topMeanEta: ${initial.topMeanEta}`,
+        `- Initial bottomMeanEta: ${initial.bottomMeanEta}`,
+        `- Final topMeanEta: ${final.topMeanEta}`,
+        `- Final bottomMeanEta: ${final.bottomMeanEta}`,
+        `- Final bottomMinusTopEta: ${final.bottomMinusTopEta}`,
+        `- Final thinAreaFraction: ${final.thinAreaFraction}`,
+        `- Final thickAreaFraction: ${final.thickAreaFraction}`,
+        `- Final meanSpeed: ${final.meanSpeed}`,
+        `- Final etaStripeAnisotropyPhiOverTheta: ${final.etaStripeAnisotropyPhiOverTheta}`,
+        `- Last map reset fraction: ${scene.lastMapStats?.resetFraction}`,
+        `- Last map max error: ${scene.lastMapStats?.maxMapError}`,
+        `- Last eta source mass: ${scene.lastSourceStats?.sourceMass}`,
+        `- Last evaporation loss: ${scene.lastSourceStats?.evaporationLoss}`,
+        `- Last raw eta source min/max: ${scene.lastSourceStats?.rawMinSource} / ${scene.lastSourceStats?.rawMaxSource}`,
+        `- Last limited eta source min/max: ${scene.lastSourceStats?.minSource} / ${scene.lastSourceStats?.maxSource}`,
+        `- Last eta source limiter fraction: ${scene.lastSourceStats?.sourceLimiterFraction}`,
+        `- Last material eta source clamp fraction: ${scene.lastSourceStats?.materialClampFraction}`,
+        `- BiMocq eta EC enabled: ${etaEc.enabled}`,
+        `- BiMocq eta EC max/mean correction: ${etaEc.maxAbsCorrection} / ${etaEc.meanAbsCorrection}`,
+        `- BiMocq eta EC extrema clamp fraction: ${etaEc.extremaClampFraction}`,
+        "",
+        "## Paper Comparison",
+        "",
+        args.scenario === "paperGravityBuoyancy"
+          ? "Fig.14 expectation: thicker/heavier regions move downward, thinner/lighter regions rise and leave rivers/drop-shaped islands."
+          : args.scenario === "paperAirFriction"
+            ? "Fig.15/Fig.16 expectation: rotating/corridor air friction induces shear stripes, vortices and line-like velocity structures."
+            : "Fig.17 expectation: evaporation subtracts a small eta amount each step; bands move downward and the top fades as it thins.",
+        "",
+        "This is an M6 coupled-physics diagnostic report. It does not claim Huang Section 5 final rendering parity.",
+      ].join("\n") + "\n",
+      "utf8",
+    );
+    diagnostics.outputs.paperSceneReport = reportPath;
     fs.writeFileSync(jsonPath, `${JSON.stringify(diagnostics, null, 2)}\n`, "utf8");
   }
   console.log(`[huang-clean] wrote ${beautyPath}`);

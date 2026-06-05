@@ -136,7 +136,59 @@ const FILM_DEBUG_VIEW_INDEX = {
   surfactant: 4,
   phase: 5,
   foam: 6,
+  phaseSupport: 7,
+  regionalRawSupport: 8,
+  regionalSupport: 9,
+  regionalRidge: 10,
+  regionalFlow: 11,
+  riverCore: 12,
+  riverCoreRawMass: 13,
+  riverPathEvidence: 14,
+  riverCoreGeodesic: 15,
+  riverCoreMass: 16,
+  riverPhase: 17,
+  riverFlux: 18,
+  riverPathRawEvidence: 19,
+  riverPathCost: 20,
+  riverPathSkeleton: 21,
+  phaseArea: 22,
+  phaseAreaSkeleton: 22.25,
+  channelPotential: 23,
+  phaseAreaError: 24,
+  foamAreaError: 25,
+  filamentConnectivity: 26,
+  gammaResidual: 27,
+  etaGammaVelocity: 28,
+  huangDivergence: 29,
+  huangGradGamma: 30,
+  huangMarangoniGate: 31,
+  huangNarrowGate: 32,
+  huangPolarReject: 33,
+  divergenceAfterGammaProjection: 34,
+  uAfterMarangoni: 35,
+  huangMobilityDivergence: 36,
+  huangGammaResidual: 37,
+  huangEtaContinuity: 38,
+  gammaCandidate: 39,
+  gammaRhsResidual: 40,
+  huangFrontState: 41,
+  huangResidualTransport: 42,
+  huangMapState: 43,
+  huangForwardMapState: 44,
 };
+
+function publishSoapFilmDebug(snapshot) {
+  if (typeof window === "undefined") return;
+  const previous = window.__soapFilmDebug || {};
+  const next = {
+    ...previous,
+    ...snapshot,
+    updatedAtMs: Math.round(performance.now()),
+  };
+  window.__soapFilmDebug = next;
+  globalThis.__soapFilmDebug = next;
+  document.documentElement.dataset.soapFilmDebug = JSON.stringify(next);
+}
 
 function cameraViewFor(visualTuning = {}) {
   return CAMERA_VIEWS[visualTuning.cameraView] || CAMERA_VIEWS.near;
@@ -201,6 +253,11 @@ export function disposeLogo3d() {
   logo3d.renderer?.forceContextLoss?.();
   Object.assign(logo3d, LOGO3D_RESET, {
     pixelRatioLimit: logo3d.pixelRatioLimit,
+  });
+  publishSoapFilmDebug({
+    ready: false,
+    renderCount: window.__soapFilmDebug?.renderCount || 0,
+    debugView: "disposed",
   });
 }
 
@@ -336,7 +393,26 @@ function createCoreMaterial() {
   return { material, uniforms };
 }
 
-function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTexture, simSize = 256) {
+function createPhysicalThinFilmShellMaterial(
+  filmStateTexture,
+  filmVelocityTexture,
+  filmSupportTexture,
+  filmRegionalRawSupportTexture,
+  filmRegionalSupportTexture,
+  filmRegionalRidgeTexture,
+  filmRegionalFlowTexture,
+  filmRiverCoreTexture,
+  filmRiverCoreRawMassTexture,
+  filmRiverPathRawEvidenceTexture,
+  filmRiverPathCostTexture,
+  filmRiverPathSkeletonTexture,
+  filmRiverPathEvidenceTexture,
+  filmRiverCoreGeodesicTexture,
+  filmRiverCoreMassTexture,
+  filmRiverPhaseTexture,
+  filmRiverFluxTexture,
+  simSize = 256,
+) {
   const uniforms = {
     uTime: { value: 0 },
     uPressure: { value: 0 },
@@ -344,6 +420,20 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
     uClinicalShift: { value: 0 },
     uFilmStateMap: { value: filmStateTexture },
     uFilmVelocityMap: { value: filmVelocityTexture },
+    uFilmSupportMap: { value: filmSupportTexture || filmStateTexture },
+    uFilmRegionalRawSupportMap: { value: filmRegionalRawSupportTexture || filmSupportTexture || filmStateTexture },
+    uFilmRegionalSupportMap: { value: filmRegionalSupportTexture || filmSupportTexture || filmStateTexture },
+    uFilmRegionalRidgeMap: { value: filmRegionalRidgeTexture || filmRegionalSupportTexture || filmSupportTexture || filmStateTexture },
+    uFilmRegionalFlowMap: { value: filmRegionalFlowTexture || filmRegionalRidgeTexture || filmRegionalSupportTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverCoreMap: { value: filmRiverCoreTexture || filmRegionalFlowTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverCoreRawMassMap: { value: filmRiverCoreRawMassTexture || filmRiverCoreMassTexture || filmRiverCoreTexture || filmRegionalFlowTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverPathRawEvidenceMap: { value: filmRiverPathRawEvidenceTexture || filmRiverPathEvidenceTexture || filmRiverCoreRawMassTexture || filmRiverCoreMassTexture || filmRiverCoreTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverPathCostMap: { value: filmRiverPathCostTexture || filmRiverPathRawEvidenceTexture || filmRiverPathEvidenceTexture || filmRiverCoreRawMassTexture || filmRiverCoreMassTexture || filmRiverCoreTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverPathEvidenceMap: { value: filmRiverPathEvidenceTexture || filmRiverCoreRawMassTexture || filmRiverCoreMassTexture || filmRiverCoreTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverCoreGeodesicMap: { value: filmRiverCoreGeodesicTexture || filmRiverPathEvidenceTexture || filmRiverCoreMassTexture || filmRiverCoreTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverCoreMassMap: { value: filmRiverCoreMassTexture || filmRiverCoreTexture || filmRegionalFlowTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverPhaseMap: { value: filmRiverPhaseTexture || filmRegionalFlowTexture || filmSupportTexture || filmStateTexture },
+    uFilmRiverFluxMap: { value: filmRiverFluxTexture || filmRiverPhaseTexture || filmRegionalFlowTexture || filmSupportTexture || filmStateTexture },
     uFilmTexel: { value: new THREE.Vector2(1 / simSize, 1 / simSize) },
     uFilmDebugView: { value: 0 },
     uEdge: { value: 0.1 },
@@ -368,14 +458,14 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
     uFilmCoverage: { value: 1.08 },
     uFilmSpeckleAmount: { value: 1.24 },
     uFilmInterferenceScale: { value: 1.42 },
-    uFilmInterferenceContrast: { value: 0.46 },
+    uFilmInterferenceContrast: { value: 0.92 },
   };
 
   const material = new THREE.ShaderMaterial({
     uniforms,
     transparent: true,
     depthWrite: false,
-    side: THREE.FrontSide,
+    side: THREE.DoubleSide,
     blending: THREE.NormalBlending,
     vertexShader: `
       uniform float uTime;
@@ -438,6 +528,20 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
       uniform float uClinicalShift;
       uniform sampler2D uFilmStateMap;
       uniform sampler2D uFilmVelocityMap;
+      uniform sampler2D uFilmSupportMap;
+      uniform sampler2D uFilmRegionalRawSupportMap;
+      uniform sampler2D uFilmRegionalSupportMap;
+      uniform sampler2D uFilmRegionalRidgeMap;
+      uniform sampler2D uFilmRegionalFlowMap;
+      uniform sampler2D uFilmRiverCoreMap;
+      uniform sampler2D uFilmRiverCoreRawMassMap;
+      uniform sampler2D uFilmRiverPathRawEvidenceMap;
+      uniform sampler2D uFilmRiverPathCostMap;
+      uniform sampler2D uFilmRiverPathEvidenceMap;
+      uniform sampler2D uFilmRiverCoreGeodesicMap;
+      uniform sampler2D uFilmRiverCoreMassMap;
+      uniform sampler2D uFilmRiverPhaseMap;
+      uniform sampler2D uFilmRiverFluxMap;
       uniform vec2 uFilmTexel;
       uniform float uFilmDebugView;
       uniform float uEdge;
@@ -452,14 +556,18 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
 
       vec3 thinFilmRgb(float thickness, float cosTheta) {
         float nFilm = 1.333;
+        float cosAir = clamp(cosTheta, 0.02, 1.0);
+        float sinAir2 = max(0.0, 1.0 - cosAir * cosAir);
+        float sinFilm2 = clamp(sinAir2 / (nFilm * nFilm), 0.0, 0.999);
+        float cosFilm = sqrt(1.0 - sinFilm2);
         float r01 = (1.0 - nFilm) / (1.0 + nFilm);
         float r12 = (nFilm - 1.0) / (nFilm + 1.0);
         vec3 rgb = vec3(0.0);
         float weightSum = 0.0;
-        for (int i = 0; i < 12; i += 1) {
+        for (int i = 0; i < 31; i += 1) {
           float fi = float(i);
-          float lambda = mix(0.405, 0.705, fi / 11.0);
-          float delta = 4.0 * 3.14159265 * nFilm * thickness * cosTheta / lambda;
+          float lambda = mix(0.4, 0.7, fi / 30.0);
+          float delta = 4.0 * 3.14159265 * nFilm * thickness * cosFilm / lambda;
           float c = cos(delta);
           float rr = (r01 * r01 + r12 * r12 + 2.0 * r01 * r12 * c) /
             max(0.0001, 1.0 + r01 * r01 * r12 * r12 + 2.0 * r01 * r12 * c);
@@ -473,11 +581,12 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
           weightSum += (sensor.r + sensor.g + sensor.b) * 0.333 * daylight;
         }
         rgb /= max(weightSum, 0.001);
-        rgb = pow(clamp(rgb * 5.2, vec3(0.0), vec3(1.4)), vec3(0.72));
+        rgb = pow(clamp(rgb * 6.6, vec3(0.0), vec3(1.55)), vec3(0.68));
         float luma = dot(rgb, vec3(0.299, 0.587, 0.114));
-        float incoherence = smoothstep(1.35, 2.6, thickness);
-        rgb = mix(rgb, vec3(luma), incoherence * 0.36);
-        return clamp(mix(vec3(luma), rgb, uFilmInterferenceContrast), vec3(0.0), vec3(1.18));
+        float incoherence = smoothstep(1.08, 1.9, thickness);
+        rgb = mix(rgb, vec3(luma), incoherence * 0.28);
+        float contrast = clamp(uFilmInterferenceContrast, 0.0, 1.35);
+        return clamp(mix(vec3(luma), rgb, contrast), vec3(0.0), vec3(1.28));
       }
 
       vec4 filmAt(vec2 uv) {
@@ -488,13 +597,78 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
         return (texture2D(uFilmVelocityMap, clamp(uv, vec2(0.002), vec2(0.998))).rg - 0.5) * 0.5;
       }
 
+      vec4 supportAt(vec2 uv) {
+        return texture2D(uFilmSupportMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 regionalRawSupportAt(vec2 uv) {
+        return texture2D(uFilmRegionalRawSupportMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 regionalSupportAt(vec2 uv) {
+        return texture2D(uFilmRegionalSupportMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 regionalRidgeAt(vec2 uv) {
+        return texture2D(uFilmRegionalRidgeMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 regionalFlowAt(vec2 uv) {
+        return texture2D(uFilmRegionalFlowMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverPhaseAt(vec2 uv) {
+        return texture2D(uFilmRiverPhaseMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverCoreAt(vec2 uv) {
+        return texture2D(uFilmRiverCoreMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverCoreRawMassAt(vec2 uv) {
+        return texture2D(uFilmRiverCoreRawMassMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverPathRawEvidenceAt(vec2 uv) {
+        return texture2D(uFilmRiverPathRawEvidenceMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverPathCostAt(vec2 uv) {
+        return texture2D(uFilmRiverPathCostMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverPathEvidenceAt(vec2 uv) {
+        return texture2D(uFilmRiverPathEvidenceMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverCoreGeodesicAt(vec2 uv) {
+        return texture2D(uFilmRiverCoreGeodesicMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverCoreMassAt(vec2 uv) {
+        return texture2D(uFilmRiverCoreMassMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 riverFluxAt(vec2 uv) {
+        return texture2D(uFilmRiverFluxMap, clamp(uv, vec2(0.002), vec2(0.998)));
+      }
+
+      vec4 huangFrontStateAt(vec2 uv) {
+        return riverPathCostAt(uv);
+      }
+
       void main() {
         vec3 normal = normalize(vWorldNormal);
         vec3 local = normalize(vLocalPosition);
         vec3 viewDir = normalize(cameraPosition - vWorldPosition);
         float facing = clamp(dot(normal, viewDir), 0.0, 1.0);
         float frontMask = smoothstep(0.12, 0.34, facing);
-        if (frontMask < 0.012) discard;
+        bool debugView = uFilmDebugView > 0.5;
+        if (uFilmDebugView > 0.5 && uFilmDebugView < 1.5) {
+          gl_FragColor = vec4(1.0, 0.08, 0.04, 1.0);
+          return;
+        }
+        if (!debugView && frontMask < 0.012) discard;
 
         vec2 filmUv = vec2(
           0.6 + local.x * 0.46 + local.y * 0.075,
@@ -506,21 +680,63 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
         vec4 right = filmAt(filmUv + vec2(uFilmTexel.x, 0.0));
         vec4 down = filmAt(filmUv - vec2(0.0, uFilmTexel.y));
         vec4 up = filmAt(filmUv + vec2(0.0, uFilmTexel.y));
+        vec4 riverState = riverPhaseAt(filmUv);
+        vec4 riverLeft = riverPhaseAt(filmUv - vec2(uFilmTexel.x, 0.0));
+        vec4 riverRight = riverPhaseAt(filmUv + vec2(uFilmTexel.x, 0.0));
+        vec4 riverDown = riverPhaseAt(filmUv - vec2(0.0, uFilmTexel.y));
+        vec4 riverUp = riverPhaseAt(filmUv + vec2(0.0, uFilmTexel.y));
+        vec4 huangFront = huangFrontStateAt(filmUv);
+        vec4 huangFrontLeft = huangFrontStateAt(filmUv - vec2(uFilmTexel.x, 0.0));
+        vec4 huangFrontRight = huangFrontStateAt(filmUv + vec2(uFilmTexel.x, 0.0));
+        vec4 huangFrontDown = huangFrontStateAt(filmUv - vec2(0.0, uFilmTexel.y));
+        vec4 huangFrontUp = huangFrontStateAt(filmUv + vec2(0.0, uFilmTexel.y));
+        float huangFrontAlong = max(max(huangFrontLeft.g, huangFrontRight.g), max(huangFrontDown.g, huangFrontUp.g));
+        float huangFrontAcross = max(abs(huangFrontLeft.g - huangFrontRight.g), abs(huangFrontDown.g - huangFrontUp.g));
+        float huangFrontSide = max(huangFrontAcross, huangFront.a * 0.72);
+        float huangFrontDistance = smoothstep(0.68, 0.08, huangFront.r);
+        float huangFrontOccupancy = smoothstep(
+          0.008,
+          0.22,
+          huangFront.g + huangFront.b * 0.2 + huangFrontAlong * 0.18 - huangFront.a * 0.16
+        );
+        float huangFrontReject = smoothstep(0.38, 0.92, huangFront.a + huangFrontAcross * 0.12 - huangFrontAlong * 0.18);
+        float huangNarrowOptical = clamp(
+          huangFrontOccupancy *
+          (0.48 + huangFrontDistance * 0.28 + huangFront.b * 0.16 + huangFrontAlong * 0.16) *
+          (1.0 - huangFrontReject),
+          0.0,
+          1.0
+        );
+        float huangFrontRimOptical = clamp(
+          smoothstep(0.012, 0.22, huangFrontAcross + huangFrontDistance * 0.035) *
+          (0.35 + huangNarrowOptical * 0.55 + huangFront.b * 0.14) *
+          (1.0 - huangFrontReject * 0.72),
+          0.0,
+          1.0
+        );
 
         float height = state.r;
         float surfactant = state.g;
-        float foam = state.b;
-        float dye = state.a;
+        float riverMeniscusOptical = smoothstep(0.04, 0.76, riverState.g);
+        float foam = clamp(state.b + riverState.b * 0.035 + riverState.g * 0.04 + riverState.a * 0.015, 0.0, 0.98);
+        float dye = clamp(max(state.a, riverState.r * 0.88 + riverState.b * 0.1), 0.0, 0.98);
+        float dyeLeft = clamp(max(left.a, riverLeft.r * 0.92 + riverLeft.b * 0.12), 0.0, 0.98);
+        float dyeRight = clamp(max(right.a, riverRight.r * 0.92 + riverRight.b * 0.12), 0.0, 0.98);
+        float dyeDown = clamp(max(down.a, riverDown.r * 0.92 + riverDown.b * 0.12), 0.0, 0.98);
+        float dyeUp = clamp(max(up.a, riverUp.r * 0.92 + riverUp.b * 0.12), 0.0, 0.98);
         float neighborMax = max(max(left.r, right.r), max(up.r, down.r));
         float neighborMin = min(min(left.r, right.r), min(up.r, down.r));
         float lapH = left.r + right.r + up.r + down.r - height * 4.0;
         float lapG = left.g + right.g + up.g + down.g - surfactant * 4.0;
-        vec2 gradDye = vec2(right.a - left.a, up.a - down.a);
+        vec2 gradDye = vec2(dyeRight - dyeLeft, dyeUp - dyeDown);
         vec2 filmVelocity = (state.ba - 0.5) * 2.0;
         filmVelocity = velocityAt(filmUv);
         float velocityMag = clamp(length(filmVelocity) * 4.8, 0.0, 1.0);
         vec2 gradH = vec2(right.r - left.r, up.r - down.r);
         vec2 gradG = vec2(right.g - left.g, up.g - down.g);
+        float riverOptical = smoothstep(0.12, 0.72, riverState.r);
+        float riverRidgeOptical = smoothstep(0.035, 0.68, riverState.b);
+        float riverInterior = riverOptical * (1.0 - max(riverRidgeOptical, riverMeniscusOptical) * 0.64);
         float rawSlope = length(gradH);
         float slope = clamp(rawSlope * 26.0 + length(gradG) * 8.0, 0.0, 1.0);
         if (uFilmDebugView > 0.5) {
@@ -528,17 +744,428 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
           if (uFilmDebugView < 1.5) {
             debugColor = vec3(1.0, 0.08, 0.04);
           } else if (uFilmDebugView < 2.5) {
-            debugColor = mix(vec3(0.02, 0.06, 0.09), vec3(1.0, 0.62, 0.12), height);
+            float heightView = smoothstep(0.12, 0.86, height);
+            float heightRidge = clamp(abs(lapH) * 18.0 + slope * 0.22, 0.0, 1.0);
+            debugColor = mix(vec3(0.02, 0.06, 0.09), vec3(1.0, 0.62, 0.12), heightView);
+            debugColor += vec3(0.18, 0.08, 0.02) * heightRidge;
           } else if (uFilmDebugView < 3.5) {
-            debugColor = vec3(0.5 + filmVelocity.x * 3.0, 0.5 + filmVelocity.y * 3.0, velocityMag);
+            float velocityDetail = clamp(length(filmVelocity) * 24.0, 0.0, 1.0);
+            float velocityShear = clamp(
+              length(velocityAt(filmUv + vec2(uFilmTexel.x, 0.0)) - velocityAt(filmUv - vec2(uFilmTexel.x, 0.0))) * 64.0 +
+              length(velocityAt(filmUv + vec2(0.0, uFilmTexel.y)) - velocityAt(filmUv - vec2(0.0, uFilmTexel.y))) * 64.0,
+              0.0,
+              1.0
+            );
+            debugColor = vec3(0.5 + filmVelocity.x * 12.0, 0.5 + filmVelocity.y * 12.0, velocityDetail);
+            debugColor = mix(debugColor, vec3(1.0, 0.18, 0.06), velocityShear * 0.35);
           } else if (uFilmDebugView < 4.5) {
             debugColor = mix(vec3(0.08, 0.12, 0.18), vec3(0.12, 0.92, 0.82), surfactant);
           } else if (uFilmDebugView < 5.5) {
-            debugColor = mix(vec3(0.03, 0.025, 0.05), vec3(0.02, 0.92, 0.86), dye);
+            float phaseEdge = clamp(length(gradDye) * 24.0, 0.0, 1.0);
+            debugColor = mix(vec3(0.03, 0.025, 0.05), vec3(0.02, 0.92, 0.86), smoothstep(0.18, 0.82, dye));
+            debugColor += vec3(0.22, 0.04, 0.34) * phaseEdge;
+          } else if (uFilmDebugView < 6.5) {
+            float foamView = pow(clamp(foam * 12.0, 0.0, 1.0), 0.58);
+            debugColor = mix(vec3(0.02, 0.02, 0.018), vec3(1.0, 0.95, 0.78), foamView);
+          } else if (uFilmDebugView < 7.5) {
+            vec4 supportState = supportAt(filmUv);
+            float chemicalView = clamp((supportState.r - 0.5) * 3.0 + 0.5, 0.0, 1.0);
+            float supportView = smoothstep(0.04, 0.78, supportState.g);
+            float regionalHighView = smoothstep(0.12, 0.42, supportState.b);
+            float ridgeView = smoothstep(0.04, 0.72, supportState.a);
+            vec3 supportColor = mix(vec3(0.025, 0.035, 0.06), vec3(0.0, 0.9, 0.68), supportView);
+            vec3 highMassColor = mix(supportColor, vec3(1.0, 0.52, 0.08), regionalHighView * 0.72);
+            vec3 chemicalColor = mix(vec3(0.08, 0.16, 0.96), vec3(1.0, 0.1, 0.06), chemicalView);
+            float supportEdge = clamp(length(vec2(
+              supportAt(filmUv + vec2(uFilmTexel.x, 0.0)).g - supportAt(filmUv - vec2(uFilmTexel.x, 0.0)).g,
+              supportAt(filmUv + vec2(0.0, uFilmTexel.y)).g - supportAt(filmUv - vec2(0.0, uFilmTexel.y)).g
+            )) * 10.0, 0.0, 1.0);
+            debugColor = mix(highMassColor, chemicalColor, 0.26);
+            debugColor = mix(debugColor, vec3(0.88, 0.18, 1.0), ridgeView * 0.22);
+            debugColor += vec3(0.18, 0.06, 0.28) * supportEdge;
+          } else if (uFilmDebugView < 8.5) {
+            vec4 regional = regionalRawSupportAt(filmUv);
+            float regionalSupport = smoothstep(0.04, 0.72, regional.r);
+            float regionalHigh = smoothstep(0.1, 0.34, regional.g);
+            float regionalRidge = smoothstep(0.04, 0.78, regional.b);
+            float regionalSheet = smoothstep(0.12, 0.72, regional.a);
+            vec3 massColor = mix(vec3(0.018, 0.024, 0.04), vec3(0.02, 0.76, 0.95), regionalSupport);
+            massColor = mix(massColor, vec3(1.0, 0.55, 0.08), regionalHigh * 0.7);
+            debugColor = mix(massColor, vec3(0.88, 0.22, 1.0), regionalRidge * 0.45);
+            debugColor = mix(debugColor, vec3(0.55, 0.08, 0.02), regionalSheet * 0.24);
+          } else if (uFilmDebugView < 9.5) {
+            vec4 regional = regionalSupportAt(filmUv);
+            float regionalSupport = smoothstep(0.04, 0.72, regional.r);
+            float regionalHigh = smoothstep(0.1, 0.34, regional.g);
+            float regionalRidge = smoothstep(0.04, 0.78, regional.b);
+            float regionalSheet = smoothstep(0.12, 0.72, regional.a);
+            vec3 massColor = mix(vec3(0.018, 0.024, 0.04), vec3(0.0, 0.92, 0.72), regionalSupport);
+            massColor = mix(massColor, vec3(1.0, 0.55, 0.08), regionalHigh * 0.7);
+            debugColor = mix(massColor, vec3(0.88, 0.22, 1.0), regionalRidge * 0.45);
+            debugColor = mix(debugColor, vec3(0.55, 0.08, 0.02), regionalSheet * 0.24);
+          } else if (uFilmDebugView < 10.5) {
+            vec4 ridge = regionalRidgeAt(filmUv);
+            float ridgeSupport = smoothstep(0.025, 0.58, ridge.r);
+            float ridgeHigh = smoothstep(0.1, 0.32, ridge.g);
+            float ridgeCore = smoothstep(0.035, 0.72, ridge.b);
+            float rejectedSheet = smoothstep(0.16, 0.78, ridge.a);
+            vec3 supportColor = mix(vec3(0.014, 0.022, 0.038), vec3(0.0, 0.94, 0.62), ridgeSupport);
+            supportColor = mix(supportColor, vec3(1.0, 0.56, 0.06), ridgeHigh * 0.62);
+            debugColor = mix(supportColor, vec3(0.92, 0.16, 1.0), ridgeCore * 0.58);
+            debugColor = mix(debugColor, vec3(0.38, 0.045, 0.018), rejectedSheet * 0.32);
+          } else if (uFilmDebugView < 11.5) {
+            vec4 flow = regionalFlowAt(filmUv);
+            vec2 tangent = normalize(flow.rg * 2.0 - 1.0);
+            float occupancy = smoothstep(0.04, 0.78, flow.b);
+            float speed = smoothstep(0.03, 0.82, flow.a);
+            vec3 directionColor = vec3(0.5 + tangent.x * 0.5, 0.5 + tangent.y * 0.5, 0.16 + speed * 0.84);
+            debugColor = mix(vec3(0.018, 0.02, 0.036), directionColor, occupancy);
+            debugColor += vec3(0.86, 0.68, 0.18) * speed * occupancy * 0.35;
+          } else if (uFilmDebugView < 12.5) {
+            vec4 support = riverCoreAt(filmUv);
+            float coreSupport = smoothstep(0.035, 0.72, support.r);
+            float edgeSupport = smoothstep(0.025, 0.64, support.g);
+            float sheetSupport = smoothstep(0.12, 0.72, support.b);
+            float areaBias = clamp(support.a * 2.0 - 1.0, -1.0, 1.0);
+            vec3 coreColor = vec3(0.012, 0.018, 0.03);
+            coreColor += vec3(0.0, 0.98, 0.78) * coreSupport * 0.9;
+            coreColor = mix(coreColor, vec3(1.0, 0.56, 0.08), edgeSupport * 0.52);
+            coreColor = mix(coreColor, vec3(0.32, 0.045, 0.018), sheetSupport * 0.32);
+            coreColor += mix(vec3(0.08, 0.08, 0.24), vec3(0.24, 0.18, 0.02), areaBias * 0.5 + 0.5) * 0.18;
+            debugColor = coreColor;
+          } else if (uFilmDebugView < 13.5) {
+            vec4 mass = riverCoreRawMassAt(filmUv);
+            float candidate = smoothstep(0.025, 0.42, mass.r);
+            float capacity = smoothstep(0.1, 0.32, mass.g);
+            float ridgeRank = smoothstep(0.035, 0.72, mass.b);
+            float reject = smoothstep(0.12, 0.72, mass.a);
+            vec3 massColor = vec3(0.012, 0.018, 0.03);
+            massColor += vec3(0.0, 0.96, 0.72) * candidate * 0.78;
+            massColor = mix(massColor, vec3(1.0, 0.55, 0.08), capacity * 0.52);
+            massColor = mix(massColor, vec3(0.9, 0.14, 1.0), ridgeRank * 0.46);
+            massColor = mix(massColor, vec3(0.32, 0.045, 0.018), reject * 0.34);
+            debugColor = massColor;
+          } else if (uFilmDebugView < 14.5) {
+            vec4 path = riverPathEvidenceAt(filmUv);
+            float distanceFront = 1.0 - smoothstep(0.3, 1.02, path.r);
+            float qualityGate = smoothstep(0.04, 0.7, max(path.b, path.g));
+            float openPath = smoothstep(0.04, 0.82, max(path.g, distanceFront * qualityGate * 0.42));
+            float seed = smoothstep(0.04, 0.72, path.b);
+            float curvature = smoothstep(0.15, 0.95, path.b);
+            float reject = smoothstep(0.08, 0.76, path.a);
+            vec3 pathColor = vec3(0.012, 0.018, 0.03);
+            pathColor += vec3(0.0, 0.96, 0.74) * openPath * 0.78;
+            pathColor = mix(pathColor, vec3(1.0, 0.58, 0.08), seed * 0.46);
+            pathColor = mix(pathColor, vec3(0.88, 0.16, 1.0), curvature * openPath * 0.42);
+            pathColor = mix(pathColor, vec3(0.32, 0.045, 0.018), reject * 0.38);
+            debugColor = pathColor;
+          } else if (uFilmDebugView < 15.5) {
+            vec4 geo = riverCoreGeodesicAt(filmUv);
+            float front = smoothstep(0.03, 0.62, geo.r);
+            float capacity = smoothstep(0.08, 0.28, geo.g);
+            float ridge = smoothstep(0.035, 0.72, geo.b);
+            float reject = smoothstep(0.12, 0.72, geo.a);
+            vec3 geoColor = vec3(0.012, 0.018, 0.03);
+            geoColor += vec3(0.0, 0.98, 0.76) * front * 0.82;
+            geoColor = mix(geoColor, vec3(1.0, 0.56, 0.08), capacity * 0.42);
+            geoColor = mix(geoColor, vec3(0.9, 0.14, 1.0), ridge * 0.5);
+            geoColor = mix(geoColor, vec3(0.32, 0.045, 0.018), reject * 0.34);
+            debugColor = geoColor;
+          } else if (uFilmDebugView < 16.5) {
+            vec4 mass = riverCoreMassAt(filmUv);
+            float candidate = smoothstep(0.025, 0.42, mass.r);
+            float capacity = smoothstep(0.1, 0.32, mass.g);
+            float ridgeRank = smoothstep(0.035, 0.72, mass.b);
+            float reject = smoothstep(0.12, 0.72, mass.a);
+            vec3 massColor = vec3(0.012, 0.018, 0.03);
+            massColor += vec3(0.0, 0.96, 0.72) * candidate * 0.78;
+            massColor = mix(massColor, vec3(1.0, 0.55, 0.08), capacity * 0.52);
+            massColor = mix(massColor, vec3(0.9, 0.14, 1.0), ridgeRank * 0.46);
+            massColor = mix(massColor, vec3(0.32, 0.045, 0.018), reject * 0.34);
+            debugColor = massColor;
+          } else if (uFilmDebugView < 17.5) {
+            vec4 river = riverPhaseAt(filmUv);
+            float riverView = smoothstep(0.08, 0.72, river.r);
+            float riverHigh = smoothstep(0.12, 0.42, river.g);
+            float riverRidge = smoothstep(0.035, 0.68, river.b);
+            float riverSheet = smoothstep(0.22, 0.72, river.a);
+            vec3 riverColor = vec3(0.014, 0.02, 0.032);
+            riverColor += vec3(0.0, 0.95, 0.72) * riverView * 0.82;
+            riverColor += vec3(1.0, 0.58, 0.08) * riverHigh * (0.72 - riverView * 0.28);
+            debugColor = mix(riverColor, vec3(0.88, 0.16, 1.0), riverRidge * 0.68);
+            debugColor = mix(debugColor, vec3(0.32, 0.045, 0.018), riverSheet * 0.28);
           } else {
-            debugColor = mix(vec3(0.02, 0.02, 0.018), vec3(1.0, 0.95, 0.78), foam);
+            vec4 flux = riverFluxAt(filmUv);
+            float drain = smoothstep(0.006, 0.42, flux.r);
+            float deposit = smoothstep(0.004, 0.34, flux.g);
+            float ridgeDeposit = smoothstep(0.004, 0.34, flux.b);
+            float sheet = smoothstep(0.08, 0.58, flux.a);
+            vec3 fluxColor = vec3(0.012, 0.018, 0.028);
+            fluxColor += vec3(1.0, 0.34, 0.06) * drain * 0.72;
+            fluxColor += vec3(0.0, 0.95, 0.72) * deposit * 0.86;
+            fluxColor = mix(fluxColor, vec3(0.9, 0.15, 1.0), ridgeDeposit * 0.6);
+            fluxColor = mix(fluxColor, vec3(0.28, 0.055, 0.015), sheet * 0.34);
+            debugColor = fluxColor;
+            if (uFilmDebugView > 42.5) {
+              vec4 mapState = riverPathCostAt(filmUv);
+              vec3 coordColor = vec3(mapState.r, mapState.g, 0.28);
+              float confidence = smoothstep(0.012, 0.82, mapState.b);
+              float reject = smoothstep(0.035, 0.82, mapState.a);
+              vec3 mapColor = mix(vec3(0.012, 0.018, 0.03), coordColor, 0.38);
+              mapColor += vec3(0.0, 0.96, 0.74) * confidence * 0.68;
+              mapColor = mix(mapColor, vec3(0.92, 0.16, 1.0), confidence * (1.0 - reject) * 0.2);
+              mapColor = mix(mapColor, vec3(0.34, 0.045, 0.018), reject * 0.56);
+              debugColor = mapColor;
+            } else if (uFilmDebugView > 41.5) {
+              vec4 transport = riverPathCostAt(filmUv);
+              float materialResidual = smoothstep(0.012, 0.82, transport.r);
+              float alongContinuity = smoothstep(0.012, 0.82, transport.g);
+              float age = smoothstep(0.015, 0.82, transport.b);
+              float sideReject = smoothstep(0.035, 0.82, transport.a);
+              vec3 transportColor = vec3(0.012, 0.018, 0.03);
+              transportColor += vec3(0.0, 0.96, 0.74) * materialResidual * 0.76;
+              transportColor = mix(transportColor, vec3(1.0, 0.58, 0.08), alongContinuity * 0.46);
+              transportColor = mix(transportColor, vec3(0.88, 0.16, 1.0), age * materialResidual * 0.42);
+              transportColor = mix(transportColor, vec3(0.34, 0.045, 0.018), sideReject * 0.5);
+              debugColor = transportColor;
+            } else if (uFilmDebugView > 40.5) {
+              vec4 front = riverPathCostAt(filmUv);
+              float distanceLine = smoothstep(0.58, 0.12, front.r);
+              float occupancy = smoothstep(0.012, 0.86, front.g);
+              float age = smoothstep(0.015, 0.82, front.b);
+              float sideReject = smoothstep(0.035, 0.82, front.a);
+              vec3 frontColor = vec3(0.012, 0.018, 0.03);
+              frontColor += vec3(0.0, 0.96, 0.74) * distanceLine * 0.78;
+              frontColor = mix(frontColor, vec3(1.0, 0.58, 0.08), occupancy * 0.42);
+              frontColor = mix(frontColor, vec3(0.88, 0.16, 1.0), age * distanceLine * 0.44);
+              frontColor = mix(frontColor, vec3(0.34, 0.045, 0.018), sideReject * 0.48);
+              debugColor = frontColor;
+            } else if (uFilmDebugView > 39.5) {
+              vec4 candidate = riverPathCostAt(filmUv);
+              float residualSigned = (candidate.b - 0.5) * 2.0;
+              float residualPositive = smoothstep(0.01, 0.72, max(0.0, residualSigned));
+              float residualNegative = smoothstep(0.01, 0.72, max(0.0, -residualSigned));
+              float correction = smoothstep(0.006, 0.58, candidate.a);
+              vec3 rhsColor = vec3(0.012, 0.018, 0.03);
+              rhsColor += vec3(1.0, 0.22, 0.06) * residualPositive * 0.82;
+              rhsColor += vec3(0.18, 0.28, 1.0) * residualNegative * 0.78;
+              rhsColor = mix(rhsColor, vec3(0.0, 0.92, 0.68), correction * 0.34);
+              debugColor = rhsColor;
+            } else if (uFilmDebugView > 38.5) {
+              vec4 candidate = riverPathCostAt(filmUv);
+              float gammaCandidate = smoothstep(0.08, 0.92, candidate.r);
+              float compression = smoothstep(0.46, 0.08, candidate.g);
+              float expansion = smoothstep(0.54, 0.92, candidate.g);
+              float residualMagnitude = smoothstep(0.035, 0.68, abs(candidate.b - 0.5) * 2.0);
+              vec3 candidateColor = mix(vec3(0.025, 0.035, 0.055), vec3(0.0, 0.94, 0.72), gammaCandidate);
+              candidateColor += vec3(0.18, 0.26, 1.0) * compression * 0.44;
+              candidateColor += vec3(1.0, 0.18, 0.06) * expansion * 0.36;
+              candidateColor = mix(candidateColor, vec3(1.0, 0.72, 0.18), residualMagnitude * 0.32);
+              debugColor = candidateColor;
+            } else if (uFilmDebugView > 37.5) {
+              vec4 residual = riverPathCostAt(filmUv);
+              float etaContinuity = smoothstep(0.006, 0.82, residual.a);
+              float projectedCompression = smoothstep(0.006, 0.72, residual.r);
+              vec3 etaColor = vec3(0.012, 0.018, 0.03);
+              etaColor += vec3(1.0, 0.56, 0.08) * etaContinuity * 0.78;
+              etaColor = mix(etaColor, vec3(0.16, 0.24, 1.0), projectedCompression * etaContinuity * 0.46);
+              debugColor = etaColor;
+            } else if (uFilmDebugView > 36.5) {
+              vec4 residual = riverPathCostAt(filmUv);
+              float gammaResidual = smoothstep(0.006, 0.82, residual.b);
+              float mobilityDivergence = smoothstep(0.006, 0.72, residual.g);
+              vec3 gammaColor = vec3(0.012, 0.018, 0.03);
+              gammaColor += vec3(1.0, 0.22, 0.06) * gammaResidual * 0.82;
+              gammaColor = mix(gammaColor, vec3(0.0, 0.92, 0.68), mobilityDivergence * gammaResidual * 0.38);
+              debugColor = gammaColor;
+            } else if (uFilmDebugView > 35.5) {
+              vec4 residual = riverPathCostAt(filmUv);
+              float mobilityDivergence = smoothstep(0.006, 0.72, residual.g);
+              float projectedCompression = smoothstep(0.006, 0.72, residual.r);
+              vec3 mobilityColor = vec3(0.012, 0.018, 0.03);
+              mobilityColor += vec3(0.0, 0.94, 0.72) * mobilityDivergence * 0.78;
+              mobilityColor = mix(mobilityColor, vec3(1.0, 0.62, 0.08), projectedCompression * 0.46);
+              debugColor = mobilityColor;
+            } else if (uFilmDebugView > 34.5) {
+              vec4 coupling = riverPathCostAt(filmUv);
+              float etaView = smoothstep(0.08, 0.86, coupling.r);
+              float gammaView = smoothstep(0.08, 0.92, coupling.g);
+              float speedView = smoothstep(0.02, 0.36, coupling.b);
+              float compression = smoothstep(0.46, 0.08, coupling.a);
+              float expansion = smoothstep(0.54, 0.92, coupling.a);
+              vec3 uColor = mix(vec3(0.025, 0.035, 0.055), vec3(1.0, 0.58, 0.08), etaView);
+              uColor = mix(uColor, vec3(0.0, 0.94, 0.72), gammaView * 0.32);
+              uColor += vec3(0.92, 0.86, 0.42) * speedView * 0.52;
+              uColor += vec3(0.18, 0.26, 1.0) * compression * 0.42 + vec3(1.0, 0.16, 0.06) * expansion * 0.34;
+              debugColor = uColor;
+            } else if (uFilmDebugView > 33.5) {
+              vec4 coupling = riverPathCostAt(filmUv);
+              float compression = smoothstep(0.46, 0.08, coupling.a);
+              float expansion = smoothstep(0.54, 0.92, coupling.a);
+              float speedView = smoothstep(0.02, 0.36, coupling.b);
+              vec3 divColor = vec3(0.012, 0.018, 0.03);
+              divColor += vec3(0.18, 0.26, 1.0) * compression * 0.78;
+              divColor += vec3(1.0, 0.18, 0.06) * expansion * 0.58;
+              divColor = mix(divColor, vec3(0.0, 0.92, 0.68), speedView * 0.24);
+              debugColor = divColor;
+            } else if (uFilmDebugView > 32.5) {
+              float polarReject = smoothstep(0.74, 0.93, abs(filmUv.y * 2.0 - 1.0));
+              vec3 polarColor = mix(vec3(0.0, 0.9, 0.66), vec3(1.0, 0.18, 0.04), polarReject);
+              debugColor = mix(vec3(0.012, 0.018, 0.03), polarColor, 0.78);
+            } else if (uFilmDebugView > 31.5) {
+              vec4 huang = riverPathCostAt(filmUv);
+              float narrowGate = smoothstep(0.012, 0.62, huang.a);
+              vec3 narrowColor = vec3(0.012, 0.018, 0.03);
+              narrowColor += vec3(0.0, 0.96, 0.74) * narrowGate * 0.82;
+              narrowColor = mix(narrowColor, vec3(1.0, 0.58, 0.08), smoothstep(0.06, 0.82, huang.r) * narrowGate * 0.36);
+              narrowColor = mix(narrowColor, vec3(0.88, 0.16, 1.0), smoothstep(0.06, 0.82, huang.b) * narrowGate * 0.48);
+              debugColor = narrowColor;
+            } else if (uFilmDebugView > 30.5) {
+              vec4 huang = riverPathCostAt(filmUv);
+              float gate = smoothstep(0.015, 0.76, huang.b);
+              vec3 gateColor = vec3(0.012, 0.018, 0.03);
+              gateColor += vec3(0.0, 0.95, 0.72) * gate * 0.78;
+              gateColor = mix(gateColor, vec3(1.0, 0.52, 0.06), smoothstep(0.035, 0.84, huang.g) * gate * 0.42);
+              gateColor = mix(gateColor, vec3(0.9, 0.15, 1.0), smoothstep(0.035, 0.84, huang.a) * 0.58);
+              debugColor = gateColor;
+            } else if (uFilmDebugView > 29.5) {
+              vec4 huang = riverPathCostAt(filmUv);
+              float gradGamma = smoothstep(0.012, 0.72, huang.g);
+              vec3 gradColor = vec3(0.012, 0.018, 0.03);
+              gradColor += vec3(0.0, 0.92, 0.68) * gradGamma * 0.82;
+              gradColor = mix(gradColor, vec3(1.0, 0.72, 0.22), smoothstep(0.035, 0.84, huang.b) * 0.42);
+              debugColor = gradColor;
+            } else if (uFilmDebugView > 28.5) {
+              vec4 huang = riverPathCostAt(filmUv);
+              float compression = smoothstep(0.015, 0.72, huang.r);
+              float gradGamma = smoothstep(0.015, 0.72, huang.g);
+              vec3 divColor = vec3(0.012, 0.018, 0.03);
+              divColor += vec3(0.18, 0.28, 1.0) * compression * 0.74;
+              divColor = mix(divColor, vec3(0.0, 0.92, 0.68), gradGamma * compression * 0.38);
+              divColor = mix(divColor, vec3(0.9, 0.16, 1.0), smoothstep(0.03, 0.76, huang.a) * 0.52);
+              debugColor = divColor;
+            } else if (uFilmDebugView > 27.5) {
+              vec4 coupling = riverPathCostAt(filmUv);
+              float etaView = smoothstep(0.08, 0.86, coupling.r);
+              float gammaView = smoothstep(0.08, 0.92, coupling.g);
+              float speedView = smoothstep(0.02, 0.36, coupling.b);
+              float compression = smoothstep(0.46, 0.08, coupling.a);
+              float expansion = smoothstep(0.54, 0.92, coupling.a);
+              vec3 etaColor = mix(vec3(0.025, 0.035, 0.055), vec3(1.0, 0.58, 0.08), etaView);
+              vec3 gammaColor = mix(vec3(0.08, 0.12, 0.28), vec3(0.0, 0.94, 0.72), gammaView);
+              vec3 motionColor = vec3(0.18, 0.26, 1.0) * compression + vec3(1.0, 0.16, 0.06) * expansion;
+              debugColor = mix(etaColor, gammaColor, 0.36 + gammaView * 0.22);
+              debugColor += vec3(0.92, 0.86, 0.42) * speedView * 0.42 + motionColor * 0.44;
+            } else if (uFilmDebugView > 26.5) {
+              vec4 gammaDiag = riverPathCostAt(filmUv);
+              float projectedCompression = smoothstep(0.006, 0.72, gammaDiag.r);
+              float mobilityDivergence = smoothstep(0.006, 0.72, gammaDiag.g);
+              float gammaResidual = smoothstep(0.006, 0.82, gammaDiag.b);
+              float etaResidual = smoothstep(0.006, 0.82, gammaDiag.a);
+              vec3 gammaColor = vec3(0.012, 0.018, 0.03);
+              gammaColor += vec3(1.0, 0.2, 0.05) * gammaResidual * 0.72;
+              gammaColor = mix(gammaColor, vec3(0.18, 0.24, 1.0), projectedCompression * 0.52);
+              gammaColor = mix(gammaColor, vec3(0.0, 0.92, 0.68), mobilityDivergence * 0.42);
+              gammaColor = mix(gammaColor, vec3(1.0, 0.78, 0.32), etaResidual * 0.34);
+              debugColor = gammaColor;
+            } else if (uFilmDebugView > 25.5) {
+              vec4 filament = riverPathCostAt(filmUv);
+              float raw = smoothstep(0.006, 0.52, filament.r);
+              float continuity = smoothstep(0.015, 0.62, filament.g);
+              float droplet = smoothstep(0.015, 0.72, filament.b);
+              float reject = smoothstep(0.04, 0.78, filament.a);
+              vec3 filamentColor = vec3(0.012, 0.018, 0.03);
+              filamentColor += vec3(0.0, 0.94, 0.72) * raw * 0.78;
+              filamentColor = mix(filamentColor, vec3(0.92, 0.18, 1.0), continuity * 0.58);
+              filamentColor = mix(filamentColor, vec3(1.0, 0.74, 0.42), droplet * 0.34);
+              filamentColor = mix(filamentColor, vec3(0.34, 0.045, 0.018), reject * 0.42);
+              debugColor = filamentColor;
+            } else if (uFilmDebugView > 24.5) {
+              vec4 foamDiag = riverPathCostAt(filmUv);
+              float foamDeficit = smoothstep(0.002, 0.08, foamDiag.b);
+              float foamExcess = smoothstep(0.002, 0.11, foamDiag.a);
+              float phaseDeficit = smoothstep(0.003, 0.12, foamDiag.r);
+              vec3 foamColor = vec3(0.012, 0.018, 0.03);
+              foamColor += vec3(0.0, 0.86, 0.68) * foamDeficit * 0.64;
+              foamColor = mix(foamColor, vec3(1.0, 0.78, 0.42), phaseDeficit * 0.22);
+              foamColor = mix(foamColor, vec3(0.9, 0.12, 0.95), foamExcess * 0.62);
+              debugColor = foamColor;
+            } else if (uFilmDebugView > 23.5) {
+              vec4 areaDiag = riverPathCostAt(filmUv);
+              float phaseDeficit = smoothstep(0.003, 0.14, areaDiag.r);
+              float phaseExcess = smoothstep(0.003, 0.14, areaDiag.g);
+              float foamDeficit = smoothstep(0.002, 0.08, areaDiag.b);
+              float foamExcess = smoothstep(0.002, 0.11, areaDiag.a);
+              vec3 errorColor = vec3(0.012, 0.018, 0.03);
+              errorColor += vec3(0.0, 0.94, 0.76) * phaseDeficit * 0.72;
+              errorColor = mix(errorColor, vec3(1.0, 0.46, 0.08), phaseExcess * 0.58);
+              errorColor = mix(errorColor, vec3(0.72, 0.2, 1.0), foamDeficit * 0.28);
+              errorColor = mix(errorColor, vec3(0.34, 0.045, 0.018), foamExcess * 0.42);
+              debugColor = errorColor;
+            } else if (uFilmDebugView > 22.5) {
+              vec4 channel = riverPathCostAt(filmUv);
+              float raw = smoothstep(0.006, 0.26, channel.r);
+              float broadReject = smoothstep(0.04, 0.58, channel.g);
+              float filament = smoothstep(0.035, 0.64, channel.b);
+              float sheetReject = smoothstep(0.04, 0.7, channel.a);
+              vec3 channelColor = vec3(0.012, 0.018, 0.03);
+              channelColor += vec3(0.0, 0.95, 0.72) * raw * 0.78;
+              channelColor = mix(channelColor, vec3(0.92, 0.18, 1.0), filament * 0.54);
+              channelColor = mix(channelColor, vec3(1.0, 0.48, 0.06), broadReject * 0.42);
+              channelColor = mix(channelColor, vec3(0.34, 0.045, 0.018), sheetReject * 0.34);
+              debugColor = channelColor;
+            } else if (uFilmDebugView > 21.5) {
+              vec4 area = riverPathCostAt(filmUv);
+              float highArea = smoothstep(0.06, 0.52, area.r);
+              float targetArea = smoothstep(0.06, 0.32, area.g);
+              float fillBudget = smoothstep(0.004, 0.16, area.b);
+              float sheetDrain = smoothstep(0.004, 0.2, area.a);
+              vec3 areaColor = vec3(0.012, 0.018, 0.03);
+              areaColor += vec3(0.0, 0.92, 0.76) * highArea * 0.72;
+              areaColor = mix(areaColor, vec3(1.0, 0.56, 0.08), targetArea * 0.52);
+              areaColor = mix(areaColor, vec3(0.88, 0.18, 1.0), fillBudget * 0.56);
+              areaColor = mix(areaColor, vec3(0.34, 0.045, 0.018), sheetDrain * 0.42);
+              debugColor = areaColor;
+            } else if (uFilmDebugView > 20.5) {
+              vec4 skeleton = riverPathEvidenceAt(filmUv);
+              float line = smoothstep(0.015, 0.68, skeleton.r);
+              float seed = smoothstep(0.025, 0.64, skeleton.g);
+              float quality = smoothstep(0.08, 0.85, skeleton.b);
+              float reject = smoothstep(0.06, 0.7, skeleton.a);
+              vec3 skeletonColor = vec3(0.012, 0.018, 0.03);
+              skeletonColor += vec3(0.0, 0.98, 0.74) * line * 0.86;
+              skeletonColor = mix(skeletonColor, vec3(1.0, 0.58, 0.08), seed * 0.38);
+              skeletonColor = mix(skeletonColor, vec3(0.9, 0.16, 1.0), quality * line * 0.46);
+              skeletonColor = mix(skeletonColor, vec3(0.32, 0.045, 0.018), reject * 0.34);
+              debugColor = skeletonColor;
+            } else if (uFilmDebugView > 19.5) {
+              vec4 cost = riverPathCostAt(filmUv);
+              float lowCost = smoothstep(0.015, 0.68, cost.r);
+              float seed = smoothstep(0.025, 0.64, cost.g);
+              float ridge = smoothstep(0.08, 0.85, cost.b);
+              float reject = smoothstep(0.06, 0.7, cost.a);
+              vec3 costColor = vec3(0.012, 0.018, 0.03);
+              costColor += vec3(0.0, 0.96, 0.74) * lowCost * 0.82;
+              costColor = mix(costColor, vec3(1.0, 0.58, 0.08), seed * 0.42);
+              costColor = mix(costColor, vec3(0.9, 0.16, 1.0), ridge * lowCost * 0.44);
+              costColor = mix(costColor, vec3(0.32, 0.045, 0.018), reject * 0.34);
+              debugColor = costColor;
+            } else if (uFilmDebugView > 18.5) {
+              vec4 rawPath = riverPathRawEvidenceAt(filmUv);
+              float lowCost = smoothstep(0.015, 0.68, rawPath.r);
+              float seed = smoothstep(0.025, 0.64, rawPath.g);
+              float curvature = smoothstep(0.12, 0.92, rawPath.b);
+              float reject = smoothstep(0.06, 0.7, rawPath.a);
+              vec3 rawColor = vec3(0.012, 0.018, 0.03);
+              rawColor += vec3(0.0, 0.96, 0.74) * lowCost * 0.82;
+              rawColor = mix(rawColor, vec3(1.0, 0.58, 0.08), seed * 0.42);
+              rawColor = mix(rawColor, vec3(0.9, 0.16, 1.0), curvature * lowCost * 0.38);
+              rawColor = mix(rawColor, vec3(0.32, 0.045, 0.018), reject * 0.34);
+              debugColor = rawColor;
+            }
           }
-          gl_FragColor = vec4(debugColor, max(frontMask, 0.18) * 0.92);
+          float debugAlpha = uFilmDebugView < 1.5 ? 1.0 : max(frontMask, 0.28) * 0.92;
+          gl_FragColor = vec4(debugColor, debugAlpha);
           return;
         }
 
@@ -553,39 +1180,124 @@ function createPhysicalThinFilmShellMaterial(filmStateTexture, filmVelocityTextu
         float shear = velocityMag + length(velocityAt(filmUv + vec2(uFilmTexel.x, 0.0)) - velocityAt(filmUv - vec2(uFilmTexel.x, 0.0))) * 3.2;
         float phaseBoundary = smoothstep(0.005, 0.05, length(gradDye));
         float capillaryRidge = smoothstep(0.004, 0.055, abs(lapH)) * smoothstep(0.08, 0.92, height);
-        float thicknessSignal = clamp(
-          height * 1.18 +
-          (surfactant - 0.5) * 0.2 -
-          dye * 0.18 +
-          slope * 0.12 +
-          foam * 0.05,
-          0.02,
-          1.2
+        float marangoniOpticalLine = smoothstep(
+          0.012,
+          0.12,
+          length(gradG) * 0.82 +
+          abs(lapG) * 0.32 +
+          abs(dot(gradG, normalize(filmVelocity + vec2(0.001, -0.002)))) * 0.35 +
+          velocityMag * 0.04
         );
-        float opticalThickness = (0.18 + thicknessSignal * (1.62 + uFilmBandContrast * 0.34)) * uFilmInterferenceScale;
+        float phaseChannelGate = smoothstep(0.12, 0.58, dye + riverInterior * 0.62 + phaseBoundary * 0.24);
+        float physicalThinChannel = clamp(
+          huangNarrowOptical * 1.0 +
+          phaseChannelGate * (0.24 + phaseBoundary * 0.2 + riverInterior * 0.16) +
+          valley * 0.18 +
+          marangoniOpticalLine * (0.13 + huangNarrowOptical * 0.24) -
+          smoothstep(0.66, 0.95, height) * 0.14 -
+          huangFrontReject * 0.1,
+          0.0,
+          1.0
+        );
+        float etaReservoir = smoothstep(
+          0.28,
+          0.72,
+          height + localCrest * 0.08 + capillaryRidge * 0.06 + foam * 0.025 - physicalThinChannel * 0.34 - riverInterior * 0.18
+        );
+        float thicknessSignal = clamp(
+          height * 0.88 +
+          (surfactant - 0.5) * 0.07 -
+          dye * 0.1 -
+          riverInterior * 0.18 +
+          riverRidgeOptical * 0.045 +
+          riverMeniscusOptical * 0.08 +
+          capillaryRidge * 0.06 +
+          localCrest * 0.035 +
+          foam * 0.025 -
+          physicalThinChannel * 0.42,
+          0.02,
+          0.95
+        );
+        float opticalThickness = clamp((0.095 + thicknessSignal * (0.78 + uFilmBandContrast * 0.105)) * uFilmInterferenceScale, 0.055, 1.18);
+        float frontOpticalDrain = physicalThinChannel * (0.38 + huangNarrowOptical * 0.24 + phaseBoundary * 0.08 + riverInterior * 0.06);
+        opticalThickness = clamp(opticalThickness - frontOpticalDrain, 0.075, 1.18);
         vec3 physical = thinFilmRgb(opticalThickness * (1.1 + uPressure * 0.08), cosTheta);
-        vec3 thinShift = thinFilmRgb((opticalThickness - 0.42 - dye * 0.22 + valley * 0.18) * (1.0 + slope * 0.18), cosTheta);
-        vec3 ridgeShift = thinFilmRgb(opticalThickness + 0.38 + phaseBoundary * 0.22 + capillaryRidge * 0.12, cosTheta);
+        float channelThickness = clamp(
+          opticalThickness -
+          physicalThinChannel * (0.24 + huangNarrowOptical * 0.16 + phaseBoundary * 0.05) -
+          riverInterior * 0.07 -
+          dye * 0.045 +
+          valley * 0.035 +
+          surfactant * 0.018,
+          0.2,
+          0.56
+        );
+        float channelInterferenceTarget = clamp(
+          0.305 +
+          surfactant * 0.026 +
+          riverRidgeOptical * 0.042 +
+          riverMeniscusOptical * 0.03 -
+          phaseBoundary * 0.022 -
+          riverInterior * 0.012,
+          0.255,
+          0.39
+        );
+        channelThickness = mix(
+          channelThickness,
+          channelInterferenceTarget,
+          clamp(physicalThinChannel * 0.48 + huangNarrowOptical * 0.38 + phaseChannelGate * 0.12 + riverInterior * 0.14, 0.0, 0.86)
+        );
+        vec3 thinShift = thinFilmRgb(channelThickness * (1.0 + slope * 0.05), cosTheta);
+        float edgeOpticalThickness = clamp(
+          mix(channelThickness + 0.16, channelThickness - 0.035, physicalThinChannel * phaseBoundary) +
+          capillaryRidge * 0.05 +
+          riverRidgeOptical * 0.04 +
+          riverMeniscusOptical * 0.03 +
+          huangFrontRimOptical * 0.1,
+          0.2,
+          0.72
+        );
+        edgeOpticalThickness = mix(
+          edgeOpticalThickness,
+          0.47 + capillaryRidge * 0.035 + riverMeniscusOptical * 0.025,
+          clamp(huangFrontRimOptical * 0.48 + phaseBoundary * huangNarrowOptical * 0.22, 0.0, 0.68)
+        );
+        vec3 ridgeShift = thinFilmRgb(edgeOpticalThickness, cosTheta);
 
         vec3 warmIlluminant = vec3(1.0, 0.73, 0.38);
         vec3 coolIlluminant = vec3(0.62, 1.0, 0.95);
         vec3 pearl = vec3(1.0, 0.93, 0.76);
         vec3 coldWhite = vec3(0.84, 0.92, 0.89);
         vec3 paleGreen = vec3(0.55, 0.74, 0.62);
-        float amberPool = smoothstep(0.2, 0.74, height) * (1.0 - dye * 0.18 + dropletCore * 0.18);
-        float thinPhase = smoothstep(0.36, 0.9, dye + valley * 0.45 + surfactant * 0.12 - height * 0.18);
-        float boundary = max(phaseBoundary, meniscus * 0.52 + capillaryRidge * 0.36);
-        float whiteSpeck = clamp(smoothstep(0.08, 0.66, foam + shear * 0.1 + boundary * 0.08 + localCrest * 0.08) * uFilmSpeckleAmount, 0.0, 1.0);
+        float channelOptical = dye * 0.34 + riverInterior * 0.44 + valley * 0.3 + surfactant * 0.1 + phaseBoundary * 0.06 + riverRidgeOptical * 0.08 + huangNarrowOptical * 0.72 + physicalThinChannel * 0.46 + huangFrontRimOptical * 0.14 + smoothstep(0.42, 0.88, 1.0 - height) * 0.05 - etaReservoir * 0.12;
+        float thinPhase = smoothstep(0.2, 0.62, channelOptical);
+        float amberPool = clamp(
+          etaReservoir *
+          (1.0 - dye * 0.1 - riverInterior * 0.38 - physicalThinChannel * 0.52 + dropletCore * 0.12 + riverRidgeOptical * 0.035 + riverMeniscusOptical * 0.14) *
+          (1.0 - thinPhase * 0.3 - riverInterior * 0.16),
+          0.0,
+          1.0
+        );
+        float boundary = max(max(phaseBoundary * 0.72, max(riverRidgeOptical, riverMeniscusOptical * 0.82)), max(meniscus * 0.42 + capillaryRidge * 0.3, max(huangNarrowOptical * 0.34, huangFrontRimOptical * 0.62)));
+        float microDropletGate = smoothstep(0.035, 0.24, foam * 1.7 + boundary * 0.3 + localCrest * 0.84 + riverMeniscusOptical * 0.24);
+        float whiteScatterEvidence =
+          foam * 1.42 +
+          boundary * (0.035 + foam * 0.5 + localCrest * 0.12) +
+          riverMeniscusOptical * 0.08 +
+          localCrest * 0.22 +
+          shear * 0.04 * microDropletGate;
+        float whiteSpeck = clamp(smoothstep(0.045, 0.42, whiteScatterEvidence) * uFilmSpeckleAmount * microDropletGate, 0.0, 1.0);
         float fiber = smoothstep(0.012, 0.09, abs(dot(gradH + gradDye * 0.35, normalize(filmVelocity + vec2(0.001, -0.002))))) * smoothstep(0.04, 0.8, velocityMag + boundary);
 
-        vec3 reflected = physical * mix(warmIlluminant, coolIlluminant, thinPhase * 0.58);
-        vec3 thickFilm = thinFilmRgb(opticalThickness + 0.16, cosTheta) * warmIlluminant;
-        vec3 thinFilmColor = thinShift * mix(coolIlluminant, vec3(0.82, 1.0, 0.9), surfactant);
+        vec3 reflected = physical * mix(warmIlluminant, vec3(0.82, 1.02, 0.96), thinPhase * 0.34 + physicalThinChannel * 0.18);
+        vec3 thickFilm = thinFilmRgb(opticalThickness + etaReservoir * 0.12 + capillaryRidge * 0.04, cosTheta) * mix(vec3(0.96, 0.84, 0.6), warmIlluminant, etaReservoir * 0.58);
+        vec3 thinFilmColor = thinShift * mix(vec3(0.82, 1.02, 0.96), vec3(0.74, 1.04, 0.96), clamp(surfactant + riverInterior * 0.36 + huangNarrowOptical * 0.24, 0.0, 1.0));
         vec3 edgeInterference = ridgeShift * mix(vec3(1.08, 0.56, 1.18), vec3(0.56, 0.72, 1.22), smoothstep(0.2, 0.95, ridgeShift.b));
         vec3 color = reflected;
-        color = mix(color, thickFilm + vec3(0.18, 0.06, 0.012), amberPool * 0.54);
-        color = mix(color, thinFilmColor * 1.18, thinPhase * 0.62);
-        color = mix(color, edgeInterference * 1.08, boundary * 0.64);
+        color = mix(color, thickFilm + warmIlluminant * 0.055, amberPool * 0.42);
+        float channelBlend = clamp(thinPhase * (0.46 + riverInterior * 0.22) + physicalThinChannel * 0.42 + huangNarrowOptical * 0.42, 0.0, 0.94);
+        color = mix(color, thinFilmColor * 1.2, channelBlend);
+        color = mix(color, edgeInterference * 1.1, boundary * (0.28 + riverRidgeOptical * 0.28 + huangFrontRimOptical * 0.34));
         color += warmIlluminant * fiber * amberPool * 0.13;
         color = mix(color, pearl, whiteSpeck * (0.18 + boundary * 0.18 + amberPool * 0.08));
 
@@ -653,7 +1365,7 @@ function createFilmSurfaceMaterial() {
     transparent: true,
     depthWrite: false,
     depthTest: false,
-    side: THREE.FrontSide,
+    side: THREE.DoubleSide,
     blending: THREE.NormalBlending,
     vertexShader: `
       uniform float uTime;
@@ -1613,8 +2325,34 @@ export function initLogo3d(elements) {
   els = elements;
   if (!els?.siriCanvas || logo3d.ready) return;
 
+  const contextAttributes = {
+    alpha: true,
+    antialias: true,
+    preserveDrawingBuffer: false,
+    powerPreference: "low-power",
+  };
+  const glContext =
+    els.siriCanvas.getContext("webgl2", contextAttributes) ||
+    els.siriCanvas.getContext("webgl", contextAttributes) ||
+    els.siriCanvas.getContext("experimental-webgl", contextAttributes);
+  if (!glContext || glContext.isContextLost?.()) {
+    publishSoapFilmDebug({
+      ready: false,
+      debugView: "webgl-pending",
+      lastError: null,
+    });
+    return;
+  }
+  const getShaderPrecisionFormat = glContext.getShaderPrecisionFormat?.bind(glContext);
+  if (getShaderPrecisionFormat) {
+    glContext.getShaderPrecisionFormat = (...args) => (
+      getShaderPrecisionFormat(...args) || { rangeMin: 127, rangeMax: 127, precision: 23 }
+    );
+  }
+
   const renderer = new THREE.WebGLRenderer({
     canvas: els.siriCanvas,
+    context: glContext,
     alpha: true,
     antialias: true,
     preserveDrawingBuffer: false,
@@ -1646,7 +2384,26 @@ export function initLogo3d(elements) {
   group.add(core);
 
   const thinFilmSim = createThinFilmSimulator(renderer, { size: 320 });
-  const glassShader = createPhysicalThinFilmShellMaterial(thinFilmSim.texture, thinFilmSim.velocityTexture, thinFilmSim.size);
+  const glassShader = createPhysicalThinFilmShellMaterial(
+    thinFilmSim.texture,
+    thinFilmSim.velocityTexture,
+    thinFilmSim.phasePotentialTexture,
+    thinFilmSim.regionalRawSupportTexture,
+    thinFilmSim.regionalSupportTexture,
+    thinFilmSim.regionalRidgeTexture,
+    thinFilmSim.regionalFlowTexture,
+    thinFilmSim.riverCoreSupportTexture,
+    thinFilmSim.riverCoreRawMassTexture,
+    thinFilmSim.riverPathRawEvidenceTexture,
+    thinFilmSim.riverPathCostTexture,
+    thinFilmSim.riverPathSkeletonTexture,
+    thinFilmSim.riverPathEvidenceTexture,
+    thinFilmSim.riverCoreGeodesicTexture,
+    thinFilmSim.riverCoreMassTexture,
+    thinFilmSim.riverPhaseTexture,
+    thinFilmSim.riverHeightFluxTexture,
+    thinFilmSim.size,
+  );
   const glass = new THREE.Mesh(new THREE.SphereGeometry(1.0, 128, 128), glassShader.material);
   glass.renderOrder = 7;
   group.add(glass);
@@ -1731,12 +2488,12 @@ export function initLogo3d(elements) {
   logo3d.particles = particles;
   logo3d.lights = [ambient, key, cyan, rose];
   resizeLogo3d();
-  window.__soapFilmDebug = {
+  publishSoapFilmDebug({
     ready: true,
     renderCount: 0,
     simSize: thinFilmSim.size,
     debugView: "init",
-  };
+  });
 }
 
 export function updateLogo3d(visual, timeMs, pressureValue = 0, visualConfig = {}, stageName = "") {
@@ -1831,12 +2588,70 @@ export function updateLogo3d(visual, timeMs, pressureValue = 0, visualConfig = {
   logo3d.glassUniforms.uFilmCoverage.value = glassWind.filmCoverage ?? 1.08;
   logo3d.glassUniforms.uFilmSpeckleAmount.value = glassWind.filmSpeckleAmount ?? 1.24;
   logo3d.glassUniforms.uFilmInterferenceScale.value = glassWind.filmInterferenceScale ?? 1.42;
-  logo3d.glassUniforms.uFilmInterferenceContrast.value = glassWind.filmInterferenceContrast ?? 0.46;
-  logo3d.glassUniforms.uFilmDebugView.value = FILM_DEBUG_VIEW_INDEX[glassWind.filmDebugView] ?? 0;
+  logo3d.glassUniforms.uFilmInterferenceContrast.value = glassWind.filmInterferenceContrast ?? 0.92;
+  const filmDebugView = glassWind.filmDebugView || "beauty";
+  logo3d.glassUniforms.uFilmDebugView.value = FILM_DEBUG_VIEW_INDEX[filmDebugView] ?? 0;
   if (logo3d.thinFilmSim && logo3d.glassUniforms.uFilmStateMap) {
-    logo3d.thinFilmSim.update(seconds, glassWind, pressure);
+    logo3d.thinFilmSim.setSolverMode?.(glassWind.filmSolver);
+    if (filmDebugView !== "solid") {
+      logo3d.thinFilmSim.update(seconds, glassWind, pressure);
+    }
     logo3d.glassUniforms.uFilmStateMap.value = logo3d.thinFilmSim.texture;
     logo3d.glassUniforms.uFilmVelocityMap.value = logo3d.thinFilmSim.velocityTexture;
+    logo3d.glassUniforms.uFilmSupportMap.value = logo3d.thinFilmSim.phasePotentialTexture;
+    logo3d.glassUniforms.uFilmRegionalRawSupportMap.value = logo3d.thinFilmSim.regionalRawSupportTexture;
+    logo3d.glassUniforms.uFilmRegionalSupportMap.value = logo3d.thinFilmSim.regionalSupportTexture;
+    logo3d.glassUniforms.uFilmRegionalRidgeMap.value = logo3d.thinFilmSim.regionalRidgeTexture;
+    logo3d.glassUniforms.uFilmRegionalFlowMap.value = logo3d.thinFilmSim.regionalFlowTexture;
+    logo3d.glassUniforms.uFilmRiverCoreMap.value = logo3d.thinFilmSim.riverCoreSupportTexture;
+    logo3d.glassUniforms.uFilmRiverCoreRawMassMap.value = logo3d.thinFilmSim.riverCoreRawMassTexture;
+    logo3d.glassUniforms.uFilmRiverPathRawEvidenceMap.value = logo3d.thinFilmSim.riverPathRawEvidenceTexture;
+    logo3d.glassUniforms.uFilmRiverPathCostMap.value =
+      filmDebugView === "huangMapState"
+        ? logo3d.thinFilmSim.huangMapStateTexture
+      : filmDebugView === "huangForwardMapState"
+        ? logo3d.thinFilmSim.huangForwardMapStateTexture
+      : filmDebugView === "beauty" || filmDebugView === "huangFrontState"
+        ? logo3d.thinFilmSim.huangFrontStateTexture
+      : filmDebugView === "huangResidualTransport"
+        ? logo3d.thinFilmSim.huangResidualTransportTexture
+      : filmDebugView === "phaseArea"
+        ? logo3d.thinFilmSim.phaseAreaTexture
+        : filmDebugView === "phaseAreaSkeleton"
+          ? logo3d.thinFilmSim.phaseAreaSkeletonTexture
+        : filmDebugView === "filamentConnectivity"
+          ? logo3d.thinFilmSim.filamentConnectivityTexture
+        : filmDebugView === "gammaCandidate" ||
+          filmDebugView === "gammaRhsResidual"
+          ? logo3d.thinFilmSim.gammaCandidateDiagnosticTexture
+        : filmDebugView === "gammaResidual" ||
+          filmDebugView === "huangMobilityDivergence" ||
+          filmDebugView === "huangGammaResidual" ||
+          filmDebugView === "huangEtaContinuity"
+          ? logo3d.thinFilmSim.gammaResidualTexture
+        : filmDebugView === "etaGammaVelocity" ||
+          filmDebugView === "divergenceAfterGammaProjection" ||
+          filmDebugView === "uAfterMarangoni"
+          ? logo3d.thinFilmSim.etaGammaVelocityTexture
+        : filmDebugView === "huangDivergence" ||
+          filmDebugView === "huangGradGamma" ||
+          filmDebugView === "huangMarangoniGate" ||
+          filmDebugView === "huangNarrowGate" ||
+          filmDebugView === "huangPolarReject"
+          ? logo3d.thinFilmSim.huangLocalDiagnosticTexture
+        : filmDebugView === "phaseAreaError" || filmDebugView === "foamAreaError"
+          ? logo3d.thinFilmSim.phaseAreaDiagnosticTexture
+          : filmDebugView === "channelPotential"
+            ? logo3d.thinFilmSim.riverPathDiagnosticsTexture
+        : logo3d.thinFilmSim.riverPathCostTexture;
+    logo3d.glassUniforms.uFilmRiverPathEvidenceMap.value =
+      filmDebugView === "riverPathSkeleton"
+        ? logo3d.thinFilmSim.riverPathSkeletonTexture
+        : logo3d.thinFilmSim.riverPathEvidenceTexture;
+    logo3d.glassUniforms.uFilmRiverCoreGeodesicMap.value = logo3d.thinFilmSim.riverCoreGeodesicTexture;
+    logo3d.glassUniforms.uFilmRiverCoreMassMap.value = logo3d.thinFilmSim.riverCoreMassTexture;
+    logo3d.glassUniforms.uFilmRiverPhaseMap.value = logo3d.thinFilmSim.riverPhaseTexture;
+    logo3d.glassUniforms.uFilmRiverFluxMap.value = logo3d.thinFilmSim.riverHeightFluxTexture;
     logo3d.glassUniforms.uFilmTexel.value.set(1 / logo3d.thinFilmSim.size, 1 / logo3d.thinFilmSim.size);
   }
   if (logo3d.filmUniforms) {
@@ -1927,16 +2742,72 @@ export function updateLogo3d(visual, timeMs, pressureValue = 0, visualConfig = {
   logo3d.lights[1].intensity = (lerp(2.2, 4.2, visual.brightness) + pulse * 0.38) * (flowParticles.keyLight ?? 1);
   logo3d.lights[2].intensity = lerp(1.35, 3.2, pressure) * (1 - clinicalShift * 0.22) * (flowParticles.cyanLight ?? 1);
   logo3d.lights[3].intensity = lerp(0.95, 2.55, pressureWindow(pressure, 0.42, 1)) * (1 - clinicalShift * 0.36) * (flowParticles.roseLight ?? 1);
+  const drawingBufferSize = logo3d.renderer.getDrawingBufferSize(new THREE.Vector2());
+  const gl = logo3d.renderer.getContext();
+  gl.colorMask(true, true, true, true);
+  gl.depthMask(true);
+  logo3d.renderer.setRenderTarget(null);
+  logo3d.renderer.setScissorTest(false);
+  logo3d.renderer.setViewport(0, 0, drawingBufferSize.x, drawingBufferSize.y);
   logo3d.renderer.render(logo3d.scene, logo3d.camera);
-  window.__soapFilmDebug = {
+  const centerPixel = new Uint8Array(4);
+  const probePixel = new Uint8Array(4);
+  let probeMaxAlpha = 0;
+  let probeMaxRed = 0;
+  let probeMaxCoord = [0, 0];
+  const drawingWidth = Math.max(1, Math.floor(drawingBufferSize.x));
+  const drawingHeight = Math.max(1, Math.floor(drawingBufferSize.y));
+  const filmReadbackEnabled = new URLSearchParams(window.location.search).get("filmReadback") === "1";
+  if (filmReadbackEnabled && !gl.isContextLost?.()) {
+    for (let yIndex = 1; yIndex <= 5; yIndex += 1) {
+      for (let xIndex = 1; xIndex <= 7; xIndex += 1) {
+        const px = Math.max(0, Math.min(drawingWidth - 1, Math.floor((drawingWidth * xIndex) / 8)));
+        const py = Math.max(0, Math.min(drawingHeight - 1, Math.floor((drawingHeight * yIndex) / 6)));
+        gl.readPixels(px, py, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, probePixel);
+        if (probePixel[3] > probeMaxAlpha || probePixel[0] > probeMaxRed) {
+          probeMaxAlpha = probePixel[3];
+          probeMaxRed = probePixel[0];
+          probeMaxCoord = [px, py];
+        }
+      }
+    }
+    logo3d.renderer
+      .getContext()
+      .readPixels(
+        Math.max(0, Math.floor(drawingWidth * 0.5)),
+        Math.max(0, Math.floor(drawingHeight * 0.5)),
+        1,
+        1,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        centerPixel,
+      );
+  }
+  const filmDiagnostics = filmReadbackEnabled
+    ? logo3d.thinFilmSim?.diagnostics || null
+    : { size: logo3d.thinFilmSim?.size || 0, readbackSkipped: true };
+  publishSoapFilmDebug({
     ready: logo3d.ready,
     renderCount: (window.__soapFilmDebug?.renderCount || 0) + 1,
     debugView: glassWind.filmDebugView || "beauty",
+    debugUniform: logo3d.glassUniforms.uFilmDebugView.value,
+    filmSolver: logo3d.thinFilmSim?.solver || glassWind.filmSolver || "huangCore",
+    filmHuangScenario: glassWind.filmHuangScenario || "referenceFlow",
     simSize: logo3d.thinFilmSim?.size || 0,
+    filmDiagnostics,
+    renderCalls: logo3d.renderer.info.render.calls,
+    renderTriangles: logo3d.renderer.info.render.triangles,
+    centerPixel: Array.from(centerPixel),
+    probeMaxAlpha,
+    probeMaxRed,
+    probeMaxCoord,
+    readbackEnabled: filmReadbackEnabled,
+    glassMaterialVisible: logo3d.glass.material.visible,
+    glassMaterialSide: logo3d.glass.material.side,
     cameraZ: logo3d.camera.position.z,
     groupScale: logo3d.group.scale.x,
     groupPosition: { x: logo3d.group.position.x, y: logo3d.group.position.y, z: logo3d.group.position.z },
     glassVisible: logo3d.glass.visible,
     canvas: { width: logo3d.width, height: logo3d.height },
-  };
+  });
 }

@@ -8,6 +8,11 @@
 - active path 绝对不能采样照片、参考图、预烘焙纹理或 canvas 图案；参考图只可作为人工对照。
 - 现在可以先不在乎性能，允许高分辨率、多子步、预热、延迟渲染；先把物理质感做出来，再优化。
 - 必须全程中文沟通。
+- 新的最高优先级参考与参考图并列：Huang et al. 2020, [Chemomechanical Simulation of Soap Film Flow on Spherical Bubbles](https://light.informatik.uni-bonn.de/chemomechanical-simulation-of-soap-film-flow-on-spherical-bubbles/)，包括官方页面、Full Paper PDF、Supplemental PDF 和 video。
+- 后续工作必须优先对齐该论文的球面 chemomechanical/lubrication 模型，而不是继续做局部阈值摆动、构图修正或 beauty 调色。
+- 用户已明确纠正：不要只读摘要，要读全文。已下载并转文本保存到 `artifacts/references/HuangEtAl-SoapBubbles-SIGGRAPH2020.pdf`、`artifacts/references/HuangEtAl-SoapBubbles-SIGGRAPH2020-supp.pdf`、`artifacts/references/HuangEtAl-SoapBubbles-SIGGRAPH2020.txt`、`artifacts/references/HuangEtAl-SoapBubbles-SIGGRAPH2020-supp.txt`；全文级实现笔记见 `artifacts/targets/soap-film-huang-2020-fulltext-notes.md`。
+- 论文级最低模型目标：半厚度 `eta`、表活剂 `Gamma`、球面切向速度 `u=(u_theta,u_phi)` 三者耦合演化；主方程按 `D u / D t = -(M / eta) grad(Gamma) + Re^-1 V + bodyForces`、`D Gamma / D t = -Gamma div(u) + Ds laplacian(Gamma)`、`D eta / D t = -eta div(u)` 逐步替换当前启发式路径/相场补给。
+- 每轮除了对照 `soap-film-reference.jpg`，还要说明当前实现与 Huang et al. 2020 在球面度量、Marangoni 项、表活剂输运、膜厚守恒和外力项上的差距。
 
 ## 本轮已停止的运行状态
 - 已停止 `127.0.0.1:4173` 上的本地 Node 服务。

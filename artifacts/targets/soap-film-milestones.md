@@ -55,7 +55,7 @@
 - 常量场 `grad/div/laplace` 为零。
 - pole crossing 无 seam。
 - 面速度散度和面积权重质量积分自洽。
-- 全尺寸运行不超过 30 分钟。
+- 全尺寸运行保存完整诊断和真实用时；不再以 30 分钟作为停止条件。
 - 输出 grid diagnostics。
 - commit 并 push。
 
@@ -134,7 +134,25 @@
 
 ## M6 eta/Gamma/u 全耦合论文场景
 
-状态：待开始。
+状态：进行中。已实现 M6 paper-coupled 场景入口和全尺寸 `1024 x 2048` 运行记录；gravity、air friction、evaporation/life 三组结果均已保存为 in-progress diagnostics，但尚未达到论文 Fig. 14/15/16/17 的形态验收，不能标记完成或推送为阶段通过。2026-06-04 追加规则变更：阶段内允许低分辨率诊断，但里程碑完成前必须跑至少一次全分辨率验收；运行时间软标记改为 90 分钟，超过后不得停掉，必须等自然完成并记录真实用时。当前 full-size gravity/buoyancy `steps=260`、`dt=0.002`、`cg=16`、`deriveEvery=0` 已自然完成多轮。旧 `M6-gravity-buoyancy-paper-time-derive-final-20260604-120950` 用时 `2397321 ms`，确认重力排液趋势但暴露极区 source limiter/material clamp 和宽带形态失败；raw field 诊断显示失败集中在极帽。随后已加入 scalar pole crossing diagnostics，并把 paper-coupled `u_phi/basePhi/betaPhi` 极区处理从分辨率相关 `4*dTheta` 改为固定物理 `0.035 rad` taper。新 full-size `M6-gravity-buoyancy-paper-time-fixed-pole-taper-20260604-144105` 用时 `3805094 ms`，将 source limiter fraction 从 `0.0038099288940429688` 降到 `0.000072479248046875`，material clamp fraction 从 `0.003600597381591797` 降到 `0.000469207763671875`，map reset fraction 从 `0.0005383491516113281` 降到 `0`，Gamma residual 从旧的 `0.004266264052492427` 降到 `0.0002774470338390492`。但该结果仍然缺少 Fig.14 的 downward tears、upward thin rivers 和 drop-shaped islands，因此 M6 仍未完成。
+
+2026-06-04 后续进展：修正 `paperGravityBuoyancy` 初始垂向厚度符号，使 `eta = baseEta - verticalEtaDrop * cos(theta) + proceduralFront` 与顶部薄、底部厚的重力排液趋势一致；并按 Huang Eq.24b/24c 的同一散度关系，把 eta material source 改为 `etaStar/GammaStar * (Gamma-GammaStar)`，不再用显式 face-divergence 另算一个不一致源项。三组全尺寸 Eq.24c diagnostics 均已自然完成并保存：gravity `M6-gravity-buoyancy-eq24c-source-front-scale-085-vdrop-055-full-20260604-185551` 用时 `2979041 ms`、air friction `M6-air-friction-eq24c-source-full-20260604-194706` 用时 `1251507 ms`、evaporation/life `M6-evaporation-life-eq24c-source-full-20260604-200835` 用时 `1254798 ms`。三组 `sourceLimiterFraction=0`、`materialClampFraction=0`、`mapResetFraction=0`，说明旧的正性/材料夹限失败已消除；但 Fig.14 仍偏宽带、Fig.15/16 仍缺细旋涡/线状速度结构、Fig.17 仍缺完整生命周期细节和 Section 5 渲染，因此 M6 仍不能标记完成。
+
+2026-06-04 追加进展：M6 paper-coupled 速度平流已从 cell-centered vector advection 改为 staggered `uThetaFace/uPhiFace` 上的 velocity-aligned spherical vector transport，`uTheta/uPhi` 中心场仅作为派生诊断/插值量。Gravity 初始 `Gamma` 不再与厚度反相关；低分辨率测试确认 full Eq.33 equilibrium 初始化过于接近平衡，当前使用弱 Eq.33 方向纬向偏置加非平衡 procedural 初态。新的 full-size gravity run `M6-gravity-staggered-vel-gamma-bias028-front-scale-085-vdrop-055-full-20260604-210024` 自然完成，用时 `3562532 ms` (`59.38 min`)，`sourceLimiterFraction=0`、`materialClampFraction=0`、`mapResetFraction=0`、`massError=0.000019145764679404677`、`bottomMinusTopEta=0.1790505949020132`。该结果数值稳定且更贴近 staggered paper path，但仍缺 Huang Fig.14 的 downward tears、upward thin rivers、drop-shaped islands；M6 继续进行，下一步审计 BiMocq2 细节保持和论文未公开初始 noise/Perlin-like material fronts。
+
+2026-06-04 最新诊断：低分辨率 ridged physical initial-front candidate `M6-lowres-ridged-front-staggered-gravity-bias028-front-scale-085-vdrop-055-20260604-220639` 自然完成，用时 `210096 ms`，数值稳定且 `sourceLimiterFraction=0`、`materialClampFraction=0`、`mapResetFraction=0`，但图像只增加碎噪和局部梯度，仍未形成 Fig.14 的连续 tears/rivers/islands。因此它不是验收候选；M6 下一步优先补审 Huang 引用的原始 BiMocq2 error-correction / detail-preservation 细节，而不是继续放大初始噪声。
+
+2026-06-04 BiMocq2 补充审计：已保存 Qu et al. 2019 `Efficient and Conservative Fluids with Bidirectional Mapping` 全文 PDF/文本与代码 README，并整理 `artifacts/targets/soap-film-bimocq2-qu-2019-fulltext-notes.md`。审计结论：该论文与 Huang 不冲突，因为 Huang Section 4.2.1 明确引用它补足 error correction 等实现细节；当前独立程序缺少 Qu 的双层 mapping、gapped/regular error correction 和 extrema clamp。下一步应实现 Huang-compatible spherical two-level eta reconstruction / gapped EC，再继续 M6 形态验收。
+
+2026-06-04 EC 对照：已实现可开关 `--biMocqEc=1/0` 的 Qu Eq.27-style eta reconstruction error correction，并保存低分辨率 EC-on / EC-off 对照。EC-on 稳定但形态几乎未改善，final mean correction 约 `0.0005273`，extrema clamp fraction 约 `0.0631`；Fig.14 coherent tears/rivers/islands 仍失败。由于当前 map error 低于 Huang `pi/128`，不能为了触发 two-level/gapped reinitialization 而自行加入非论文周期重置；M6 继续转向论文场景时间、外力、初始条件和 map-advection 精度审计。
+
+2026-06-04 诊断修正：此前 `marangoniDirection.cosine` 误把总速度 `u` 与 `-grad_s(Gamma)` 比较，导致重力/气流主导时出现负值误报。现已改为比较 `(u - baseVelocity)` 与 `-grad_s(Gamma)`，并保留 `totalVelocityCosine`。短跑 `M6-lowres-marangoni-score-check-20260604-223528` 得到 `correctionCosine=0.9908740463746487`，说明 Marangoni 符号正确；M6 形态失败不来自全局符号翻转。
+
+2026-06-04 长时低分辨率重力诊断：`M6-lowres-long-gravity-t156-bias028-front-scale-085-vdrop-055-20260604-223737` 自然完成，用时 `659411 ms` (`10.99 min`)，低于 `90 min` 阶段诊断软标记但仍不是里程碑验收。该 run 数值稳定：`massError=0.00004051176366317133`、`gammaResidual=0.00010177421703211192 -> 0.000013391252747470449`、`sourceLimiterFraction=0`、`materialClampFraction=0`、`mapResetFraction=0`；更长物理时间使 `bottomMinusTopEta` 达到 `0.3267180723443252`，但图像仍是纬向宽带和碎片小纹理，没有形成 Huang Fig.14 的 coherent downward tears / upward thin rivers / drop-shaped islands。因此延长时间本身不是充分条件，M6 继续进行，下一步转向 Fig.14 场景设定、外力/时间积分和 Eq.17/Eq.24-26 耦合强度审计。
+
+2026-06-04 Eq.26 修正：审计 Huang Eq.24-26 后，将 Gamma 隐式系统从近似的 `Gamma - dt*div_s(GammaStar*beta*grad_s(Gamma)) = GammaStar - dt*GammaStar*div_s(base)` 改为论文形式 `Gamma/(GammaStar*dt) - div_s((M*dt)/(etaStar+Cr*dt)*grad_s(Gamma)) = 1/dt - div_s(base)`。全尺寸 operator audit `M6-paper-eq26-gamma-projection-fullsize-audit-20260604-2338` 用时 `8033 ms`，残差 `0.008118551670214236 -> 0.0000013915802870419416`，reduction factor `5834.05193779491`，relative asymmetry `1.587593557486631e-10`，`gammaClampFraction=0`。低分辨率 gravity 诊断表明新算子需要更高 CG 预算：`cg=16` relative residual 约 `0.0392`，`cg=64` 可降到约 `1.96e-5` 绝对残差；paper-coupled 场景已改为未显式传 `--cg` 时默认 `cg=64`。但短时和长时 corrected Eq.26 结果仍保持纬向宽带，未生成 Fig.14 的 coherent tears/rivers/islands。因此 Eq.26 修正保留为唯一论文路径，但 M6 形态缺口继续归因到 Fig.14 未公开初始条件/场景 forcing 或剩余时间积分细节，不能标记完成。
+
+2026-06-04 Eq.34 诊断：为 `paperGravityBuoyancy` 增加并默认启用 `--gravityGammaRatio=1`，使初始 `Gamma = (gammaBase/baseEta) * eta`，对应 Huang Eq.34 的 `D(Gamma/eta)/Dt = 0` 材料不变量。低分辨率诊断 `M6-lowres-eq34-ratio-gamma-eq26-cg64-gravity-front-scale-085-vdrop-055-20260604-2348` 自然完成，用时 `244373 ms`，`gammaResidual=0.1685240970595692 -> 0.000014763756935558321`，`sourceLimiterFraction=0`、`materialClampFraction=0`、`mapResetFraction=0`，`bottomMinusTopEta=0.18281171792188367`。但该结果过于平滑、仍呈全局宽带，未形成 Fig.14 的 coherent tears/rivers/islands。因此它是方程贴合证据，不是 M6 验收候选；M6 仍继续调查论文未公开 Fig.14 初始物理场、forcing 和输运细节。
 
 目标：
 

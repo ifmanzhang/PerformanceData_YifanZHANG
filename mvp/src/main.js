@@ -51,6 +51,30 @@ function pageCanRunVisuals() {
   );
 }
 
+function publishVisualInitError(error) {
+  window.__soapFilmDebug = {
+    ...(window.__soapFilmDebug || {}),
+    ready: false,
+    debugView: "init-error",
+    lastError: {
+      name: error?.name || "Error",
+      message: error?.message || String(error),
+      stack: error?.stack || "",
+    },
+    updatedAtMs: Math.round(performance.now()),
+  };
+  document.documentElement.dataset.soapFilmDebug = JSON.stringify(window.__soapFilmDebug);
+}
+
+function safeInitLogo3d() {
+  try {
+    initLogo3d(els);
+  } catch (error) {
+    publishVisualInitError(error);
+    console.error("Logo 3D initialization failed", error);
+  }
+}
+
 const state = {
   activePanel: "run",
   mode: "timeline",
@@ -924,7 +948,7 @@ function resumePageWork() {
   state.pageVisible = true;
   state.lastRenderAt = 0;
   state.lastReadoutAt = 0;
-  initLogo3d(els);
+  safeInitLogo3d();
   resizeLogo3d();
   applyVisual(state.visual);
   updateReadout();
@@ -1028,12 +1052,17 @@ function bindDomEvents() {
 }
 
 applyInitialUrlOverrides();
-if (pageCanRunVisuals()) initLogo3d(els);
+if (pageCanRunVisuals()) safeInitLogo3d();
 bindEventHandlers();
 bindDomEvents();
-renderTabs();
-renderPanel();
-loadReplayData();
-if (pageCanRunVisuals()) applyVisual(state.visual);
-updateReadout();
-scheduleRenderLoop();
+try {
+  renderTabs();
+  renderPanel();
+  loadReplayData();
+  if (pageCanRunVisuals()) applyVisual(state.visual);
+  updateReadout();
+  scheduleRenderLoop();
+} catch (error) {
+  publishVisualInitError(error);
+  console.error("Visual boot failed", error);
+}
