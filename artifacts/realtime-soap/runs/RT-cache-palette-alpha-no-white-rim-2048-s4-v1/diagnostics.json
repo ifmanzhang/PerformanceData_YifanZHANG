@@ -1,0 +1,84 @@
+{
+  "kind": "realtime-soap-hybrid-diagnostics",
+  "approximationBoundary": "Realtime optimized eta/Gamma/u residual solver coupled to physical cache; not strict Huang 2020 solve.",
+  "cache": "artifacts/realtime-soap/cache/gravity_fig14_like",
+  "cacheFrameCount": 1,
+  "params": {
+    "mode": "benchmark",
+    "physics": "256x512",
+    "render": 2048,
+    "fpsTarget": 24,
+    "seconds": 1,
+    "cache": "artifacts/realtime-soap/cache/gravity_fig14_like",
+    "outDir": "artifacts/realtime-soap/runs/RT-cache-palette-alpha-no-white-rim-2048-s4-v1",
+    "cacheBlend": 0,
+    "disturbanceStrength": 0,
+    "disturbanceRadius": 0.12,
+    "disturbanceU": 0.42,
+    "disturbanceV": 0.38,
+    "gravityAngle": 0,
+    "airSpeed": 0.38,
+    "airDirection": 24,
+    "marangoni": 0.65,
+    "viscosity": 0.22,
+    "diffusion": 0.018,
+    "evaporation": 0.00002,
+    "substeps": 1,
+    "pressureIterations": 6,
+    "renderBaseAlpha": 0.32,
+    "renderCacheBlend": 1,
+    "renderDetailBoost": 0.015,
+    "renderEdgeGlow": 0,
+    "renderEdgePower": 5.5,
+    "renderEtaScale": 2100,
+    "renderExposure": 1.08,
+    "renderFlipV": 1,
+    "renderFrontAlpha": 0.06,
+    "renderOptics": "palette",
+    "renderReconstruction": "bicubic",
+    "renderRimAlpha": 0.1,
+    "renderRimPower": 5.8,
+    "renderSamples": 4,
+    "renderSharpen": 0.08,
+    "renderSource": "cache",
+    "renderSaturation": 1.2,
+    "renderTransparent": 1,
+    "recordFrames": 0
+  },
+  "eta": {
+    "min": 0.08445239812135696,
+    "max": 0.38561615347862244,
+    "mean": 0.2289884428946607,
+    "bad": 0
+  },
+  "Gamma": {
+    "min": 0.4774729013442993,
+    "max": 0.6216495037078857,
+    "mean": 0.550485832599179,
+    "bad": 0
+  },
+  "velocity": {
+    "min": 0.00030387562583200634,
+    "max": 0.6397635340690613,
+    "mean": 0.06130512235577412,
+    "bad": 0
+  },
+  "front": {
+    "min": 0.00358238210901618,
+    "max": 1,
+    "mean": 0.42682107377486744,
+    "bad": 0
+  },
+  "foam": {
+    "min": 0.0023409498389810324,
+    "max": 1,
+    "mean": 0.12824233211421365,
+    "bad": 0
+  },
+  "divergence": {
+    "min": -231.01849365234375,
+    "max": 157.62989807128906,
+    "mean": -0.028938435093911252,
+    "bad": 0
+  }
+}

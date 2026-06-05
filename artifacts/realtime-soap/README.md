@@ -51,10 +51,12 @@ This path bypasses the low-resolution realtime residual layer for final stills a
 Transparent PNG still render:
 
 ```bash
-node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=spectral --renderEtaScale=3600 --renderExposure=1.08 --renderSaturation=1.55 --renderSharpen=0.10 --renderDetailBoost=0.06 --renderTransparent=1 --renderBaseAlpha=0.30 --renderRimAlpha=0.58 --renderFrontAlpha=0.24 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-spectral-alpha-2048-s4-v1 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=palette --renderEtaScale=2100 --renderExposure=1.08 --renderSaturation=1.20 --renderSharpen=0.08 --renderDetailBoost=0.015 --renderTransparent=1 --renderBaseAlpha=0.32 --renderRimAlpha=0.10 --renderRimPower=5.8 --renderFrontAlpha=0.06 --renderEdgeGlow=0 --renderEdgePower=5.5 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-palette-alpha-no-white-rim-2048-s4-v1 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
 ```
 
 `renderTransparent=1` writes a real PNG alpha channel: outside the bubble is transparent, the film body is semi-transparent, and rim/front/foam regions get higher opacity from physical fields and view angle. Set `renderTransparent=0` for opaque black-background preview output.
+
+The wide white rim from the first alpha test was a render-layer artifact caused by broad edge glow, high rim alpha, and over-amplified cache front. The no-white-rim preset disables `renderEdgeGlow`, narrows the rim contribution with `renderRimPower`, and reduces `renderFrontAlpha`.
 
 ## Outputs
 
@@ -129,3 +131,4 @@ Anti-aliased render update:
 - `--renderSharpen` and `--renderDetailBoost` improve clarity from the rendered physical fields and front/compression fields; they do not sample any reference image.
 - `--renderSource=cache --renderOptics=spectral` is the preferred still-image path when avoiding the fake low-resolution hybrid look is more important than live perturbation.
 - `--renderTransparent=1` enables semi-transparent soap-film alpha. Opacity is controlled by `renderBaseAlpha`, `renderRimAlpha`, and `renderFrontAlpha`.
+- `--renderEdgeGlow=0 --renderRimAlpha=0.10 --renderRimPower=5.8` avoids the earlier broad white edge artifact.

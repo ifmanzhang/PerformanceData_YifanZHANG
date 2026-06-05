@@ -288,3 +288,42 @@ RT-M4:
     - semi-transparent pixels: `3293710`
     - opaque pixels: `2442`
   - Copied to `artifacts/targets/latest-realtime-soap-alpha.png`.
+
+## RT-M4 White Rim Artifact Removal
+
+- User comparison:
+  - The earlier baseline image `artifacts/realtime-soap/baseline/huang-official-highres512/frame0499-thinfilm-sphere.png` does not show the broad white rim.
+  - The first transparent alpha render did show a broad white line.
+- Cause:
+  - The broad white line was a render-layer artifact, not a Huang/physical result.
+  - It came from the newer alpha/spectral render path: broad `edgeGlow`, high `renderRimAlpha`, and over-amplified cache `front`/foam contribution.
+  - The baseline image did not have that artifact because it was an older opaque/composited thin-film sphere render without the new rim/alpha/front opacity layer.
+- Fix:
+  - Added `numberArg()` so explicit zero values such as `--renderEdgeGlow=0` are honored instead of falling back to defaults.
+  - Added `renderEdgeGlow`, `renderEdgePower`, and `renderRimPower`.
+  - Reduced default `renderRimAlpha` and `renderFrontAlpha`.
+  - Reduced cache-only `front` and foam amplification.
+  - Added a no-white-rim transparent preset:
+    - `renderEdgeGlow=0`
+    - `renderRimAlpha=0.10`
+    - `renderRimPower=5.8`
+    - `renderFrontAlpha=0.06`
+- Validation runs:
+  - `artifacts/realtime-soap/runs/RT-cache-spectral-alpha-no-white-rim-2048-s4-v1`
+    - Render: `2048 x 2048`
+    - Source: cache-only spectral
+    - Render samples: `4`
+    - Final PNG render time: `42465.5 ms`
+    - Alpha audit: `alpha_min=0`, `alpha_max=130`, `alpha_mean=63.18`, `opaque_pixels=0`.
+    - Result: broad white rim mostly removed, but spectral mode still leaves pale bright regions from the optical color response.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-alpha-no-white-rim-2048-s4-v1`
+    - Render: `2048 x 2048`
+    - Source: cache-only palette optics
+    - Render samples: `4`
+    - Final PNG render time: `16951.0 ms`
+    - Alpha audit: `alpha_min=0`, `alpha_max=117`, `alpha_mean=66.02`, `transparent_pixels=898152`, `semi_pixels=3296152`, `opaque_pixels=0`.
+    - Copied to `artifacts/targets/latest-realtime-soap-alpha.png`.
+    - Result: no broad white rim; remaining edge is a narrow transparent film edge rather than a fake opaque white stripe.
+- Current conclusion:
+  - The white wide line should not be treated as physical evidence or desired output.
+  - For transparent preview, use the palette no-white-rim preset until a higher-quality physical cache and spectral opacity model are available.

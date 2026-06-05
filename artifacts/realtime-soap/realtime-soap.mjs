@@ -29,16 +29,19 @@ function parseArgs(argv) {
     evaporation: 0.00002,
     substeps: 1,
     pressureIterations: 6,
-    renderBaseAlpha: 0.34,
+    renderBaseAlpha: 0.24,
     renderCacheBlend: 0.74,
     renderDetailBoost: 0.10,
+    renderEdgeGlow: 0.025,
+    renderEdgePower: 3.2,
     renderEtaScale: 2100,
     renderExposure: 0.92,
     renderFlipV: 1,
-    renderFrontAlpha: 0.22,
+    renderFrontAlpha: 0.14,
     renderOptics: "spectral",
     renderReconstruction: "bicubic",
-    renderRimAlpha: 0.52,
+    renderRimAlpha: 0.24,
+    renderRimPower: 3.4,
     renderSamples: 4,
     renderSharpen: 0.16,
     renderSource: "hybrid",
@@ -68,6 +71,11 @@ function parsePhysics(value) {
 
 function clamp(v, a, b) {
   return Math.max(a, Math.min(b, v));
+}
+
+function numberArg(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 function fract(v) {
@@ -370,18 +378,19 @@ function spectralThinFilmColor(thicknessNm, cosI, front, foam, args) {
   rr /= Math.max(EPS, wr);
   gg /= Math.max(EPS, wg);
   bb /= Math.max(EPS, wb);
-  const edge = Math.pow(clamp(1 - incidence, 0, 1), 1.2);
+  const edge = Math.pow(clamp(1 - incidence, 0, 1), clamp(numberArg(args.renderEdgePower, 3.2), 1.2, 8));
+  const edgeGlow = edge * clamp(numberArg(args.renderEdgeGlow, 0.025), 0, 0.5);
   const ridge = Math.pow(clamp(front, 0, 1), 0.8);
   const mist = Math.pow(clamp(foam, 0, 1), 1.6);
-  rr += edge * 0.08 + ridge * 0.11 + mist * 0.14;
-  gg += edge * 0.12 + ridge * 0.13 + mist * 0.14;
-  bb += edge * 0.22 + ridge * 0.18 + mist * 0.14;
+  rr += edgeGlow * 0.70 + ridge * 0.10 + mist * 0.08;
+  gg += edgeGlow * 0.85 + ridge * 0.11 + mist * 0.08;
+  bb += edgeGlow * 1.15 + ridge * 0.14 + mist * 0.08;
   const gray = (rr + gg + bb) / 3;
-  const sat = clamp(Number(args.renderSaturation) || 1, 0.2, 3);
+  const sat = clamp(numberArg(args.renderSaturation, 1), 0.2, 3);
   rr = gray + (rr - gray) * sat;
   gg = gray + (gg - gray) * sat;
   bb = gray + (bb - gray) * sat;
-  const exposure = clamp(Number(args.renderExposure) || 1, 0.05, 4);
+  const exposure = clamp(numberArg(args.renderExposure, 1), 0.05, 4);
   return [
     clamp(1 - Math.exp(-Math.max(0, rr) * exposure), 0, 1),
     clamp(1 - Math.exp(-Math.max(0, gg) * exposure), 0, 1),
@@ -699,22 +708,22 @@ function shadeSphereSample(sim, sx, z) {
   let foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
   if (source === "cache") {
     etaRender = etaCache;
-    front = clamp(frontCache * 3.8, 0, 1);
-    foam = clamp(frontCache * 0.22, 0, 1);
+    front = clamp(frontCache * 2.25, 0, 1);
+    foam = clamp(frontCache * 0.10, 0, 1);
   } else if (source === "live") {
     etaRender = eta;
     front = clamp(frontLive, 0, 1);
     foam = clamp(foamLive, 0, 1);
   }
-  const thicknessNm = etaRender * clamp(Number(sim.args.renderEtaScale) || 2100, 100, 8000);
+  const thicknessNm = etaRender * clamp(numberArg(sim.args.renderEtaScale, 2100), 100, 8000);
   const color = sim.args.renderOptics === "palette"
     ? phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam)
     : spectralThinFilmColor(thicknessNm, clamp(sy, 0.03, 1), front, foam, sim.args);
-  const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(Number(sim.args.renderDetailBoost) || 0, 0, 0.5);
-  const edge = Math.pow(clamp(1 - sy, 0, 1), 1.18);
-  const baseAlpha = clamp(Number(sim.args.renderBaseAlpha) || 0.34, 0, 1);
-  const rimAlpha = clamp(Number(sim.args.renderRimAlpha) || 0.52, 0, 1);
-  const frontAlpha = clamp(Number(sim.args.renderFrontAlpha) || 0.22, 0, 1);
+  const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(numberArg(sim.args.renderDetailBoost, 0), 0, 0.5);
+  const edge = Math.pow(clamp(1 - sy, 0, 1), clamp(numberArg(sim.args.renderRimPower, 3.4), 1.1, 10));
+  const baseAlpha = clamp(numberArg(sim.args.renderBaseAlpha, 0.34), 0, 1);
+  const rimAlpha = clamp(numberArg(sim.args.renderRimAlpha, 0.52), 0, 1);
+  const frontAlpha = clamp(numberArg(sim.args.renderFrontAlpha, 0.22), 0, 1);
   const alpha = Number(sim.args.renderTransparent)
     ? clamp(baseAlpha + rimAlpha * edge + frontAlpha * Math.max(front, foam), 0, 1)
     : 1;
@@ -798,12 +807,15 @@ function main() {
     renderBaseAlpha: args.renderBaseAlpha,
     renderResolution: args.render,
     renderDetailBoost: args.renderDetailBoost,
+    renderEdgeGlow: args.renderEdgeGlow,
+    renderEdgePower: args.renderEdgePower,
     renderEtaScale: args.renderEtaScale,
     renderExposure: args.renderExposure,
     renderOptics: args.renderOptics,
     renderReconstruction: args.renderReconstruction,
     renderFrontAlpha: args.renderFrontAlpha,
     renderRimAlpha: args.renderRimAlpha,
+    renderRimPower: args.renderRimPower,
     renderSamples: args.renderSamples,
     renderSharpen: args.renderSharpen,
     renderSource: args.renderSource,
