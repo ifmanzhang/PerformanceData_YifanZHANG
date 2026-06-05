@@ -31,6 +31,7 @@ function parseArgs(argv) {
     pressureIterations: 6,
     renderCacheBlend: 0.74,
     renderFlipV: 1,
+    renderSamples: 4,
     recordFrames: 0,
   };
   for (let i = 2; i < argv.length; i += 1) {
@@ -553,41 +554,52 @@ class RealtimeSoap {
   }
 }
 
+function shadeSphereSample(sim, sx, z) {
+  const r2 = sx * sx + z * z;
+  if (r2 > 1) return [0.0018, 0.0024, 0.0032];
+  const sy = Math.sqrt(Math.max(0, 1 - r2));
+  const theta = Math.acos(clamp(z, -1, 1));
+  const phi = Math.atan2(sy, sx);
+  const u = (phi + PI) / TAU;
+  const vRaw = theta / PI;
+  const v = Number(sim.args.renderFlipV) ? 1 - vRaw : vRaw;
+  const eta = bilinear(sim.eta, sim.nPhi, sim.nTheta, u, v);
+  const etaCache = sim.cacheRenderSample("eta", u, v);
+  const frontLive = bilinear(sim.front, sim.nPhi, sim.nTheta, u, v);
+  const foamLive = bilinear(sim.foam, sim.nPhi, sim.nTheta, u, v);
+  const frontCache = sim.cacheRenderSample("front", u, v);
+  const renderCacheBlend = clamp(sim.args.renderCacheBlend, 0, 1);
+  const etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
+  const front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
+  const foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
+  const thicknessNm = etaRender * 2100;
+  return phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam);
+}
+
 function renderSphere(sim, size, file) {
   const rgba = new Uint8Array(size * size * 4);
+  const requestedSamples = Math.max(1, Math.min(16, Math.floor(Number(sim.args.renderSamples) || 1)));
+  const sampleGrid = Math.max(1, Math.ceil(Math.sqrt(requestedSamples)));
+  const sampleCount = sampleGrid * sampleGrid;
   for (let y = 0; y < size; y += 1) {
-    const z = 1 - ((y + 0.5) / size) * 2;
     for (let x = 0; x < size; x += 1) {
-      const sx = ((x + 0.5) / size) * 2 - 1;
-      const r2 = sx * sx + z * z;
       const p = (y * size + x) * 4;
-      if (r2 > 1) {
-        rgba[p + 0] = 5;
-        rgba[p + 1] = 7;
-        rgba[p + 2] = 10;
-        rgba[p + 3] = 255;
-        continue;
+      let rr = 0;
+      let gg = 0;
+      let bb = 0;
+      for (let gy = 0; gy < sampleGrid; gy += 1) {
+        for (let gx = 0; gx < sampleGrid; gx += 1) {
+          const sx = ((x + (gx + 0.5) / sampleGrid) / size) * 2 - 1;
+          const z = 1 - ((y + (gy + 0.5) / sampleGrid) / size) * 2;
+          const color = shadeSphereSample(sim, sx, z);
+          rr += color[0];
+          gg += color[1];
+          bb += color[2];
+        }
       }
-      const sy = Math.sqrt(Math.max(0, 1 - r2));
-      const theta = Math.acos(clamp(z, -1, 1));
-      const phi = Math.atan2(sy, sx);
-      const u = (phi + PI) / TAU;
-      const vRaw = theta / PI;
-      const v = Number(sim.args.renderFlipV) ? 1 - vRaw : vRaw;
-      const eta = bilinear(sim.eta, sim.nPhi, sim.nTheta, u, v);
-      const etaCache = sim.cacheRenderSample("eta", u, v);
-      const frontLive = bilinear(sim.front, sim.nPhi, sim.nTheta, u, v);
-      const foamLive = bilinear(sim.foam, sim.nPhi, sim.nTheta, u, v);
-      const frontCache = sim.cacheRenderSample("front", u, v);
-      const renderCacheBlend = clamp(sim.args.renderCacheBlend, 0, 1);
-      const etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
-      const front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
-      const foam = clamp(foamLive * 0.62 + frontCache * 0.24, 0, 1);
-      const thicknessNm = etaRender * 2100;
-      const color = phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam);
-      rgba[p + 0] = encodeByte(Math.pow(color[0], 1 / 2.2));
-      rgba[p + 1] = encodeByte(Math.pow(color[1], 1 / 2.2));
-      rgba[p + 2] = encodeByte(Math.pow(color[2], 1 / 2.2));
+      rgba[p + 0] = encodeByte(Math.pow(rr / sampleCount, 1 / 2.2));
+      rgba[p + 1] = encodeByte(Math.pow(gg / sampleCount, 1 / 2.2));
+      rgba[p + 2] = encodeByte(Math.pow(bb / sampleCount, 1 / 2.2));
       rgba[p + 3] = 255;
     }
   }
@@ -631,6 +643,7 @@ function main() {
     solver: "realtime-hybrid-approximation",
     physicsResolution: [sim.nTheta, sim.nPhi],
     renderResolution: args.render,
+    renderSamples: args.renderSamples,
     targetFps: args.fpsTarget,
     simulatedSeconds: args.seconds,
     frames,

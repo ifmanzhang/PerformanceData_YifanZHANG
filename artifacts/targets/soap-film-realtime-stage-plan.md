@@ -135,7 +135,48 @@ RT-M4:
     - p95 physics frame time: `36.80 ms`
     - Cache frame count: `32`
     - Latest preview copied to `artifacts/targets/latest-realtime-soap-beauty.png`.
-- Current judgment:
-  - Multi-frame cache is useful for animation and recovery continuity, but only with small precomputed time steps.
-  - For a single still image, the stable temporal cache is close to v6 but not necessarily better.
-  - Next visual improvement should focus on better spectral/Fresnel rendering, not more aggressive cache advection.
+  - Current judgment:
+    - Multi-frame cache is useful for animation and recovery continuity, but only with small precomputed time steps.
+    - For a single still image, the stable temporal cache is close to v6 but not necessarily better.
+    - Next visual improvement should focus on better spectral/Fresnel rendering, not more aggressive cache advection.
+
+## RT-M4 Visual Clarity / Anti-Aliasing Patch
+
+- Problem observed:
+  - The latest preview was `2048 x 2048`, but clarity was still insufficient and stair-step aliasing was visible.
+  - Root causes:
+    - The sphere renderer used one point sample per output pixel.
+    - The sphere silhouette was a hard binary coverage test.
+    - High-contrast thin-film bands and cache-derived front lines were sampled without subpixel averaging.
+    - Realtime physics is `256 x 512` and the cache is `512 x 1024`, so high-resolution output needs a better render sampling layer.
+- Fix:
+  - Added `--renderSamples=N` to `realtime-soap.mjs`.
+  - Default is now `4`, implemented as a 2x2 supersampling grid per final output pixel.
+  - Rendering now shades subpixel positions and averages in linear color before gamma encoding.
+  - `performance.json` records `renderSamples` so high-quality still render time is separated from realtime physics fps.
+- Validation plan:
+  - Run `2048 x 2048` with `renderSamples=4`.
+  - Run a sharper inspection still at `4096 x 4096` with `renderSamples=4` if runtime is reasonable.
+  - Copy the best beauty render to `artifacts/targets/latest-realtime-soap-beauty.png`.
+- Validation results:
+  - `artifacts/realtime-soap/runs/RT-aa-2048-s4-v1`
+    - Physics: `256 x 512`
+    - Render: `2048 x 2048`
+    - Render samples: `4`
+    - Simulated seconds: `5`
+    - Average physics fps: `30.26`
+    - p95 physics frame time: `40.79 ms`
+    - Final PNG render time: `8791.6 ms`
+  - `artifacts/realtime-soap/runs/RT-aa-4096-s4-v1`
+    - Physics: `256 x 512`
+    - Render: `4096 x 4096`
+    - Render samples: `4`
+    - Simulated seconds: `5`
+    - Average physics fps: `30.11`
+    - p95 physics frame time: `40.47 ms`
+    - Final PNG render time: `33318.9 ms`
+    - Copied to `artifacts/targets/latest-realtime-soap-beauty.png`.
+- Remaining clarity boundary:
+  - SSAA reduces raster stair-stepping and hard sphere-edge aliasing.
+  - It does not invent missing physical detail beyond the realtime field/cache resolution.
+  - Further improvement requires either higher physics/cache resolution, bicubic/edge-aware field reconstruction, or a GPU renderer with temporal antialiasing for interactive display.

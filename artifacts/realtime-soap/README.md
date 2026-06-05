@@ -24,6 +24,14 @@ The temporal cache is about 406MB and is intentionally not committed. It can be 
 node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --fpsTarget=24 --seconds=20 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-latest
 ```
 
+High-quality still render with 4x supersampling anti-aliasing:
+
+```bash
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --fpsTarget=24 --seconds=5 --cache=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --outDir=artifacts/realtime-soap/runs/RT-aa-2048-s4 --cacheBlend=0.90 --renderCacheBlend=0.86 --disturbanceStrength=0.08
+```
+
+For inspection stills, `--render=4096 --renderSamples=4` gives a cleaner image at the cost of PNG render time. Physics fps is measured separately from final PNG rendering.
+
 ## Outputs
 
 - `beauty.png`
@@ -88,3 +96,8 @@ Best current display case:
 - Average physics fps: `32.98`
 - Cache frames: `32`
 - Preview copy: `artifacts/targets/latest-realtime-soap-beauty.png`
+
+Anti-aliased render update:
+
+- `realtime-soap.mjs` supports `--renderSamples=N`, default `4`.
+- The final sphere renderer uses subpixel supersampling before writing PNG, reducing the hard sphere rim and high-contrast internal stair-stepping.
