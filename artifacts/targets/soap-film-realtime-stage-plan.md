@@ -327,3 +327,37 @@ RT-M4:
 - Current conclusion:
   - The white wide line should not be treated as physical evidence or desired output.
   - For transparent preview, use the palette no-white-rim preset until a higher-quality physical cache and spectral opacity model are available.
+
+## RT-M4 Lighting / Transparent Volume Patch
+
+- Problem observed:
+  - After removing the fake white rim, the bubble looked too flat.
+  - Cause: the transparent preview was mostly thin-film color plus alpha. It had no explicit environment lighting, directional transmission, compact specular highlight, or Fresnel reflection.
+- Fix:
+  - Added a render-only lighting pass derived from sphere normal, view direction, and physical front/foam fields.
+  - New controls:
+    - `renderLighting`
+    - `renderAmbient`
+    - `renderDiffuse`
+    - `renderTransmission`
+    - `renderSpecular`
+    - `renderSpecularPower`
+    - `renderFresnelReflect`
+    - `renderLightX/renderLightY/renderLightZ`
+  - The lighting pass does not sample reference images or paint new color regions. Thin-film color still comes from optical thickness / palette phase and physical fields.
+  - The previous white-rim fix remains active via `renderEdgeGlow=0`, low `renderRimAlpha`, and high `renderRimPower`.
+- Validation runs:
+  - `artifacts/realtime-soap/runs/RT-cache-palette-alpha-lit-2048-s4-v1`
+    - Render: `2048 x 2048`
+    - Average physics fps: `30.83`
+    - Final PNG render time: `20537.7 ms`
+    - Result: lighting was present but too subtle.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-alpha-lit-contrast-2048-s4-v1`
+    - Render: `2048 x 2048`
+    - Average physics fps: `29.48`
+    - Final PNG render time: `20611.4 ms`
+    - Copied to `artifacts/targets/latest-realtime-soap-alpha.png`.
+    - Result: visible upper-left highlight and clearer sphere lighting gradient without reintroducing the broad fake white rim.
+- Current boundary:
+  - This is a transparent preview lighting layer, not a full ray-traced environment/refraction solution.
+  - A production viewer should later use an HDR environment map or analytic multi-light environment and premultiplied alpha compositing, while preserving this no-wide-rim constraint.

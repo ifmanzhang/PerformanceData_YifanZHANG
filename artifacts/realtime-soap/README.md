@@ -58,6 +58,14 @@ node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x51
 
 The wide white rim from the first alpha test was a render-layer artifact caused by broad edge glow, high rim alpha, and over-amplified cache front. The no-white-rim preset disables `renderEdgeGlow`, narrows the rim contribution with `renderRimPower`, and reduces `renderFrontAlpha`.
 
+Lit transparent preview:
+
+```bash
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=palette --renderEtaScale=2100 --renderExposure=1.08 --renderSaturation=1.20 --renderSharpen=0.08 --renderDetailBoost=0.015 --renderTransparent=1 --renderBaseAlpha=0.32 --renderRimAlpha=0.10 --renderRimPower=5.8 --renderFrontAlpha=0.06 --renderEdgeGlow=0 --renderEdgePower=5.5 --renderLighting=1 --renderAmbient=0.60 --renderDiffuse=0.40 --renderTransmission=0.14 --renderSpecular=0.42 --renderSpecularPower=44 --renderFresnelReflect=0.075 --renderLightX=-0.58 --renderLightY=0.56 --renderLightZ=0.59 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-palette-alpha-lit-contrast-2048-s4-v1 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
+```
+
+Lighting is a view/normal-derived render layer on top of physical film color: hemisphere environment, directional transmission, compact specular highlight, and a small Fresnel reflection. It does not sample reference images or paint color regions.
+
 ## Outputs
 
 - `beauty.png`
@@ -132,3 +140,4 @@ Anti-aliased render update:
 - `--renderSource=cache --renderOptics=spectral` is the preferred still-image path when avoiding the fake low-resolution hybrid look is more important than live perturbation.
 - `--renderTransparent=1` enables semi-transparent soap-film alpha. Opacity is controlled by `renderBaseAlpha`, `renderRimAlpha`, and `renderFrontAlpha`.
 - `--renderEdgeGlow=0 --renderRimAlpha=0.10 --renderRimPower=5.8` avoids the earlier broad white edge artifact.
+- `--renderLighting=1` enables hemisphere lighting, transmission, compact specular, and Fresnel reflection from the sphere normal. Use this for transparent preview outputs that otherwise look too flat.

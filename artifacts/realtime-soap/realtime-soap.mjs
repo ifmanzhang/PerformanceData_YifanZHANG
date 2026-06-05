@@ -38,6 +38,16 @@ function parseArgs(argv) {
     renderExposure: 0.92,
     renderFlipV: 1,
     renderFrontAlpha: 0.14,
+    renderAmbient: 0.78,
+    renderDiffuse: 0.18,
+    renderFresnelReflect: 0.045,
+    renderLighting: 1,
+    renderLightX: -0.42,
+    renderLightY: 0.62,
+    renderLightZ: 0.66,
+    renderSpecular: 0.16,
+    renderSpecularPower: 72,
+    renderTransmission: 0.08,
     renderOptics: "spectral",
     renderReconstruction: "bicubic",
     renderRimAlpha: 0.24,
@@ -76,6 +86,15 @@ function clamp(v, a, b) {
 function numberArg(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function normalize3(x, y, z) {
+  const m = Math.hypot(x, y, z) || 1;
+  return [x / m, y / m, z / m];
+}
+
+function dot3(a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
 function fract(v) {
@@ -398,6 +417,38 @@ function spectralThinFilmColor(thicknessNm, cosI, front, foam, args) {
   ];
 }
 
+function applyFilmLighting(color, normal, front, foam, args) {
+  if (!Number(args.renderLighting)) return color;
+  const light = normalize3(
+    numberArg(args.renderLightX, -0.42),
+    numberArg(args.renderLightY, 0.62),
+    numberArg(args.renderLightZ, 0.66),
+  );
+  const view = [0, 1, 0];
+  const halfVec = normalize3(light[0] + view[0], light[1] + view[1], light[2] + view[2]);
+  const ndl = clamp(dot3(normal, light), 0, 1);
+  const ndh = clamp(dot3(normal, halfVec), 0, 1);
+  const fresnel = Math.pow(clamp(1 - normal[1], 0, 1), 5);
+  const topHemi = clamp(0.5 + normal[2] * 0.5, 0, 1);
+  const bottomHemi = 1 - topHemi;
+  const ambient = clamp(numberArg(args.renderAmbient, 0.78), 0, 1.5);
+  const diffuse = clamp(numberArg(args.renderDiffuse, 0.18), 0, 1.5);
+  const transmission = clamp(numberArg(args.renderTransmission, 0.08), 0, 0.8);
+  const specularStrength = clamp(numberArg(args.renderSpecular, 0.16), 0, 1);
+  const specularPower = clamp(numberArg(args.renderSpecularPower, 72), 8, 256);
+  const reflectStrength = clamp(numberArg(args.renderFresnelReflect, 0.045), 0, 0.5);
+  const lambert = Math.pow(ndl, 1.25);
+  const hemi = ambient + diffuse * lambert + transmission * (topHemi * 0.65 + bottomHemi * 0.18);
+  const specular = Math.pow(ndh, specularPower) * specularStrength * (0.45 + 0.55 * fresnel);
+  const grazing = fresnel * reflectStrength * (0.45 + 0.55 * topHemi);
+  const shearGlint = Math.pow(clamp(front * 0.75 + foam * 0.25, 0, 1), 1.4) * specularStrength * 0.035;
+  return [
+    clamp(color[0] * hemi + specular * 1.00 + grazing * 0.52 + shearGlint * 0.88, 0, 1),
+    clamp(color[1] * (hemi + topHemi * 0.025) + specular * 0.96 + grazing * 0.66 + shearGlint * 0.92, 0, 1),
+    clamp(color[2] * (hemi + topHemi * 0.045) + specular * 0.88 + grazing * 0.94 + shearGlint * 1.00, 0, 1),
+  ];
+}
+
 function sharpenRgbaInPlace(rgba, width, height, amount) {
   const strength = clamp(Number(amount) || 0, 0, 1);
   if (strength <= 0) return;
@@ -716,9 +767,10 @@ function shadeSphereSample(sim, sx, z) {
     foam = clamp(foamLive, 0, 1);
   }
   const thicknessNm = etaRender * clamp(numberArg(sim.args.renderEtaScale, 2100), 100, 8000);
-  const color = sim.args.renderOptics === "palette"
+  let color = sim.args.renderOptics === "palette"
     ? phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam)
     : spectralThinFilmColor(thicknessNm, clamp(sy, 0.03, 1), front, foam, sim.args);
+  color = applyFilmLighting(color, [sx, sy, z], front, foam, sim.args);
   const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(numberArg(sim.args.renderDetailBoost, 0), 0, 0.5);
   const edge = Math.pow(clamp(1 - sy, 0, 1), clamp(numberArg(sim.args.renderRimPower, 3.4), 1.1, 10));
   const baseAlpha = clamp(numberArg(sim.args.renderBaseAlpha, 0.34), 0, 1);
@@ -806,11 +858,16 @@ function main() {
     physicsResolution: [sim.nTheta, sim.nPhi],
     renderBaseAlpha: args.renderBaseAlpha,
     renderResolution: args.render,
+    renderAmbient: args.renderAmbient,
+    renderDiffuse: args.renderDiffuse,
     renderDetailBoost: args.renderDetailBoost,
     renderEdgeGlow: args.renderEdgeGlow,
     renderEdgePower: args.renderEdgePower,
     renderEtaScale: args.renderEtaScale,
     renderExposure: args.renderExposure,
+    renderFresnelReflect: args.renderFresnelReflect,
+    renderLighting: args.renderLighting,
+    renderLight: [args.renderLightX, args.renderLightY, args.renderLightZ],
     renderOptics: args.renderOptics,
     renderReconstruction: args.renderReconstruction,
     renderFrontAlpha: args.renderFrontAlpha,
@@ -820,6 +877,9 @@ function main() {
     renderSharpen: args.renderSharpen,
     renderSource: args.renderSource,
     renderSaturation: args.renderSaturation,
+    renderSpecular: args.renderSpecular,
+    renderSpecularPower: args.renderSpecularPower,
+    renderTransmission: args.renderTransmission,
     renderTransparent: args.renderTransparent,
     targetFps: args.fpsTarget,
     simulatedSeconds: args.seconds,
