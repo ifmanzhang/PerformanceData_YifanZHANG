@@ -13,6 +13,8 @@ function parseArgs(argv) {
     outDir: "artifacts/realtime-soap/cache/gravity_fig14_like",
     h: 1e-6,
     authorRatio: 2e5,
+    frames: 1,
+    frameDt: 1 / 24,
     python: process.env.HUANG_SOAP_PYTHON || "C:\\Users\\Ifmanzhang\\miniconda3\\envs\\huang-soapbubble\\python.exe",
   };
   for (let i = 2; i < argv.length; i += 1) {
@@ -199,6 +201,47 @@ function deriveFields(eta, width, height) {
   return { eta, gamma, uTheta, uPhi, div, curl, front };
 }
 
+function bilinear(field, width, height, u, v) {
+  let uu = u - Math.floor(u);
+  let vv = v;
+  if (vv < 0) {
+    vv = -vv;
+    uu += 0.5;
+  }
+  if (vv > 1) {
+    vv = 2 - vv;
+    uu += 0.5;
+  }
+  uu -= Math.floor(uu);
+  vv = clamp(vv, 0.0001, 0.9999);
+  const x = uu * width - 0.5;
+  const y = vv * height - 0.5;
+  const x0f = Math.floor(x);
+  const y0 = clamp(Math.floor(y), 0, height - 1);
+  const x1f = x0f + 1;
+  const y1 = clamp(y0 + 1, 0, height - 1);
+  const fx = x - x0f;
+  const fy = y - y0;
+  const x0 = ((x0f % width) + width) % width;
+  const x1 = ((x1f % width) + width) % width;
+  const a = field[y0 * width + x0] * (1 - fx) + field[y0 * width + x1] * fx;
+  const b = field[y1 * width + x0] * (1 - fx) + field[y1 * width + x1] * fx;
+  return a * (1 - fy) + b * fy;
+}
+
+function advectScalar(field, uTheta, uPhi, width, height, dt) {
+  const next = new Float32Array(field.length);
+  for (let i = 0; i < height; i += 1) {
+    const v = (i + 0.5) / height;
+    for (let j = 0; j < width; j += 1) {
+      const u = (j + 0.5) / width;
+      const k = idx(width, i, j);
+      next[k] = bilinear(field, width, height, u - uPhi[k] * dt, v - uTheta[k] * dt);
+    }
+  }
+  return next;
+}
+
 function writeField(outDir, name, field) {
   fs.writeFileSync(path.join(outDir, `${name}.f32.gz`), zlib.gzipSync(Buffer.from(field.buffer)));
 }
@@ -215,26 +258,53 @@ function main() {
   fieldToPng(fields.front, width, height, path.join(args.outDir, "front.png"), 0, 1);
   fieldToPng(fields.curl, width, height, path.join(args.outDir, "curl.png"), -1, 1);
 
+  const frameCount = Math.max(1, Math.floor(args.frames));
+  const frames = [];
+  if (frameCount > 1) {
+    let frameEta = fields.eta;
+    let frameGamma = fields.gamma;
+    for (let frame = 0; frame < frameCount; frame += 1) {
+      const frameDir = path.join(args.outDir, "frames", `frame${String(frame).padStart(4, "0")}`);
+      fs.mkdirSync(frameDir, { recursive: true });
+      const frameFields = deriveFields(frameEta, width, height);
+      frameFields.gamma.set(frameGamma);
+      for (const [name, field] of Object.entries(frameFields)) {
+        fs.writeFileSync(path.join(frameDir, `${name}.f32.gz`), zlib.gzipSync(Buffer.from(field.buffer)));
+      }
+      frames.push({
+        index: frame,
+        time: frame * args.frameDt,
+        fields: Object.fromEntries(Object.keys(frameFields).map((name) => [name, path.join("frames", `frame${String(frame).padStart(4, "0")}`, `${name}.f32.gz`).replace(/\\/g, "/")])),
+      });
+      frameEta = advectScalar(frameFields.eta, frameFields.uTheta, frameFields.uPhi, width, height, args.frameDt);
+      frameGamma = advectScalar(frameFields.gamma, frameFields.uTheta, frameFields.uPhi, width, height, args.frameDt);
+    }
+  }
+
   const manifest = {
     kind: "soap-film-physical-cache",
-    version: 1,
+    version: frameCount > 1 ? 2 : 1,
     source: path.normalize(args.source),
     sourceReadMode: "OpenEXR R channel via Python OpenEXR",
     width,
     height,
     layout: "row-major theta-major equirectangular sphere",
     fields: Object.fromEntries(Object.keys(fields).map((name) => [name, `${name}.f32.gz`])),
+    frames,
+    frameCount,
+    frameDt: args.frameDt,
     sourceStats,
     fieldStats: Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, stats(field)])),
     constraints: {
       notTexture: true,
       physicalCacheFieldsOnly: true,
       generatedFromHuangOutput: true,
+      temporalFramesGeneratedByPhysicalFieldAdvection: frameCount > 1,
     },
   };
   fs.writeFileSync(path.join(args.outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   console.log(`[cache-builder] wrote ${args.outDir}`);
-  console.log(`[cache-builder] grid=${height}x${width} eta=${sourceStats.etaMin}..${sourceStats.etaMax}`);
+  console.log(`[cache-builder] grid=${height}x${width} eta=${sourceStats.etaMin}..${sourceStats.etaMax} frames=${frameCount}`);
 }
 
 main();

@@ -10,6 +10,14 @@ It is not a strict Huang 2020 reproduction. It is a realtime approximation that 
 node artifacts/realtime-soap/cache-builder.mjs --source=artifacts/realtime-soap/baseline/huang-official-highres512/frame0499.exr --outDir=artifacts/realtime-soap/cache/gravity_fig14_like
 ```
 
+Build a local 32-frame physical cache for smoother realtime recovery:
+
+```bash
+node artifacts/realtime-soap/cache-builder.mjs --source=artifacts/realtime-soap/baseline/huang-official-highres512/frame0499.exr --outDir=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --frames=32 --frameDt=0.006
+```
+
+The temporal cache is about 406MB and is intentionally not committed. It can be regenerated from the command above.
+
 ## Run Benchmark
 
 ```bash
@@ -67,3 +75,16 @@ Visual fidelity repair run:
 - p95 physics frame time: `24.190ms`
 - 2048 PNG render/write time: `2248.4ms`
 - Result: reached the `>=24fps` physics target with improved cache-preserved visual structure.
+
+Temporal-cache parameter scan:
+
+```bash
+node artifacts/realtime-soap/parameter-scan.mjs --cache=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --outDir=artifacts/realtime-soap/runs/RT-scan-temporal32-soft-v1 --physics=256x512 --render=2048 --seconds=5 --fpsTarget=24
+```
+
+Best current display case:
+
+- Output: `artifacts/realtime-soap/runs/RT-scan-temporal32-soft-v1/high-cache-stable`
+- Average physics fps: `32.98`
+- Cache frames: `32`
+- Preview copy: `artifacts/targets/latest-realtime-soap-beauty.png`

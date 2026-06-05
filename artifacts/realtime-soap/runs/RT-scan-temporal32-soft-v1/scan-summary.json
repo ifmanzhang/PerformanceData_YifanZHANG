@@ -1,0 +1,368 @@
+{
+  "kind": "realtime-soap-parameter-scan",
+  "cache": "artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft",
+  "physics": "256x512",
+  "render": 2048,
+  "seconds": 5,
+  "fpsTarget": 24,
+  "results": [
+    {
+      "name": "baseline",
+      "ok": true,
+      "elapsedMs": 8413.8814,
+      "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\baseline",
+      "flags": [],
+      "performance": {
+        "solver": "realtime-hybrid-approximation",
+        "physicsResolution": [
+          256,
+          512
+        ],
+        "renderResolution": 2048,
+        "targetFps": 24,
+        "simulatedSeconds": 5,
+        "frames": 120,
+        "physicsElapsedMs": 3609.8068000000003,
+        "avgPhysicsFrameMs": 30.077610000000046,
+        "p95PhysicsFrameMs": 31.415700000000015,
+        "p99PhysicsFrameMs": 62.13040000000001,
+        "avgPhysicsFps": 33.24732250999991,
+        "renderMs": 2528.4299,
+        "reached24Fps": true,
+        "cacheFrameCount": 32
+      },
+      "eta": {
+        "min": 0.06847035139799118,
+        "max": 0.42066526412963867,
+        "mean": 0.22866916494172074,
+        "bad": 0
+      },
+      "Gamma": {
+        "min": 0.4729875922203064,
+        "max": 0.7749190926551819,
+        "mean": 0.5580204861807943,
+        "bad": 0
+      },
+      "velocity": {
+        "min": 0.0005226259818300605,
+        "max": 0.2669583559036255,
+        "mean": 0.04686788242949591,
+        "bad": 0
+      },
+      "front": {
+        "min": 0.007263564970344305,
+        "max": 1,
+        "mean": 0.4376835686968725,
+        "bad": 0
+      },
+      "foam": {
+        "min": 0.002492104656994343,
+        "max": 1,
+        "mean": 0.09403384199723064,
+        "bad": 0
+      }
+    },
+    {
+      "name": "low-cache-free",
+      "ok": true,
+      "elapsedMs": 8454.897400000002,
+      "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\low-cache-free",
+      "flags": [
+        "--cacheBlend=0.48",
+        "--renderCacheBlend=0.52",
+        "--disturbanceStrength=0.28"
+      ],
+      "performance": {
+        "solver": "realtime-hybrid-approximation",
+        "physicsResolution": [
+          256,
+          512
+        ],
+        "renderResolution": 2048,
+        "targetFps": 24,
+        "simulatedSeconds": 5,
+        "frames": 120,
+        "physicsElapsedMs": 3652.1022999999996,
+        "avgPhysicsFrameMs": 30.430133333333327,
+        "p95PhysicsFrameMs": 33.55380000000014,
+        "p99PhysicsFrameMs": 66.22570000000042,
+        "avgPhysicsFps": 32.86216294374875,
+        "renderMs": 2537.200599999999,
+        "reached24Fps": true,
+        "cacheFrameCount": 32
+      },
+      "eta": {
+        "min": 0.05473725125193596,
+        "max": 0.533078670501709,
+        "mean": 0.23509325466000064,
+        "bad": 0
+      },
+      "Gamma": {
+        "min": 0.47804197669029236,
+        "max": 1.133779525756836,
+        "mean": 0.5956098102437863,
+        "bad": 0
+      },
+      "velocity": {
+        "min": 0.00020771892741322517,
+        "max": 0.6932194232940674,
+        "mean": 0.06317467994168346,
+        "bad": 0
+      },
+      "front": {
+        "min": 0.005345191806554794,
+        "max": 1,
+        "mean": 0.4838297329806025,
+        "bad": 0
+      },
+      "foam": {
+        "min": 0.0027591923717409372,
+        "max": 1,
+        "mean": 0.11420290889369689,
+        "bad": 0
+      }
+    },
+    {
+      "name": "high-cache-stable",
+      "ok": true,
+      "elapsedMs": 8451.290100000002,
+      "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\high-cache-stable",
+      "flags": [
+        "--cacheBlend=0.90",
+        "--renderCacheBlend=0.86",
+        "--disturbanceStrength=0.08"
+      ],
+      "performance": {
+        "solver": "realtime-hybrid-approximation",
+        "physicsResolution": [
+          256,
+          512
+        ],
+        "renderResolution": 2048,
+        "targetFps": 24,
+        "simulatedSeconds": 5,
+        "frames": 120,
+        "physicsElapsedMs": 3639.5235,
+        "avgPhysicsFrameMs": 30.3256666666667,
+        "p95PhysicsFrameMs": 36.80490000000009,
+        "p99PhysicsFrameMs": 62.97559999999976,
+        "avgPhysicsFps": 32.975367400551754,
+        "renderMs": 2534.4791999999998,
+        "reached24Fps": true,
+        "cacheFrameCount": 32
+      },
+      "eta": {
+        "min": 0.06806420534849167,
+        "max": 0.3929980397224426,
+        "mean": 0.22800207313929377,
+        "bad": 0
+      },
+      "Gamma": {
+        "min": 0.47247856855392456,
+        "max": 0.6659011840820312,
+        "mean": 0.5521055891879314,
+        "bad": 0
+      },
+      "velocity": {
+        "min": 0.00035333860432729125,
+        "max": 0.18496684730052948,
+        "mean": 0.04577961533095065,
+        "bad": 0
+      },
+      "front": {
+        "min": 0.004586906637996435,
+        "max": 1,
+        "mean": 0.4276687286920797,
+        "bad": 0
+      },
+      "foam": {
+        "min": 0.002231849357485771,
+        "max": 0.9319305419921875,
+        "mean": 0.09199764588983328,
+        "bad": 0
+      }
+    },
+    {
+      "name": "strong-disturbance",
+      "ok": true,
+      "elapsedMs": 8424.788399999998,
+      "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\strong-disturbance",
+      "flags": [
+        "--disturbanceStrength=0.90",
+        "--disturbanceU=0.35",
+        "--disturbanceV=0.45",
+        "--cacheBlend=0.68"
+      ],
+      "performance": {
+        "solver": "realtime-hybrid-approximation",
+        "physicsResolution": [
+          256,
+          512
+        ],
+        "renderResolution": 2048,
+        "targetFps": 24,
+        "simulatedSeconds": 5,
+        "frames": 120,
+        "physicsElapsedMs": 3664.9199999999996,
+        "avgPhysicsFrameMs": 30.537401666666657,
+        "p95PhysicsFrameMs": 33.45580000000018,
+        "p99PhysicsFrameMs": 61.8716000000004,
+        "avgPhysicsFps": 32.74672845173851,
+        "renderMs": 2512.3224999999993,
+        "reached24Fps": true,
+        "cacheFrameCount": 32
+      },
+      "eta": {
+        "min": 0.03500000014901161,
+        "max": 0.5669482350349426,
+        "mean": 0.21905009254203378,
+        "bad": 0
+      },
+      "Gamma": {
+        "min": 0.4742892384529114,
+        "max": 1.5499999523162842,
+        "mean": 0.6533056568068787,
+        "bad": 0
+      },
+      "velocity": {
+        "min": 0.00006712940376019105,
+        "max": 0.7014620304107666,
+        "mean": 0.07028382246059389,
+        "bad": 0
+      },
+      "front": {
+        "min": 0.002390890847891569,
+        "max": 1,
+        "mean": 0.511442333165876,
+        "bad": 0
+      },
+      "foam": {
+        "min": 0.0029557158704847097,
+        "max": 1,
+        "mean": 0.12472103484327768,
+        "bad": 0
+      }
+    },
+    {
+      "name": "strong-air-marangoni",
+      "ok": true,
+      "elapsedMs": 8404.036799999994,
+      "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\strong-air-marangoni",
+      "flags": [
+        "--airSpeed=1.20",
+        "--airDirection=75",
+        "--marangoni=1.10",
+        "--disturbanceStrength=0.20"
+      ],
+      "performance": {
+        "solver": "realtime-hybrid-approximation",
+        "physicsResolution": [
+          256,
+          512
+        ],
+        "renderResolution": 2048,
+        "targetFps": 24,
+        "simulatedSeconds": 5,
+        "frames": 120,
+        "physicsElapsedMs": 3637.6721,
+        "avgPhysicsFrameMs": 30.310182500000003,
+        "p95PhysicsFrameMs": 33.726700000000164,
+        "p99PhysicsFrameMs": 62.41720000000032,
+        "avgPhysicsFps": 32.99221309538469,
+        "renderMs": 2504.057999999999,
+        "reached24Fps": true,
+        "cacheFrameCount": 32
+      },
+      "eta": {
+        "min": 0.08172044157981873,
+        "max": 0.4265841245651245,
+        "mean": 0.22955673219888695,
+        "bad": 0
+      },
+      "Gamma": {
+        "min": 0.4691297113895416,
+        "max": 0.7982816696166992,
+        "mean": 0.5604674031617378,
+        "bad": 0
+      },
+      "velocity": {
+        "min": 0.0002565259928815067,
+        "max": 0.4555409848690033,
+        "mean": 0.06692928194885095,
+        "bad": 0
+      },
+      "front": {
+        "min": 0.007161750923842192,
+        "max": 1,
+        "mean": 0.4339570112890705,
+        "bad": 0
+      },
+      "foam": {
+        "min": 0.003518846584483981,
+        "max": 1,
+        "mean": 0.1035761276032563,
+        "bad": 0
+      }
+    },
+    {
+      "name": "low-diffusion-crisp",
+      "ok": true,
+      "elapsedMs": 8591.239500000003,
+      "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\low-diffusion-crisp",
+      "flags": [
+        "--diffusion=0.004",
+        "--viscosity=0.18",
+        "--renderCacheBlend=0.82"
+      ],
+      "performance": {
+        "solver": "realtime-hybrid-approximation",
+        "physicsResolution": [
+          256,
+          512
+        ],
+        "renderResolution": 2048,
+        "targetFps": 24,
+        "simulatedSeconds": 5,
+        "frames": 120,
+        "physicsElapsedMs": 3780.0964,
+        "avgPhysicsFrameMs": 31.496615833333337,
+        "p95PhysicsFrameMs": 35.7518,
+        "p99PhysicsFrameMs": 64.14539999999988,
+        "avgPhysicsFps": 31.74944271129234,
+        "renderMs": 2540.8209000000006,
+        "reached24Fps": true,
+        "cacheFrameCount": 32
+      },
+      "eta": {
+        "min": 0.07061520963907242,
+        "max": 0.4204322099685669,
+        "mean": 0.22876585603819422,
+        "bad": 0
+      },
+      "Gamma": {
+        "min": 0.473251074552536,
+        "max": 0.7746961712837219,
+        "mean": 0.5581786804702915,
+        "bad": 0
+      },
+      "velocity": {
+        "min": 0.00016680060070939362,
+        "max": 0.1864761859178543,
+        "mean": 0.049098004933553985,
+        "bad": 0
+      },
+      "front": {
+        "min": 0.006822656840085983,
+        "max": 1,
+        "mean": 0.4386262887986163,
+        "bad": 0
+      },
+      "foam": {
+        "min": 0.002774078631773591,
+        "max": 0.8249729871749878,
+        "mean": 0.09597633590672672,
+        "bad": 0
+      }
+    }
+  ]
+}

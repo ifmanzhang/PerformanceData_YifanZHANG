@@ -13,3 +13,5 @@ mvp/tts/models/
 mvp/tts/generated/
 mvp/tts/output/
 mvp/tts/previews/
+
+artifacts/realtime-soap/cache/gravity_fig14_like_temporal32*/

@@ -108,3 +108,34 @@ RT-M4:
 2. Implement local cacheBlend suppression and recovery diagnostics for interactive disturbance.
 3. Add a parameter scan runner that saves side-by-side result summaries.
 4. Keep 256 x 512 physics at or above 24fps while preserving 2048 final rendering.
+
+## RT-M4 Progress
+
+- Multi-frame cache support:
+  - `cache-builder.mjs` now supports `--frames` and `--frameDt`.
+  - Multi-frame caches are stored as physical field sequences under `frames/frame0000/...`, not image textures.
+  - Generated local cache:
+    - `artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft`
+    - Command:
+      - `node artifacts/realtime-soap/cache-builder.mjs --source=artifacts/realtime-soap/baseline/huang-official-highres512/frame0499.exr --outDir=artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft --frames=32 --frameDt=0.006`
+    - Size: about `406 MB`, intentionally not committed.
+  - Failed/too-aggressive cache:
+    - `gravity_fig14_like_temporal32` with `frameDt=1/24` caused visible blocky advected cache artifacts and should not be used as default.
+- Runtime support:
+  - `realtime-soap.mjs` now detects `manifest.frames`, pre-samples each frame onto the realtime grid, and time-interpolates cache fields during physics and rendering.
+  - `cacheFrameCount` is written into `performance.json` and `diagnostics.json`.
+- Parameter scan:
+  - Added `artifacts/realtime-soap/parameter-scan.mjs`.
+  - Scan output:
+    - `artifacts/realtime-soap/runs/RT-scan-temporal32-soft-v1`
+  - All six scan cases reached `>=24fps`.
+  - Best current display case:
+    - `high-cache-stable`
+    - Average physics fps: `32.98`
+    - p95 physics frame time: `36.80 ms`
+    - Cache frame count: `32`
+    - Latest preview copied to `artifacts/targets/latest-realtime-soap-beauty.png`.
+- Current judgment:
+  - Multi-frame cache is useful for animation and recovery continuity, but only with small precomputed time steps.
+  - For a single still image, the stable temporal cache is close to v6 but not necessarily better.
+  - Next visual improvement should focus on better spectral/Fresnel rendering, not more aggressive cache advection.

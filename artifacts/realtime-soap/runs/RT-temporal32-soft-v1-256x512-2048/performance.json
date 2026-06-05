@@ -1,0 +1,19 @@
+{
+  "solver": "realtime-hybrid-approximation",
+  "physicsResolution": [
+    256,
+    512
+  ],
+  "renderResolution": 2048,
+  "targetFps": 24,
+  "simulatedSeconds": 20,
+  "frames": 480,
+  "physicsElapsedMs": 14359.1898,
+  "avgPhysicsFrameMs": 29.912301041666662,
+  "p95PhysicsFrameMs": 32.55969999999979,
+  "p99PhysicsFrameMs": 35.84299999999894,
+  "avgPhysicsFps": 33.431062311356094,
+  "renderMs": 2490.1810000000005,
+  "reached24Fps": true,
+  "cacheFrameCount": 32
+}

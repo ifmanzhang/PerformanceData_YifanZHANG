@@ -1,0 +1,68 @@
+{
+  "kind": "realtime-soap-hybrid-diagnostics",
+  "approximationBoundary": "Realtime optimized eta/Gamma/u residual solver coupled to physical cache; not strict Huang 2020 solve.",
+  "cache": "artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft",
+  "cacheFrameCount": 32,
+  "params": {
+    "mode": "benchmark",
+    "physics": "256x512",
+    "render": 2048,
+    "fpsTarget": 24,
+    "seconds": 5,
+    "cache": "artifacts/realtime-soap/cache/gravity_fig14_like_temporal32_soft",
+    "outDir": "artifacts\\realtime-soap\\runs\\RT-scan-temporal32-soft-v1\\high-cache-stable",
+    "cacheBlend": 0.9,
+    "disturbanceStrength": 0.08,
+    "disturbanceRadius": 0.12,
+    "disturbanceU": 0.42,
+    "disturbanceV": 0.38,
+    "gravityAngle": 0,
+    "airSpeed": 0.38,
+    "airDirection": 24,
+    "marangoni": 0.65,
+    "viscosity": 0.22,
+    "diffusion": 0.018,
+    "evaporation": 0.00002,
+    "substeps": 1,
+    "pressureIterations": 6,
+    "renderCacheBlend": 0.86,
+    "renderFlipV": 1,
+    "recordFrames": 0
+  },
+  "eta": {
+    "min": 0.06806420534849167,
+    "max": 0.3929980397224426,
+    "mean": 0.22800207313929377,
+    "bad": 0
+  },
+  "Gamma": {
+    "min": 0.47247856855392456,
+    "max": 0.6659011840820312,
+    "mean": 0.5521055891879314,
+    "bad": 0
+  },
+  "velocity": {
+    "min": 0.00035333860432729125,
+    "max": 0.18496684730052948,
+    "mean": 0.04577961533095065,
+    "bad": 0
+  },
+  "front": {
+    "min": 0.004586906637996435,
+    "max": 1,
+    "mean": 0.4276687286920797,
+    "bad": 0
+  },
+  "foam": {
+    "min": 0.002231849357485771,
+    "max": 0.9319305419921875,
+    "mean": 0.09199764588983328,
+    "bad": 0
+  },
+  "divergence": {
+    "min": -68.56803894042969,
+    "max": 44.75825119018555,
+    "mean": -0.0037872255628652596,
+    "bad": 0
+  }
+}

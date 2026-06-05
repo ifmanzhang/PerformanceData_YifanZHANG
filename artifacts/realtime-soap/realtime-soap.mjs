@@ -136,6 +136,12 @@ function readField(cacheDir, manifest, name) {
   return new Float32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4).slice();
 }
 
+function readFrameField(cacheDir, frame, name) {
+  const file = path.join(cacheDir, frame.fields[name]);
+  const bytes = zlib.gunzipSync(fs.readFileSync(file));
+  return new Float32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4).slice();
+}
+
 function bilinear(field, width, height, u, v) {
   const uv = normalizeUv(u, v);
   const x = uv[0] * width - 0.5;
@@ -155,7 +161,7 @@ function bilinear(field, width, height, u, v) {
 
 function loadCache(cacheDir) {
   const manifest = JSON.parse(fs.readFileSync(path.join(cacheDir, "manifest.json"), "utf8"));
-  return {
+  const cache = {
     manifest,
     width: manifest.width,
     height: manifest.height,
@@ -165,7 +171,21 @@ function loadCache(cacheDir) {
     uPhi: readField(cacheDir, manifest, "uPhi"),
     curl: manifest.fields.curl ? readField(cacheDir, manifest, "curl") : null,
     front: readField(cacheDir, manifest, "front"),
+    frames: [],
   };
+  if (Array.isArray(manifest.frames) && manifest.frames.length > 1) {
+    cache.frames = manifest.frames.map((frame) => ({
+      index: frame.index,
+      time: frame.time,
+      eta: readFrameField(cacheDir, frame, "eta"),
+      gamma: readFrameField(cacheDir, frame, "gamma"),
+      uTheta: readFrameField(cacheDir, frame, "uTheta"),
+      uPhi: readFrameField(cacheDir, frame, "uPhi"),
+      curl: frame.fields.curl ? readFrameField(cacheDir, frame, "curl") : null,
+      front: readFrameField(cacheDir, frame, "front"),
+    }));
+  }
+  return cache;
 }
 
 function makeCrcTable() {
@@ -290,7 +310,12 @@ class RealtimeSoap {
     this.cachePhiGrid = new Float32Array(this.count);
     this.cacheFrontGrid = new Float32Array(this.count);
     this.cacheCurlGrid = new Float32Array(this.count);
+    this.cacheGridFrames = [];
+    this.cacheFrameA = null;
+    this.cacheFrameB = null;
+    this.cacheFrameT = 0;
     this.precomputeCacheGrid();
+    this.selectCacheFrame(0);
     this.initialize();
   }
 
@@ -299,6 +324,7 @@ class RealtimeSoap {
   }
 
   precomputeCacheGrid() {
+    const sourceFrames = this.cache.frames.length > 1 ? this.cache.frames : [this.cache];
     for (let i = 0; i < this.nTheta; i += 1) {
       const v = (i + 0.5) / this.nTheta;
       for (let j = 0; j < this.nPhi; j += 1) {
@@ -312,22 +338,86 @@ class RealtimeSoap {
         this.cacheCurlGrid[k] = this.cache.curl ? bilinear(this.cache.curl, this.cache.width, this.cache.height, u, v) : 0;
       }
     }
+    this.cacheGridFrames = sourceFrames.map((frame) => {
+      const grid = {
+        eta: new Float32Array(this.count),
+        gamma: new Float32Array(this.count),
+        uTheta: new Float32Array(this.count),
+        uPhi: new Float32Array(this.count),
+        front: new Float32Array(this.count),
+        curl: new Float32Array(this.count),
+      };
+      for (let i = 0; i < this.nTheta; i += 1) {
+        const v = (i + 0.5) / this.nTheta;
+        for (let j = 0; j < this.nPhi; j += 1) {
+          const u = (j + 0.5) / this.nPhi;
+          const k = idx(this.nPhi, i, j);
+          grid.eta[k] = bilinear(frame.eta, this.cache.width, this.cache.height, u, v);
+          grid.gamma[k] = bilinear(frame.gamma, this.cache.width, this.cache.height, u, v);
+          grid.uTheta[k] = bilinear(frame.uTheta, this.cache.width, this.cache.height, u, v);
+          grid.uPhi[k] = bilinear(frame.uPhi, this.cache.width, this.cache.height, u, v);
+          grid.front[k] = bilinear(frame.front, this.cache.width, this.cache.height, u, v);
+          grid.curl[k] = frame.curl ? bilinear(frame.curl, this.cache.width, this.cache.height, u, v) : 0;
+        }
+      }
+      return grid;
+    });
+  }
+
+  selectCacheFrame(frameIndex) {
+    const frames = this.cacheGridFrames.length ? this.cacheGridFrames : [{
+      eta: this.cacheEtaGrid,
+      gamma: this.cacheGammaGrid,
+      uTheta: this.cacheThetaGrid,
+      uPhi: this.cachePhiGrid,
+      front: this.cacheFrontGrid,
+      curl: this.cacheCurlGrid,
+    }];
+    if (frames.length === 1) {
+      this.cacheFrameA = frames[0];
+      this.cacheFrameB = frames[0];
+      this.cacheFrameT = 0;
+      return;
+    }
+    const cursor = (frameIndex * 0.35) % frames.length;
+    const a = Math.floor(cursor);
+    this.cacheFrameA = frames[a];
+    this.cacheFrameB = frames[(a + 1) % frames.length];
+    this.cacheFrameT = cursor - a;
+  }
+
+  cacheValue(name, k) {
+    return this.cacheFrameA[name][k] * (1 - this.cacheFrameT) + this.cacheFrameB[name][k] * this.cacheFrameT;
+  }
+
+  cacheRenderSample(name, u, v) {
+    if (this.cache.frames.length <= 1) {
+      return bilinear(this.cache[name], this.cache.width, this.cache.height, u, v);
+    }
+    const cursor = (this.lastFrameIndex * 0.35) % this.cache.frames.length;
+    const a = Math.floor(cursor);
+    const t = cursor - a;
+    const frameA = this.cache.frames[a];
+    const frameB = this.cache.frames[(a + 1) % this.cache.frames.length];
+    return bilinear(frameA[name], this.cache.width, this.cache.height, u, v) * (1 - t) + bilinear(frameB[name], this.cache.width, this.cache.height, u, v) * t;
   }
 
   initialize() {
     for (let i = 0; i < this.nTheta; i += 1) {
       for (let j = 0; j < this.nPhi; j += 1) {
         const k = idx(this.nPhi, i, j);
-        this.eta[k] = this.cacheEtaGrid[k];
-        this.gamma[k] = this.cacheGammaGrid[k];
-        this.uTheta[k] = this.cacheThetaGrid[k];
-        this.uPhi[k] = this.cachePhiGrid[k];
+        this.eta[k] = this.cacheValue("eta", k);
+        this.gamma[k] = this.cacheValue("gamma", k);
+        this.uTheta[k] = this.cacheValue("uTheta", k);
+        this.uPhi[k] = this.cacheValue("uPhi", k);
       }
     }
     this.deriveFields();
   }
 
   step(frameIndex, dt) {
+    this.lastFrameIndex = frameIndex;
+    this.selectCacheFrame(frameIndex);
     const a = this.args;
     const airDir = (a.airDirection * PI) / 180;
     const gAng = (a.gravityAngle * PI) / 180;
@@ -358,14 +448,14 @@ class RealtimeSoap {
         const influence = Math.exp(-(dU * dU + dV * dV) / r2) * a.disturbanceStrength;
         const localBlend = clamp(a.cacheBlend * (1 - influence * 0.78), 0.08, 0.96);
         const damp = Math.exp(-a.viscosity * dt * 1.8);
-        const cacheCurl = this.cacheCurlGrid[k];
+        const cacheCurl = this.cacheValue("curl", k);
 
         let ut = this.uTheta[k] * damp;
         let up = this.uPhi[k] * damp;
         ut += dt * (gravTheta - a.marangoni * gradTheta / Math.max(0.08, eta) * 0.025 + dv);
         up += dt * (-a.marangoni * gradPhi / Math.max(0.08, eta) * 0.025 + du);
-        ut += (this.cacheThetaGrid[k] - ut) * localBlend * 0.055;
-        up += (this.cachePhiGrid[k] - up) * localBlend * 0.055;
+        ut += (this.cacheValue("uTheta", k) - ut) * localBlend * 0.055;
+        up += (this.cacheValue("uPhi", k) - up) * localBlend * 0.055;
         ut += cacheCurl * 0.00045;
         up -= cacheCurl * 0.00030;
         ut += influence * Math.sin(frameIndex * 0.07 + u * TAU) * 0.018;
@@ -401,8 +491,8 @@ class RealtimeSoap {
         const localBlend = clamp(a.cacheBlend * (1 - influence * 0.78), 0.06, 0.96);
         eta += influence * 0.11 * Math.sin(phase * TAU + u * TAU * 2.0);
         gamma += influence * 0.09;
-        eta = eta * (1 - localBlend * 0.16) + this.cacheEtaGrid[k] * localBlend * 0.16;
-        gamma = gamma * (1 - localBlend * 0.11) + this.cacheGammaGrid[k] * localBlend * 0.11;
+        eta = eta * (1 - localBlend * 0.16) + this.cacheValue("eta", k) * localBlend * 0.16;
+        gamma = gamma * (1 - localBlend * 0.11) + this.cacheValue("gamma", k) * localBlend * 0.11;
         eta -= a.evaporation * dt;
         this.tmpEta[k] = clamp(eta, 0.035, 1.45);
         this.tmpGamma[k] = clamp(gamma, 0.035, 1.55);
@@ -455,7 +545,7 @@ class RealtimeSoap {
         const speed = Math.hypot(this.uTheta[k], this.uPhi[k]);
         this.div[k] = div;
         const liveFront = clamp(gradEta * 0.15 + gradGamma * 0.055 + Math.max(0, -div) * 0.018, 0, 1);
-        const cacheFront = clamp(this.cacheFrontGrid[k] * 3.2, 0, 1);
+        const cacheFront = clamp(this.cacheValue("front", k) * 3.2, 0, 1);
         this.front[k] = clamp(Math.max(liveFront, cacheFront * 0.82) + Math.max(0, -div) * 0.006, 0, 1);
         this.foam[k] = clamp(this.front[k] * 0.10 + speed * 0.38 + Math.max(0, -div) * 0.012, 0, 1);
       }
@@ -485,10 +575,10 @@ function renderSphere(sim, size, file) {
       const vRaw = theta / PI;
       const v = Number(sim.args.renderFlipV) ? 1 - vRaw : vRaw;
       const eta = bilinear(sim.eta, sim.nPhi, sim.nTheta, u, v);
-      const etaCache = bilinear(sim.cache.eta, sim.cache.width, sim.cache.height, u, v);
+      const etaCache = sim.cacheRenderSample("eta", u, v);
       const frontLive = bilinear(sim.front, sim.nPhi, sim.nTheta, u, v);
       const foamLive = bilinear(sim.foam, sim.nPhi, sim.nTheta, u, v);
-      const frontCache = bilinear(sim.cache.front, sim.cache.width, sim.cache.height, u, v);
+      const frontCache = sim.cacheRenderSample("front", u, v);
       const renderCacheBlend = clamp(sim.args.renderCacheBlend, 0, 1);
       const etaRender = eta * (1 - renderCacheBlend) + etaCache * renderCacheBlend;
       const front = clamp(Math.max(frontLive * 0.82, frontCache * 3.4), 0, 1);
@@ -551,11 +641,13 @@ function main() {
     avgPhysicsFps: 1000 / Math.max(EPS, avg),
     renderMs,
     reached24Fps: 1000 / Math.max(EPS, avg) >= 24,
+    cacheFrameCount: cache.frames.length || 1,
   };
   const diagnostics = {
     kind: "realtime-soap-hybrid-diagnostics",
     approximationBoundary: "Realtime optimized eta/Gamma/u residual solver coupled to physical cache; not strict Huang 2020 solve.",
     cache: args.cache,
+    cacheFrameCount: cache.frames.length || 1,
     params: args,
     eta: stats(sim.eta),
     Gamma: stats(sim.gamma),
