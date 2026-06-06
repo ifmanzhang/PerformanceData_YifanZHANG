@@ -396,3 +396,47 @@ RT-M4:
   - This is not a full physically exact path tracer.
   - It is an analytic real-time lighting approximation: environment transmission, compact specular, Fresnel reflection, and hemisphere lighting on top of physical film color.
   - True production lighting should eventually happen in the interactive viewer with premultiplied alpha, HDR/environment lighting, and optional refraction/background distortion.
+
+## RT-M4 Soap-Like Reflection / Refraction Patch
+
+- User feedback:
+  - The environment-composite version still looked fake because it mostly read as a brightness lift, not a soap-bubble surface.
+- Technical cause:
+  - Environment reflection was still mostly mixed into the film color layer and then attenuated by transparency.
+  - The independent reflection term was mainly a white specular lobe, not a reflected environment.
+  - The film surface normal was a perfect sphere, so the environment reflection did not respond to membrane structure.
+- Fix:
+  - Added analytic studio environment features in `environmentColor()`:
+    - softbox panel
+    - vertical side strip
+    - top strip
+    - horizon band
+    - dark flag band
+  - Added membrane-gradient normal perturbation:
+    - `renderBumpStrength`
+    - normal is perturbed from local `eta` gradients sampled from the current render source.
+  - Added analytic refraction/distortion for composite preview:
+    - `renderRefraction`
+    - composite background direction is shifted by perturbed normal.
+  - Reworked `surfaceReflectionAdd()`:
+    - independent surface reflection now samples analytic environment with Fresnel weighting.
+    - reflection is no longer just a white lobe.
+    - reflection is not multiplied away by transparent film alpha in composite preview.
+- Validation:
+  - `artifacts/realtime-soap/runs/RT-cache-palette-soaplike-env-1024-s4-v1`
+    - Result: subtle bump/refraction, still too flat.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-soaplike-env-1024-s4-v2`
+    - Result: stronger transparency and environment response, still muted.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-soaplike-env-1024-s4-v3`
+    - Result: clearer shell/edge reflection, acceptable for full render.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-soaplike-env-2048-s4-v3`
+    - Render: `2048 x 2048`
+    - Average physics fps: `30.73`
+    - Final PNG render time: `64540.9 ms`
+    - Copied to:
+      - `artifacts/targets/latest-realtime-soap-lit-preview.png`
+      - `artifacts/targets/latest-realtime-soap-alpha.png`
+- Current boundary:
+  - This is the first version that is closer to soap-bubble lighting instead of plain brightening.
+  - It is still analytic realtime lighting, not full multi-bounce optical simulation.
+  - The color looks more muted because actual reflected environment competes with thin-film color; recovering stronger color should be done by adjusting physical/optical balance, not by painting fake light.

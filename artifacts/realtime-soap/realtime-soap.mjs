@@ -40,6 +40,7 @@ function parseArgs(argv) {
     renderFrontAlpha: 0.14,
     renderAmbient: 0.78,
     renderBacklight: 0.10,
+    renderBumpStrength: 0.055,
     renderCompositeBackground: 0,
     renderDiffuse: 0.18,
     renderEnvironmentStrength: 0.28,
@@ -51,6 +52,7 @@ function parseArgs(argv) {
     renderSpecular: 0.16,
     renderSpecularPower: 72,
     renderTransmission: 0.08,
+    renderRefraction: 0.16,
     renderSoftbox: 0.18,
     renderSoftboxPower: 18,
     renderOptics: "spectral",
@@ -117,6 +119,11 @@ function reflect3(incident, normal) {
     incident[1] - 2 * d * normal[1],
     incident[2] - 2 * d * normal[2],
   );
+}
+
+function expBell(v, center, width) {
+  const d = (v - center) / Math.max(EPS, width);
+  return Math.exp(-(d * d));
 }
 
 function fract(v) {
@@ -452,11 +459,17 @@ function environmentColor(dir, args) {
   const horizon = Math.exp(-(horizonBand ** 2)) * 0.10;
   const softboxPower = clamp(numberArg(args.renderSoftboxPower, 18), 2, 96);
   const softbox = Math.pow(clamp(dot3(dir, light), 0, 1), softboxPower) * clamp(numberArg(args.renderSoftbox, 0.18), 0, 2);
+  const panel = clamp(numberArg(args.renderSoftbox, 0.18), 0, 2) * (
+    expBell(dir[0], -0.58, 0.085) * expBell(dir[2], 0.22, 0.42) * 0.92
+    + expBell(dir[0], 0.72, 0.055) * expBell(dir[2], -0.02, 0.62) * 0.45
+    + expBell(dir[0], -0.08, 0.22) * expBell(dir[2], 0.74, 0.075) * 0.34
+  );
+  const darkFlag = expBell(dir[0], 0.12, 0.34) * expBell(dir[2], -0.34, 0.18) * 0.13;
   const sideLift = Math.pow(side, 2.2) * 0.045;
   return [
-    clamp(base[0] + horizon * 0.75 + softbox * 1.00 + sideLift * 0.80, 0, 1),
-    clamp(base[1] + horizon * 0.88 + softbox * 0.96 + sideLift * 0.95, 0, 1),
-    clamp(base[2] + horizon * 1.10 + softbox * 0.90 + sideLift * 1.12, 0, 1),
+    clamp(base[0] + horizon * 0.75 + softbox * 1.00 + panel * 1.00 + sideLift * 0.80 - darkFlag * 0.50, 0, 1),
+    clamp(base[1] + horizon * 0.88 + softbox * 0.96 + panel * 0.98 + sideLift * 0.95 - darkFlag * 0.42, 0, 1),
+    clamp(base[2] + horizon * 1.10 + softbox * 0.90 + panel * 0.92 + sideLift * 1.12 - darkFlag * 0.30, 0, 1),
   ];
 }
 
@@ -511,16 +524,19 @@ function surfaceReflectionAdd(normal, args) {
   const view = [0, 1, 0];
   const halfVec = normalize3(light[0] + view[0], light[1] + view[1], light[2] + view[2]);
   const ndh = clamp(dot3(normal, halfVec), 0, 1);
-  const fresnel = Math.pow(clamp(1 - normal[1], 0, 1), 7.5);
+  const fresnelBase = clamp(1 - normal[1], 0, 1);
+  const fresnel = Math.pow(fresnelBase, 2.65);
   const specularStrength = clamp(numberArg(args.renderSpecular, 0.16), 0, 1);
   const specularPower = clamp(numberArg(args.renderSpecularPower, 72), 8, 256);
   const reflectStrength = clamp(numberArg(args.renderFresnelReflect, 0.045), 0, 0.5);
-  const compactSpec = Math.pow(ndh, specularPower) * specularStrength * 0.78;
-  const rimReflect = fresnel * reflectStrength * 0.38;
+  const reflDir = reflect3([0, -1, 0], normal);
+  const envRefl = environmentColor(reflDir, args);
+  const compactSpec = Math.pow(ndh, specularPower) * specularStrength * 0.36;
+  const envGain = reflectStrength * (0.12 + fresnel * 1.85 + Math.pow(fresnelBase, 7.0) * 1.25);
   return [
-    compactSpec * 1.00 + rimReflect * 0.32,
-    compactSpec * 0.96 + rimReflect * 0.48,
-    compactSpec * 0.90 + rimReflect * 0.78,
+    compactSpec * 1.00 + envRefl[0] * envGain,
+    compactSpec * 0.96 + envRefl[1] * envGain,
+    compactSpec * 0.90 + envRefl[2] * envGain,
   ];
 }
 
@@ -542,6 +558,14 @@ function sharpenRgbaInPlace(rgba, width, height, amount) {
       }
     }
   }
+}
+
+function sampleRenderEta(sim, u, v, reconstruction, source, renderCacheBlend) {
+  if (source === "cache") return sim.cacheRenderSample("eta", u, v, reconstruction);
+  if (source === "live") return sampleField(sim.eta, sim.nPhi, sim.nTheta, u, v, reconstruction);
+  const live = sampleField(sim.eta, sim.nPhi, sim.nTheta, u, v, reconstruction);
+  const cache = sim.cacheRenderSample("eta", u, v, reconstruction);
+  return live * (1 - renderCacheBlend) + cache * renderCacheBlend;
 }
 
 class RealtimeSoap {
@@ -848,10 +872,23 @@ function shadeSphereSample(sim, sx, z) {
     foam = clamp(foamLive, 0, 1);
   }
   const thicknessNm = etaRender * clamp(numberArg(sim.args.renderEtaScale, 2100), 100, 8000);
+  const bumpStrength = clamp(numberArg(sim.args.renderBumpStrength, 0.055), 0, 0.4);
+  const du = 1 / Math.max(128, source === "cache" ? sim.cache.width : sim.nPhi);
+  const dv = 1 / Math.max(64, source === "cache" ? sim.cache.height : sim.nTheta);
+  const gradU = (sampleRenderEta(sim, u + du, v, reconstruction, source, renderCacheBlend) - sampleRenderEta(sim, u - du, v, reconstruction, source, renderCacheBlend)) / (2 * du);
+  const gradV = (sampleRenderEta(sim, u, v + dv, reconstruction, source, renderCacheBlend) - sampleRenderEta(sim, u, v - dv, reconstruction, source, renderCacheBlend)) / (2 * dv);
+  const tangentU = normalize3(-sy, sx, 0);
+  const tangentV = normalize3(-sx * z, -sy * z, 1 - z * z);
+  const gradScale = 0.020 * bumpStrength;
+  const shadeNormal = normalize3(
+    sx - (gradU * tangentU[0] + gradV * tangentV[0]) * gradScale,
+    sy - (gradU * tangentU[1] + gradV * tangentV[1]) * gradScale,
+    z - (gradU * tangentU[2] + gradV * tangentV[2]) * gradScale,
+  );
   let color = sim.args.renderOptics === "palette"
     ? phaseColor(thicknessNm, clamp(sy, 0.03, 1), front, foam)
     : spectralThinFilmColor(thicknessNm, clamp(sy, 0.03, 1), front, foam, sim.args);
-  color = applyFilmLighting(color, [sx, sy, z], front, foam, sim.args);
+  color = applyFilmLighting(color, shadeNormal, front, foam, sim.args);
   const detail = Math.pow(clamp(front, 0, 1), 1.25) * clamp(numberArg(sim.args.renderDetailBoost, 0), 0, 0.5);
   const shaded = [
     clamp(color[0] + detail * 0.36, 0, 1),
@@ -866,8 +903,14 @@ function shadeSphereSample(sim, sx, z) {
     ? clamp(baseAlpha + rimAlpha * edge + frontAlpha * Math.max(front, foam), 0, 1)
     : 1;
   if (Number(sim.args.renderCompositeBackground)) {
-    const bg = environmentColor(normalize3(sx * 0.34, -1, z * 0.48), sim.args);
-    const glint = surfaceReflectionAdd([sx, sy, z], sim.args);
+    const refract = clamp(numberArg(sim.args.renderRefraction, 0.16), 0, 0.8);
+    const bgDir = normalize3(
+      sx * 0.34 - (shadeNormal[0] - sx) * refract * 3.2,
+      -1,
+      z * 0.48 - (shadeNormal[2] - z) * refract * 2.4,
+    );
+    const bg = environmentColor(bgDir, sim.args);
+    const glint = surfaceReflectionAdd(shadeNormal, sim.args);
     return [
       clamp(shaded[0] * alpha + bg[0] * (1 - alpha) + glint[0], 0, 1),
       clamp(shaded[1] * alpha + bg[1] * (1 - alpha) + glint[1], 0, 1),
@@ -956,6 +999,7 @@ function main() {
     renderResolution: args.render,
     renderAmbient: args.renderAmbient,
     renderBacklight: args.renderBacklight,
+    renderBumpStrength: args.renderBumpStrength,
     renderCompositeBackground: args.renderCompositeBackground,
     renderDiffuse: args.renderDiffuse,
     renderDetailBoost: args.renderDetailBoost,
@@ -978,6 +1022,7 @@ function main() {
     renderSaturation: args.renderSaturation,
     renderSpecular: args.renderSpecular,
     renderSpecularPower: args.renderSpecularPower,
+    renderRefraction: args.renderRefraction,
     renderSoftbox: args.renderSoftbox,
     renderSoftboxPower: args.renderSoftboxPower,
     renderTransmission: args.renderTransmission,
