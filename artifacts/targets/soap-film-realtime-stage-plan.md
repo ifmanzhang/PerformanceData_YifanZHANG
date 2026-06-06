@@ -358,6 +358,41 @@ RT-M4:
     - Final PNG render time: `20611.4 ms`
     - Copied to `artifacts/targets/latest-realtime-soap-alpha.png`.
     - Result: visible upper-left highlight and clearer sphere lighting gradient without reintroducing the broad fake white rim.
-- Current boundary:
-  - This is a transparent preview lighting layer, not a full ray-traced environment/refraction solution.
-  - A production viewer should later use an HDR environment map or analytic multi-light environment and premultiplied alpha compositing, while preserving this no-wide-rim constraint.
+  - Current boundary:
+    - This is a transparent preview lighting layer, not a full ray-traced environment/refraction solution.
+    - A production viewer should later use an HDR environment map or analytic multi-light environment and premultiplied alpha compositing, while preserving this no-wide-rim constraint.
+
+## RT-M4 Environment-Composite Lighting Clarification
+
+- User feedback:
+  - The first lighting pass looked nearly identical and did not read as real light.
+- Technical cause:
+  - The first lighting pass was only a weak normal-derived shading term.
+  - In transparent PNG preview over a black/default viewer background, transmission/refraction cannot be judged.
+  - The first composite incorrectly let alpha attenuate surface reflection too much, so specular highlights were mostly swallowed.
+- Fix:
+  - Added analytic environment color for preview: dark lower environment, brighter upper hemisphere, horizon band, and softbox contribution.
+  - Added `renderCompositeBackground=1` preview mode. It composites the semi-transparent film over the analytic environment so transmission and reflection are visible.
+  - Added independent surface reflection in composite preview so compact specular/Fresnel reflection is not multiplied away by film transparency.
+  - Added controls:
+    - `renderCompositeBackground`
+    - `renderEnvironmentStrength`
+    - `renderSoftbox`
+    - `renderSoftboxPower`
+    - `renderBacklight`
+- Validation:
+  - `artifacts/realtime-soap/runs/RT-cache-palette-alpha-envlit-composite-1024-s4-glint-v1`
+    - Result: light became visible, but highlight was too broad.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-alpha-envlit-composite-1024-s4-balanced-v1`
+    - Result: narrower, more controlled environment reflection.
+  - `artifacts/realtime-soap/runs/RT-cache-palette-alpha-envlit-composite-2048-s4-balanced-v1`
+    - Render: `2048 x 2048`
+    - Average physics fps: `29.93`
+    - Final PNG render time: `33683.9 ms`
+    - Copied to:
+      - `artifacts/targets/latest-realtime-soap-lit-preview.png`
+      - `artifacts/targets/latest-realtime-soap-alpha.png`
+- Honesty boundary:
+  - This is not a full physically exact path tracer.
+  - It is an analytic real-time lighting approximation: environment transmission, compact specular, Fresnel reflection, and hemisphere lighting on top of physical film color.
+  - True production lighting should eventually happen in the interactive viewer with premultiplied alpha, HDR/environment lighting, and optional refraction/background distortion.

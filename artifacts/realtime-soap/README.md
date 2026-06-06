@@ -66,6 +66,14 @@ node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x51
 
 Lighting is a view/normal-derived render layer on top of physical film color: hemisphere environment, directional transmission, compact specular highlight, and a small Fresnel reflection. It does not sample reference images or paint color regions.
 
+Environment-composited lighting preview:
+
+```bash
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=palette --renderEtaScale=2100 --renderExposure=1.08 --renderSaturation=1.20 --renderSharpen=0.08 --renderDetailBoost=0.015 --renderTransparent=1 --renderCompositeBackground=1 --renderBaseAlpha=0.50 --renderRimAlpha=0.15 --renderRimPower=5.4 --renderFrontAlpha=0.09 --renderEdgeGlow=0 --renderEdgePower=5.5 --renderLighting=1 --renderAmbient=0.63 --renderDiffuse=0.36 --renderTransmission=0.24 --renderEnvironmentStrength=0.50 --renderSpecular=0.55 --renderSpecularPower=42 --renderSoftbox=0.38 --renderSoftboxPower=18 --renderFresnelReflect=0.12 --renderBacklight=0.14 --renderLightX=-0.58 --renderLightY=0.56 --renderLightZ=0.59 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-palette-alpha-envlit-composite-2048-s4-balanced-v1 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
+```
+
+`renderCompositeBackground=1` is for judging lighting in still images: it composites the semi-transparent film over the analytic environment so transmission and reflection are visible. For an actual transparent asset, keep `renderCompositeBackground=0` and composite the PNG in the final viewer.
+
 ## Outputs
 
 - `beauty.png`
@@ -141,3 +149,4 @@ Anti-aliased render update:
 - `--renderTransparent=1` enables semi-transparent soap-film alpha. Opacity is controlled by `renderBaseAlpha`, `renderRimAlpha`, and `renderFrontAlpha`.
 - `--renderEdgeGlow=0 --renderRimAlpha=0.10 --renderRimPower=5.8` avoids the earlier broad white edge artifact.
 - `--renderLighting=1` enables hemisphere lighting, transmission, compact specular, and Fresnel reflection from the sphere normal. Use this for transparent preview outputs that otherwise look too flat.
+- `--renderCompositeBackground=1` composites the transparent film over an analytic environment for preview only. It is closer to how the bubble will look inside a viewer than inspecting the alpha PNG over a black background.
