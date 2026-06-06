@@ -440,3 +440,27 @@ RT-M4:
   - This is the first version that is closer to soap-bubble lighting instead of plain brightening.
   - It is still analytic realtime lighting, not full multi-bounce optical simulation.
   - The color looks more muted because actual reflected environment competes with thin-film color; recovering stronger color should be done by adjusting physical/optical balance, not by painting fake light.
+
+## RT-M4 Pure Black Preview Background
+
+- User requirement:
+  - Preview background should be pure black, not the gray analytic environment.
+- Fix:
+  - Added `renderBackground` string parameter.
+  - `renderBackground=black` returns `[0, 0, 0]` for composited preview background.
+  - The analytic environment is still used internally for bubble-surface reflection and transmission estimates, but the final canvas background is pure black.
+- Validation:
+  - Run: `artifacts/realtime-soap/runs/RT-cache-palette-soaplike-blackbg-2048-s4-v1`
+    - Render: `2048 x 2048`
+    - Average physics fps: `29.84`
+    - Final PNG render time: `53918.8 ms`
+    - Copied to `artifacts/targets/latest-realtime-soap-lit-preview.png`.
+  - Pixel audit:
+    - `(0,0) = 0,0,0,255`
+    - `(10,10) = 0,0,0,255`
+    - `(2047,0) = 0,0,0,255`
+    - `(0,2047) = 0,0,0,255`
+    - `(2047,2047) = 0,0,0,255`
+- Boundary:
+  - `latest-realtime-soap-lit-preview.png` is now the black-background preview.
+  - `latest-realtime-soap-alpha.png` should remain the transparent asset preview, not be overwritten by the black-background composite.

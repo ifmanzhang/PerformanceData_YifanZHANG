@@ -41,6 +41,7 @@ function parseArgs(argv) {
     renderAmbient: 0.78,
     renderBacklight: 0.10,
     renderBumpStrength: 0.055,
+    renderBackground: "transparent",
     renderCompositeBackground: 0,
     renderDiffuse: 0.18,
     renderEnvironmentStrength: 0.28,
@@ -473,6 +474,13 @@ function environmentColor(dir, args) {
   ];
 }
 
+function compositeBackgroundColor(dir, args) {
+  const mode = String(args.renderBackground || "environment").toLowerCase();
+  if (mode === "black") return [0, 0, 0];
+  if (mode === "dark") return [0.0018, 0.0024, 0.0032];
+  return environmentColor(dir, args);
+}
+
 function applyFilmLighting(color, normal, front, foam, args) {
   if (!Number(args.renderLighting)) return color;
   const light = normalize3(
@@ -840,7 +848,7 @@ function shadeSphereSample(sim, sx, z) {
   const r2 = sx * sx + z * z;
   if (r2 > 1) {
     if (Number(sim.args.renderCompositeBackground)) {
-      const bg = environmentColor(normalize3(sx * 0.42, -1, z * 0.58), sim.args);
+      const bg = compositeBackgroundColor(normalize3(sx * 0.42, -1, z * 0.58), sim.args);
       return [bg[0], bg[1], bg[2], 1];
     }
     return [0.0018, 0.0024, 0.0032, Number(sim.args.renderTransparent) ? 0 : 1];
@@ -909,7 +917,7 @@ function shadeSphereSample(sim, sx, z) {
       -1,
       z * 0.48 - (shadeNormal[2] - z) * refract * 2.4,
     );
-    const bg = environmentColor(bgDir, sim.args);
+    const bg = compositeBackgroundColor(bgDir, sim.args);
     const glint = surfaceReflectionAdd(shadeNormal, sim.args);
     return [
       clamp(shaded[0] * alpha + bg[0] * (1 - alpha) + glint[0], 0, 1),
@@ -1000,6 +1008,7 @@ function main() {
     renderAmbient: args.renderAmbient,
     renderBacklight: args.renderBacklight,
     renderBumpStrength: args.renderBumpStrength,
+    renderBackground: args.renderBackground,
     renderCompositeBackground: args.renderCompositeBackground,
     renderDiffuse: args.renderDiffuse,
     renderDetailBoost: args.renderDetailBoost,

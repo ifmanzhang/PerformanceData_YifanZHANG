@@ -74,13 +74,13 @@ node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x51
 
 `renderCompositeBackground=1` is for judging lighting in still images: it composites the semi-transparent film over the analytic environment so transmission and reflection are visible. For an actual transparent asset, keep `renderCompositeBackground=0` and composite the PNG in the final viewer.
 
-Soap-like environment reflection preview:
+Soap-like environment reflection preview with pure black background:
 
 ```bash
-node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=palette --renderEtaScale=2150 --renderExposure=1.04 --renderSaturation=1.38 --renderSharpen=0.08 --renderDetailBoost=0.012 --renderTransparent=1 --renderCompositeBackground=1 --renderBaseAlpha=0.30 --renderRimAlpha=0.26 --renderRimPower=4.9 --renderFrontAlpha=0.07 --renderEdgeGlow=0 --renderEdgePower=5.5 --renderLighting=1 --renderAmbient=0.48 --renderDiffuse=0.10 --renderTransmission=0.38 --renderEnvironmentStrength=1.18 --renderSpecular=0.28 --renderSpecularPower=92 --renderSoftbox=1.25 --renderSoftboxPower=24 --renderFresnelReflect=0.42 --renderBacklight=0.18 --renderBumpStrength=0.14 --renderRefraction=0.38 --renderLightX=-0.58 --renderLightY=0.56 --renderLightZ=0.59 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-palette-soaplike-env-2048-s4-v3 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
+node artifacts/realtime-soap/realtime-soap.mjs --mode=benchmark --physics=256x512 --render=2048 --renderSamples=4 --renderReconstruction=bicubic --renderSource=cache --renderOptics=palette --renderEtaScale=2150 --renderExposure=1.04 --renderSaturation=1.38 --renderSharpen=0.08 --renderDetailBoost=0.012 --renderTransparent=1 --renderCompositeBackground=1 --renderBackground=black --renderBaseAlpha=0.30 --renderRimAlpha=0.26 --renderRimPower=4.9 --renderFrontAlpha=0.07 --renderEdgeGlow=0 --renderEdgePower=5.5 --renderLighting=1 --renderAmbient=0.48 --renderDiffuse=0.10 --renderTransmission=0.38 --renderEnvironmentStrength=1.18 --renderSpecular=0.28 --renderSpecularPower=92 --renderSoftbox=1.25 --renderSoftboxPower=24 --renderFresnelReflect=0.42 --renderBacklight=0.18 --renderBumpStrength=0.14 --renderRefraction=0.38 --renderLightX=-0.58 --renderLightY=0.56 --renderLightZ=0.59 --fpsTarget=24 --seconds=1 --cache=artifacts/realtime-soap/cache/gravity_fig14_like --outDir=artifacts/realtime-soap/runs/RT-cache-palette-soaplike-blackbg-2048-s4-v1 --cacheBlend=0 --renderCacheBlend=1 --disturbanceStrength=0
 ```
 
-This preset is the current best still-image lighting preview. It uses analytic studio panels/strips in `environmentColor()`, Fresnel-weighted environment reflection independent of alpha, and thickness-gradient normal perturbation (`renderBumpStrength`) for mild reflection/refraction distortion.
+This preset is the current best still-image lighting preview. It uses analytic studio panels/strips in `environmentColor()` for reflection only, but composites the actual canvas over pure black via `--renderBackground=black`. Pixel audit of the outer corners is `0,0,0,255`.
 
 ## Outputs
 
@@ -158,5 +158,6 @@ Anti-aliased render update:
 - `--renderEdgeGlow=0 --renderRimAlpha=0.10 --renderRimPower=5.8` avoids the earlier broad white edge artifact.
 - `--renderLighting=1` enables hemisphere lighting, transmission, compact specular, and Fresnel reflection from the sphere normal. Use this for transparent preview outputs that otherwise look too flat.
 - `--renderCompositeBackground=1` composites the transparent film over an analytic environment for preview only. It is closer to how the bubble will look inside a viewer than inspecting the alpha PNG over a black background.
+- `--renderBackground=black` makes the preview canvas pure black while preserving hidden analytic environment reflection on the bubble surface.
 - `--renderBumpStrength` perturbs the shading normal from membrane thickness gradients so reflected/transmitted environment light bends with the simulated film field.
 - `--renderRefraction` controls analytic background distortion in composite preview. It is a realtime approximation, not full ray-traced refraction.
